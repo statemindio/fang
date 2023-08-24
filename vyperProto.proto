@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+message VarRef {
+    oneof type {
+        Int i = 1;
+        Bool b = 2;
+    }
+
+    uint32 varnum = 3;
+}
+
+message Literal {
+    oneof literal_oneof {
+        uint64 intval = 1;  // check if we can make it just int
+        string strval = 2;
+        bool boolval = 3;
+    }
+}
+
+message BinaryOp {
+    enum BOp {
+        ADD = 0;
+        SUB = 1;
+        MUL = 2;
+        DIV = 3;
+        MOD = 4;
+        EXP = 5;
+        AND = 6;
+        OR = 7;
+        EQ = 8;
+        INEQ = 9;
+        LESS = 10;
+        LESSEQ = 11;
+        GREATER = 12;
+        GREATEREQ = 13;
+        BIT_AND = 14;
+        BIT_OR = 15;
+        BIT_XOR = 16;
+        LEFT_SHIFT = 17;
+        RIGHT_SHIFT = 18;
+    }   
+
+    BOp op = 1;
+    Expression left = 2;
+    Expression right = 3;
+}
+
+message UnaryOp {
+    enum UOp {
+        NOT = 0;
+        MINUS = 1;
+        BIT_NOT = 2;
+    }
+
+    UOp op = 1;
+    Expression expr = 2;
+}
+
+message Expression {
+    oneof expr_oneof {
+        VarRef varref = 1;
+        Literal cons = 2;
+        BinaryOp binop = 3;
+        UnaryOp unop = 4;
+        // NullaryOp nop = 5;
+    }
+}
+
+message Int {
+    uint32 n = 1;
+    bool sign = 2;
+}
+
+message Bool {
+
+}
+
+message VarDecl {
+    oneof type {
+        Int i = 1;
+        Bool b = 2;
+    }
+    Expression expr = 3;
+}
+
+message AssignmentStatement {
+    VarRef ref_id = 1;
+    Expression expr = 2;
+}
+
+message Statement {
+    oneof stmt_oneof {
+      VarDecl             decl            = 1;
+      AssignmentStatement assignment      = 2;
+    }
+}
+
+message Block {
+    repeated Statement statements = 1;
+}
+
+message Reentrancy {
+    string key = 1;
+}
+
+message FuncParam {
+    oneof type {
+        Int i = 1;
+        Bool b = 2;
+    }
+}
+
+message Func {
+    enum Visibility {
+        EXTERNAL = 0;
+        INTERNAL = 1;
+    }
+
+    enum Mutability {
+        PURE = 0;
+        VIEW = 1;
+        NONPAYABLE = 2;
+        PAYABLE = 3;
+    }
+
+    Visibility vis = 1;
+    Mutability mut = 2;
+    optional Reentrancy ret = 3;
+    repeated FuncParam input_params = 4;  
+    repeated FuncParam output_params = 5;
+    Block block = 6;
+}
+
+message Contract { 
+    repeated VarDecl decls = 1;
+    repeated Func functions = 2;
+}
+
