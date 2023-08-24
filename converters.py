@@ -43,7 +43,7 @@ class LiteralConverter(Converter):
 
 class BinOpConverter(Converter):
 
-    def __init__(self, binop: BinaryOp, expr_level) -> None:
+    def __init__(self, binop: BinaryOp, func_params, expr_level) -> None:
         super().__init__()
 
         self.binop = binop
@@ -53,25 +53,25 @@ class BinOpConverter(Converter):
 
 class UnaryOpConverter(Converter):
 
-    def __init__(self, unop: UnaryOp, global_vars, available_vars, expr_level) -> None:
+    def __init__(self, unop: UnaryOp, global_vars, available_vars, func_params, expr_level) -> None:
         super().__init__()
 
         self.unop = unop
 
         self.global_vars = global_vars
         self.available_vars = available_vars.copy() # CHECK IF SHOULD COPY, BECAUSE IT SHOULD BE READ-ONLY
-
+        self.func_params = func_params
         self.expr_level = expr_level
 
     def visit(self):
         if self.unop.op == UnaryOp.UOp.NOT:
             self.result = "not "
-        elif self.unop.op == UnaryOp.UOp.Minus:
+        elif self.unop.op == UnaryOp.UOp.MINUS:
             self.result = "-"
-        elif self.unop.op == UnaryOp.Uop.BIT_NOT:
+        elif self.unop.op == UnaryOp.UOp.BIT_NOT:
             self.result = "~"
         
-        expr = ExpressionConverter(self.unop.expr, self.global_vars, self.available_vars, self.expr_level + 1)
+        expr = ExpressionConverter(self.unop.expr, self.global_vars, self.available_vars, self.func_params, self.expr_level + 1)
         self.result += expr.visit()
 
         return self.result
@@ -111,14 +111,14 @@ class IntConverter(Converter):
 
 class ExpressionConverter(Converter):  # TO-DO maybe store here type of variable ?
 
-    def __init__(self, expr: Expression, global_vars, available_vars, expr_level) -> None:
+    def __init__(self, expr: Expression, global_vars, available_vars, func_params, expr_level) -> None:
         super().__init__()
 
         self.expr = expr
 
         self.global_vars = global_vars
         self.available_vars = available_vars.copy()  # CHECK IF SHOULD COPY, BECAUSE IT SHOULD BE READ-ONLY
-
+        self.func_params = func_params
         self.expr_level = expr_level
 
     def visit(self):
@@ -127,20 +127,20 @@ class ExpressionConverter(Converter):  # TO-DO maybe store here type of variable
             self.result = "True"
         elif self.expr.HasField("varref"):
 
-            var_c = VarRefConverter(self.expr.varref, self.global_vars, self.available_vars)
+            var_c = VarRefConverter(self.expr.varref, self.global_vars, self.available_vars, self.func_params)
             self.result = var_c.visit()
-        elif self.expr.HasField("cons"):
-
-            literal = LiteralConverter(self.expr.cons)
-            self.result = literal.visit()
         elif self.expr.HasField("binop"):
 
-            binop = BinOpConverter(self.expr.binop, self.expr_level)
+            binop = BinOpConverter(self.expr.binop, self.func_params, self.expr_level)
             self.result = binop.visit()
         elif self.expr.HasField("unop"):
 
-            uniop = UnaryOpConverter(self.expr.unop, self.global_vars, self.available_vars, self.expr_level)
+            uniop = UnaryOpConverter(self.expr.unop, self.global_vars, self.available_vars, self.func_params, self.expr_level)
             self.result = uniop.visit()
+        else: # cons, had to remove else cuz of oneof
+            # i think this might lead to something like `literal` = ...
+            literal = LiteralConverter(self.expr.cons)
+            self.result = literal.visit()
         
         return self.result
 
@@ -184,7 +184,7 @@ class FuncParamConverter(Converter):
             vyper_type += int.visit()
             self.type = Type.INT
 
-        elif self.param.HasField("b"):
+        else:
 
             bool = BoolConverter()
 
@@ -223,7 +223,7 @@ class FuncParamConverter(Converter):
             vyper_type += int.visit()
             self.type = Type.INT
 
-        elif self.param.HasField("b"):
+        else:
 
             bool = BoolConverter()
 
@@ -252,7 +252,7 @@ class VarRefConverter(Converter):
     def visit(self):
         if self.var_ref.HasField('i'):
             self.type = Type.INT
-        elif self.var_ref.HasField('b'):
+        else:
             self.type = Type.BOOL
 
         global_vars_type_max_idx = -1
@@ -313,18 +313,18 @@ class AssignmentStatementConverter(Converter):
         self.func_params = func_params
 
     def visit(self):
-        var_ref_converter = VarRefConverter(self.assign.ref_id, self.func_params, is_assign=True)
+        var_ref_converter = VarRefConverter(self.assign.ref_id, self.global_vars, self.available_vars, self.func_params, is_assign=True)
 
         self.result = var_ref_converter.visit() + " = "
 
-        expr = ExpressionConverter(self.assign.expr, self.global_vars, self.available_vars, 1)
+        expr = ExpressionConverter(self.assign.expr, self.global_vars, self.available_vars, self.func_params, 1)
         self.result += expr.visit()
 
         return self.result
 
 class StatementConverter(Converter):
 
-    def __init__(self, statement: Statement, global_vars, available_vars, func_params, nesting_level) -> None:
+    def __init__(self, statement: Statement, global_vars, available_vars, func_params) -> None:
         super().__init__()
 
         self.statement = statement
@@ -333,14 +333,12 @@ class StatementConverter(Converter):
         self.available_vars = available_vars.copy()
         self.func_params = func_params
 
-        self.nesting_level = nesting_level  # FOR WHAT NESTING LEVEL ?
-
     def visit(self):
         if self.statement.HasField('decl'):
-            var_decl_converter = VarDeclConverter(self.statement.decl, self.available_vars)
+            var_decl_converter = VarDeclConverter(self.statement.decl, self.global_vars, self.available_vars, self.func_params)
 
             self.result += var_decl_converter.visit()
-
+        # can be NoneType
         elif self.statement.HasField('assignment'):
             assignment_converter = AssignmentStatementConverter(self.statement.assignment, self.global_vars, self.available_vars, self.func_params)
 
@@ -364,9 +362,12 @@ class BlockConverter(Converter):
     
     def visit(self):
         for statement in self.block.statements:
-            statement_converter = StatementConverter(statement, self.global_vars, self.available_vars, self.func_params, self.nesting_level)
+            statement_converter = StatementConverter(statement, self.global_vars, self.available_vars, self.func_params)
             
             self.result += get_spaces(self.nesting_level) + statement_converter.visit()
+
+        if len(self.block.statements) == 0:
+            self.result += get_spaces(self.nesting_level) + "pass"
 
         return self.result
 
@@ -425,12 +426,14 @@ class FuncConverter(Converter):
                 break
             input_counter += 1
 
-            param_converter = FuncParamConverter(input_param, self.available_vars)
-
-            self.result += param_converter.visit() + ", "
+            param_converter = FuncParamConverter(input_param, self.available_vars, self.func_params)
+            
+            self.result += param_converter.visit_input() + ", "
         
         if input_counter != 0:
-            self.result = self.result[:-2] + ")"
+            self.result = self.result[:-2]
+        
+        self.result += ")"
 
         if len(self.function.output_params) != 0:
             
@@ -447,7 +450,7 @@ class FuncConverter(Converter):
 
                 self.result += param_converter.visit() + ", "
             
-            self.result = self.result[:-2] + ")"
+            self.result = self.result[:-2] + ')'
         
         self.result += ":" + "\n"
 
@@ -458,14 +461,14 @@ class FuncConverter(Converter):
 
 class VarDeclConverter(Converter):
 
-    def __init__(self, variable: VarDecl, global_vars, available_vars, is_global=False):
+    def __init__(self, variable: VarDecl, global_vars, available_vars, func_params, is_global=False):
         super().__init__()
 
         self.variable = variable
 
         self.global_vars = global_vars
         self.available_vars = available_vars
-
+        self.func_params = func_params
         self.type = None
         self.is_global = is_global
 
@@ -480,7 +483,7 @@ class VarDeclConverter(Converter):
             vyper_type += int.visit()
             self.type = Type.INT
 
-        elif self.variable.HasField("b"):
+        else:
 
             bool = BoolConverter()
 
@@ -498,7 +501,7 @@ class VarDeclConverter(Converter):
         if not self.is_global:
             self.result += " = "
 
-            expr = ExpressionConverter(self.variable.expr, self.global_vars, self.available_vars, 1)
+            expr = ExpressionConverter(self.variable.expr, self.global_vars, self.available_vars, self.func_params, 1)
             self.result += expr.visit()
 
         return self.result
@@ -526,11 +529,11 @@ class ContractConverter(Converter):
             if variable_counter == MAX_STORAGE_VARIABLES:
                 break
             variable_counter += 1
-
-            variable_converter = VarDeclConverter(variable, self.global_vars, is_global=True)
+            # passing empty func_params
+            variable_converter = VarDeclConverter(variable, self.global_vars, self.global_vars.copy(), {}, is_global=True)
             
             res = variable_converter.visit()
-            self.result += res + '\n'
+            self.result += res + '\n\n'
 
         function_counter = 0
         for function in self.contract.functions:
@@ -539,26 +542,27 @@ class ContractConverter(Converter):
             function_counter += 1
 
             function_converter = FuncConverter(self, function, self.nesting_level + 1)
-            self.result += function_converter.visit() + '\n'
+            self.result += function_converter.visit() + '\n\n'
 
             self.func_count += 1
 
 
 class IfStmtCaseConverter(Converter):
 
-    def __init__(self, ifstmtcase: IfStmtCase, global_vars, available_vars, nesting_level):
+    def __init__(self, ifstmtcase: IfStmtCase, global_vars, available_vars, func_params, nesting_level):
         super().__init__()
 
         self.ifstmtcase = ifstmtcase
         self.nesting_level = nesting_level
         self.global_vars = global_vars
         self.available_vars = available_vars.copy()
+        self.func_params = func_params
 
     def visit(self):
-        expr = ExpressionConverter(self.variable.expr, self.global_vars, self.available_vars, 1)
+        expr = ExpressionConverter(self.variable.expr, self.global_vars, self.available_vars, self.func_params, 1)
         self.result += expr.visit()
         self.result += ":\n"
-        block = BlockConverter(self.variable.b, self.global_vars, self.available_vars, self.nesting_level + 1)
+        block = BlockConverter(self.variable.b, self.global_vars, self.available_vars, {}, self.nesting_level + 1)
         self.result += block.visit()
     
         return self.result
@@ -566,13 +570,14 @@ class IfStmtCaseConverter(Converter):
 
 class IfStmtConverter(Converter):
 
-    def __init__(self, ifstmt: IfStmt, global_vars, available_vars, nesting_level):
+    def __init__(self, ifstmt: IfStmt, global_vars, available_vars, func_params, nesting_level):
 
         super().__init__()
         self.ifstmt = ifstmt
         self.nesting_level = nesting_level
         self.global_vars = global_vars
         self.available_vars = available_vars.copy()
+        self.func_params = func_params
 
     def visit(self):
 
@@ -583,17 +588,17 @@ class IfStmtConverter(Converter):
             self.result += "False:\n"
             self.result += get_spaces(self.nesting_level) + "    pass\n"
         else:
-            ifbody = IfStmtCaseConverter(self.ifstmt.cases[0], self.global_vars, self.available_vars, self.nesting_level)
+            ifbody = IfStmtCaseConverter(self.ifstmt.cases[0], self.global_vars, self.available_vars, self.func_params, self.nesting_level)
             self.result += ifbody.visit()
             
         for case_num in range(1, branches):
             self.result += get_spaces(self.nesting_level) + "elif"
-            ifbody = IfStmtCaseConverter(self.ifstmt.cases[case_num], self.global_vars, self.available_vars, self.nesting_level)
+            ifbody = IfStmtCaseConverter(self.ifstmt.cases[case_num], self.global_vars, self.available_vars, self.func_params, self.nesting_level)
             self.result += ifbody.visit()
         
         if self.ifstmt.HasField("else_case"):
             self.result += get_spaces(self.nesting_level) + "else:\n"
-            block = BlockConverter(self.ifstmt.else_case, contract.global_vars, contract.available_vars, self.nesting_level + 1)
+            block = BlockConverter(self.ifstmt.else_case, self.global_vars, self.available_vars, self.func_params, self.nesting_level + 1)
             self.result += block.visit()
             
         return self.result
@@ -617,17 +622,18 @@ class ForStmtRangedConverter(Converter):
 
 class ForStmtVariableConverter(Converter):
 
-    def __init__(self, forstmt_var: ForStmtVariable, global_vars, available_vars):
+    def __init__(self, forstmt_var: ForStmtVariable, global_vars, available_vars, func_params):
         super().__init__()
 
         self.forstmt_var = forstmt_var
         self.global_vars = global_vars
         self.available_vars = available_vars.copy()
+        self.func_params = func_params
 
     def visit(self):
         length = self.forstmt_var.length
         if self.forstmt_var.HasField("ref_id"):
-            var_c = VarRefConverter(self.forstmt_var.ref_id, self.global_vars, self.available_vars)
+            var_c = VarRefConverter(self.forstmt_var.ref_id, self.global_vars, self.available_vars, self.func_params)
             var = var_c.visit()
             self.result = f"range({var},{var}+{length}):\n"
         else:
@@ -638,13 +644,14 @@ class ForStmtVariableConverter(Converter):
 
 class ForStmtConverter(Converter):
 
-    def __init__(self, forstmt: ForStmt, available_vars, global_vars, nesting_level):
+    def __init__(self, forstmt: ForStmt, available_vars, global_vars, func_params, nesting_level):
         super().__init__()
 
         self.forstmt = forstmt
         self.nesting_level = nesting_level
         self.available_vars = available_vars.copy()
         self.global_vars = global_vars
+        self.func_params = func_params
 
     def visit(self):
         # local vars 
@@ -661,10 +668,10 @@ class ForStmtConverter(Converter):
             ranged = ForStmtRangedConverter(self.forstmt.ranged)
             self.result += ranged.visit()
         else:
-            variable = ForStmtVariableConverter(self.forstmt.variable, self.global_vars, self.available_vars)
+            variable = ForStmtVariableConverter(self.forstmt.variable, self.global_vars, self.available_vars, self.func_params)
             self.result += variable.visit()
 
-        block = BlockConverter(self.forstmt.body, self.global_vars, self.available_vars, self.nesting_level + 1)
+        block = BlockConverter(self.forstmt.body, self.global_vars, self.available_vars, self.func_params, self.nesting_level + 1)
         self.result += block.visit()
 
         return self.result
