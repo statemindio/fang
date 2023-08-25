@@ -1,6 +1,7 @@
-from enum import Enum
+from data_types import Type
 
 from utils import get_spaces, get_nearest_multiple
+from utils import get_random_token, get_random_element
 
 from config import MAX_NESTING_LEVEL, MAX_EXPRESSION_LEVEL, MAX_FUNCTION_INPUT, MAX_FUNCTIONS
 from config import MAX_FUNCTION_OUTPUT, MAX_STORAGE_VARIABLES, MAX_LOCAL_VARIABLES
@@ -11,10 +12,6 @@ from vyperProto_pb2 import VarDecl, AssignmentStatement, Expression, Int, Bool
 from vyperProto_pb2 import VarRef, Literal, BinaryOp, UnaryOp
 from vyperProto_pb2 import IfStmtCase, IfStmt, ForStmtRanged, ForStmtVariable, ForStmt
 
-
-class Type(Enum):
-    INT = 0
-    BOOL = 1
 
 class Converter:
 
@@ -30,30 +27,144 @@ class LiteralConverter(Converter):
         super().__init__()
 
         self.literal = literal
+        self.type = None
 
-    def visit(self):  # check here type of variable, or maybe check this during assinging
+    def visit(self):
         if self.literal.HasField("intval"):
+
             self.result = str(self.literal.intval)
-        elif self.literal.HasField("strval"):
-            self.result = self.literal.strval
+            self.type = Type.INT
+
         elif self.literal.HasField("boolval"):
+
             self.result = str(self.literal.boolval)  # TO-DO check format of str(bool), uppercase 
+            self.type = Type.BOOL
 
         return self.result
 
 class BinOpConverter(Converter):
 
-    def __init__(self, binop: BinaryOp, expr_level) -> None:
+    def __init__(self, binop: BinaryOp, global_vars, available_vars, base_expr_level) -> None:
         super().__init__()
 
         self.binop = binop
 
+        self.global_vars = global_vars
+        self.available_vars = available_vars
+
+        self.type = None
+        self.base_expr_level = base_expr_level
+
     def visit(self):
-        return ""
+        symbol = ""
+
+        if self.binop.op == BinaryOp.BOp.ADD :
+            needed_types = [Type.INT]  # ADD can have multiple types
+            symbol = "+"
+        
+        elif self.binop.op == BinaryOp.BOp.SUB :
+            needed_types = [Type.INT]  
+            symbol = "-"
+
+        elif self.binop.op == BinaryOp.BOp.DIV :
+            needed_types = [Type.INT]  
+            symbol = "/"
+
+        elif self.binop.op == BinaryOp.BOp.MOD :
+            needed_types = [Type.INT]  
+            symbol = "%"
+
+        elif self.binop.op == BinaryOp.BOp.EXP :
+            needed_types = [Type.INT]  # ADD can have multiple types
+            symbol = "**"
+        
+        elif self.binop.op == BinaryOp.BOp.AND :
+            self.type = Type.BOOL
+
+            needed_types = [Type.BOOL]  # ADD can have multiple types
+            symbol = "and"
+        
+        elif self.binop.op == BinaryOp.BOp.OR :
+            self.type = Type.BOOL
+
+            needed_types = [Type.BOOL]  # ADD can have multiple types
+            symbol = "or"
+        
+        elif self.binop.op == BinaryOp.BOp.EQ:
+            self.type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "=="
+
+        elif self.binop.op == BinaryOp.BOp.INEQ:
+            self.type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "!="
+        
+        elif self.binop.op == BinaryOp.BOp.LESS:
+            self.type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "<"
+
+        elif self.binop.op == BinaryOp.BOp.LESSEQ:
+            self.type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "<="
+        
+        elif self.binop.op == BinaryOp.BOp.GREATER:
+            self.type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = ">"
+        
+        elif self.binop.op == BinaryOp.BOp.GREATEREQ:
+            self.type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = ">="
+        
+        elif self.binop.op == BinaryOp.BOp.BIT_AND: # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]  
+            symbol = "&"
+        
+        elif self.binop.op == BinaryOp.BOp.BIT_OR: # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]  
+            symbol = "|"
+        
+        elif self.binop.op == BinaryOp.BOp.BIT_XOR: # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]  
+            symbol = "^"
+        
+        elif self.binop.op == BinaryOp.BOp.LEFT_SHIFT: # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]  
+            symbol = "<<"
+        
+        elif self.binop.op == BinaryOp.BOp.RIGHT_SHIFT: # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]  
+            symbol = ">>"
+
+        left_expr = ExpressionConverter(self.binop.op.left, needed_types, self.global_vars, self.available_vars, self.base_expr_level + 1)
+        if self.type == None:
+            self.type = left_expr.type  # EXPRESSION TYPE IS BASED ON LEFT EXPRESSION, WE CAN COMPARE WITH PARENT TYPE OR LEFT IT AS IT IS 
+
+        right_expr = ExpressionConverter(self.binop.op.right, needed_types, self.global_vars, self.available_vars, self.base_expr_level + 1)
+
+        self.result = "( " + left_expr.visit() + f" {symbol} "
+        if left_expr.type != right_expr.type:  # check here for conversion !
+            self.result += "dictionaryToken()"  # CHANGE dictionary token to random value
+        else:
+            self.result += right_expr.visit()
+        self.result += " )"
+
+        return self.result
+
 
 class UnaryOpConverter(Converter):
 
-    def __init__(self, unop: UnaryOp, global_vars, available_vars, expr_level) -> None:
+    def __init__(self, unop: UnaryOp, global_vars, available_vars, base_expr_level) -> None:
         super().__init__()
 
         self.unop = unop
@@ -61,18 +172,27 @@ class UnaryOpConverter(Converter):
         self.global_vars = global_vars
         self.available_vars = available_vars.copy() # CHECK IF SHOULD COPY, BECAUSE IT SHOULD BE READ-ONLY
 
-        self.expr_level = expr_level
+        self.type = None
+        self.base_expr_level = base_expr_level
 
     def visit(self):
         if self.unop.op == UnaryOp.UOp.NOT:
-            self.result = "not "
+            needed_types = [Type.BOOL]
+            symbol = "not"  # CHECK MAYBE ADD BRACKETS
+
         elif self.unop.op == UnaryOp.UOp.Minus:
-            self.result = "-"
+            needed_types = [Type.INT]
+            symbol = "-"
+
         elif self.unop.op == UnaryOp.Uop.BIT_NOT:
-            self.result = "~"
+            needed_types = [Type.INT]
+            symbol = "~"
         
-        expr = ExpressionConverter(self.unop.expr, self.global_vars, self.available_vars, self.expr_level + 1)
-        self.result += expr.visit()
+        expr = ExpressionConverter(self.unop.op, needed_types, self.global_vars, self.available_vars, self.base_expr_level + 1)
+        if self.type == None:
+            self.type = expr.type
+
+        self.result = "( " + symbol + " " + expr.visit() + " )"
 
         return self.result
         
@@ -109,12 +229,14 @@ class IntConverter(Converter):
         return self.result
 
 
-class ExpressionConverter(Converter):  # TO-DO maybe store here type of variable ?
+class ExpressionConverter(Converter):
 
-    def __init__(self, expr: Expression, global_vars, available_vars, expr_level) -> None:
+    def __init__(self, expr: Expression, needed_types: [Type], global_vars, available_vars, expr_level) -> None:
         super().__init__()
 
         self.expr = expr
+        self.needed_types = needed_types
+        self.type = None
 
         self.global_vars = global_vars
         self.available_vars = available_vars.copy()  # CHECK IF SHOULD COPY, BECAUSE IT SHOULD BE READ-ONLY
@@ -122,26 +244,72 @@ class ExpressionConverter(Converter):  # TO-DO maybe store here type of variable
         self.expr_level = expr_level
 
     def visit(self):
-        if self.expr_level == MAX_EXPRESSION_LEVEL:
-            # has to be right literal?
-            self.result = "True"
-        elif self.expr.HasField("varref"):
+        if self.expr.HasField("varref"):
 
             var_c = VarRefConverter(self.expr.varref, self.global_vars, self.available_vars)
-            self.result = var_c.visit()
+            tmp_res = var_c.visit()
+
+            if var_c.type not in self.needed_types:  # we should call visit, because type is set during visit()
+
+                self.type = get_random_element(self.needed_types)  # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                return str(get_random_token(self.type))  #  think about conversions and vyper_type
+            else:
+
+                self.type = var_c.type
+                self.result = tmp_res
+
+                return self.result
+
         elif self.expr.HasField("cons"):
 
-            literal = LiteralConverter(self.expr.cons)
-            self.result = literal.visit()
-        elif self.expr.HasField("binop"):
+            literal_c = LiteralConverter(self.expr.cons)  # make inside literal converter checking for type
+            tmp_res = literal_c.visit()
 
-            binop = BinOpConverter(self.expr.binop, self.expr_level)
-            self.result = binop.visit()
+            if literal_c.type not in self.needed_types:
+                
+                self.type = get_random_element(self.needed_types)  # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                return str(get_random_token(self.type))
+            else:
+
+                self.type = literal_c.type
+                self.result = tmp_res
+                return self.result
+            
+        elif self.expr_level == MAX_EXPRESSION_LEVEL:
+
+            self.type = get_random_element(self.needed_types)  # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+            return str(get_random_token(self.type))
+        
+        elif self.expr.HasField("binop"):
+            
+            binop_c = BinOpConverter(self.expr.binop, self.global_vars, self.available_vars, self.expr_level)
+            tmp_res = binop_c.visit()
+
+            if binop_c.type not in self.needed_types:
+
+                self.type = get_random_element(self.needed_types)  # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                return str(get_random_token(self.type))
+            else:
+                self.type = binop_c.type
+                self.result = tmp_res
+            
+                return self.result
+        
         elif self.expr.HasField("unop"):
 
-            uniop = UnaryOpConverter(self.expr.unop, self.global_vars, self.available_vars, self.expr_level)
-            self.result = uniop.visit()
-        
+            unop_c = UnaryOpConverter(self.expr.unop, self.global_vars, self.available_vars, self.expr_level)
+            tmp_res = unop_c.visit()
+
+            if unop_c.type not in self.needed_types:
+
+                self.type = get_random_element(self.needed_types)  # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                return get_random_token(self.type)
+            else:
+                self.type = unop_c.type
+                self.result = tmp_res
+
+                return self.result
+
         return self.result
 
 
@@ -237,7 +405,9 @@ class FuncParamConverter(Converter):
 
 class VarRefConverter(Converter):
 
-    def __init__(self, var_ref: VarRef, global_vars, available_vars, func_params, is_assign=False) -> None:
+    def __init__(self, var_ref: VarRef, global_vars, available_vars, func_params=None, is_assign=False) -> None:
+        assert is_assign == (func_params != None)  # if var ref is not used as assigned var then func_params not needed
+
         super().__init__()
 
         self.var_ref = var_ref
@@ -264,15 +434,16 @@ class VarRefConverter(Converter):
             available_vars_type_max_idx = self.available_vars[self.type] - 1
 
         func_param_type_max_idx = -1
-        if self.type in self.func_params:
-            func_param_type_max_idx = self.func_params[self.type] - 1
+        if self.func_params:
+            if self.type in self.func_params:
+                func_param_type_max_idx = self.func_params[self.type] - 1
 
         idx = -1
 
         if available_vars_type_max_idx >= 0:
             idx = self.var_ref.varnum % (available_vars_type_max_idx + 1)
         else:
-            # has to return some typed literal
+            # IF IT IS NOT ASSIGNEMENT VAR REF THEN RETURN LITERAL - CONSTANT, ELSE RETURN NONE AND ADD PROCESSING FOR THIS CASE
             if self.type == Type.INT:
                 self.result = "1"
             else:
@@ -595,7 +766,7 @@ class IfStmtConverter(Converter):
             self.result += get_spaces(self.nesting_level) + "else:\n"
             block = BlockConverter(self.ifstmt.else_case, contract.global_vars, contract.available_vars, self.nesting_level + 1)
             self.result += block.visit()
-            
+
         return self.result
     
 
@@ -654,7 +825,7 @@ class ForStmtConverter(Converter):
             idx = self.available_vars[Type.INT]
             self.available_vars[Type.INT] += 1
 
-        loop_var = f"x_INT{idx}"
+        loop_var = f"x_INT_{idx}"
         self.result += get_spaces(self.nesting_level) + f"for {loop_var} in "
 
         if self.forstmt.HasField("ranged"):
