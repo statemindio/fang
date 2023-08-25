@@ -122,6 +122,8 @@ message Statement {
     oneof stmt_oneof {
       VarDecl             decl            = 1;
       AssignmentStatement assignment      = 2;
+      ForStmt             for_stmt        = 3;
+      IfStmt              if_stmt         = 4;
     }
 }
 

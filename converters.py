@@ -50,7 +50,7 @@ class ProtoConverter(Converter):
                 break
             variable_counter += 1
             # passing empty func_params
-            variable_converter = self.visit_var_decl(variable, 
+            variable_converter = self.visit_var_decl(variable,
                                                      self.global_vars.copy(),
                                                      {}, is_global=True)
             self.result += variable_converter + '\n\n'
@@ -364,7 +364,7 @@ class ProtoConverter(Converter):
         result = ''
         for statement in block.statements:
             statement_converter = self.visit_statement(
-                statement, available_vars, func_params)
+                statement, available_vars, func_params, nesting_level)
 
             result += get_spaces(nesting_level) + statement_converter
 
@@ -373,7 +373,7 @@ class ProtoConverter(Converter):
 
         return result
 
-    def visit_statement(self, statement, available_vars, func_params):
+    def visit_statement(self, statement, available_vars, func_params, nesting_level):
 
         result = ''
         if statement.HasField('decl'):
@@ -385,6 +385,14 @@ class ProtoConverter(Converter):
 
             result += self.visit_assignment_statement(
                 statement.assignment, available_vars, func_params)
+        elif statement.HasField('for_stmt'):
+
+            result += self.visit_for_stmt(statement.for_stmt,
+                                          available_vars, func_params, nesting_level)
+        elif statement.HasField('if_stmt'):
+
+            result += self.visit_if_stmt(statement.if_stmt,
+                                         available_vars, func_params, nesting_level)
 
         return result
 
@@ -402,15 +410,15 @@ class ProtoConverter(Converter):
     def visit_if_stmt_case(self, ifstmtcase, available_vars, func_params, nesting_level):
 
         result = self.visit_expression(
-            ifstmtcase.cond.expr, available_vars, func_params, 1)
+            ifstmtcase.cond, available_vars, func_params, 1)
         result += ":\n"
-        result += self.visit_block(ifstmtcase.cond.if_body,
+        result += self.visit_block(ifstmtcase.if_body,
                                    available_vars, func_params, nesting_level + 1)
 
         return result
 
     def visit_if_stmt(self, ifstmt, available_vars, func_params, nesting_level):
-        result = get_spaces(nesting_level) + "if "
+        result = "if "
         branches = len(ifstmt.cases)
         # add tabbing
         if branches == 0:
@@ -443,6 +451,7 @@ class ProtoConverter(Converter):
     def visit_for_stmt_var(self, for_stmt_var, available_vars, func_params):
         length = for_stmt_var.length
         if for_stmt_var.HasField("ref_id"):
+            # gets bool if no ints :(
             var = self.visit_var_ref(
                 for_stmt_var.ref_id, available_vars, func_params)
             result = f"range({var},{var}+{length}):\n"
@@ -453,6 +462,8 @@ class ProtoConverter(Converter):
 
     def visit_for_stmt(self, forstmt, available_vars, func_params, nesting_level):
         # local vars
+        idx = 0
+        
         if Type.INT not in available_vars:
             available_vars[Type.INT] = 1
         else:
@@ -460,7 +471,7 @@ class ProtoConverter(Converter):
             available_vars[Type.INT] += 1
 
         loop_var = f"x_INT{idx}"
-        result = get_spaces(nesting_level) + f"for {loop_var} in "
+        result = f"for {loop_var} in "
 
         if forstmt.HasField("ranged"):
             result += self.visit_for_stmt_range(forstmt.ranged)
