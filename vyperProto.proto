@@ -12,8 +12,7 @@ message VarRef {
 message Literal {
     oneof literal_oneof {
         uint64 intval = 1;  // check if we can make it just int
-        string strval = 2;
-        bool boolval = 3;
+        bool boolval = 2;
     }
 }
 

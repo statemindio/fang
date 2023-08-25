@@ -1,6 +1,7 @@
-from enum import Enum
+from data_types import Type
 
 from utils import get_spaces, get_nearest_multiple
+from utils import get_random_token, get_random_element
 
 from config import MAX_NESTING_LEVEL, MAX_EXPRESSION_LEVEL, MAX_FUNCTION_INPUT, MAX_FUNCTIONS
 from config import MAX_FUNCTION_OUTPUT, MAX_STORAGE_VARIABLES, MAX_LOCAL_VARIABLES
@@ -10,11 +11,6 @@ from vyperProto_pb2 import Contract, Func, FuncParam, Reentrancy,  Block, Statem
 from vyperProto_pb2 import VarDecl, AssignmentStatement, Expression, Int, Bool
 from vyperProto_pb2 import VarRef, Literal, BinaryOp, UnaryOp
 from vyperProto_pb2 import IfStmtCase, IfStmt, ForStmtRanged, ForStmtVariable, ForStmt
-
-
-class Type(Enum):
-    INT = 0
-    BOOL = 1
 
 
 class Converter:
@@ -52,7 +48,7 @@ class ProtoConverter(Converter):
             # passing empty func_params
             variable_converter = self.visit_var_decl(variable,
                                                      self.global_vars.copy(),
-                                                     {}, is_global=True)
+                                                     is_global=True)
             self.result += variable_converter + '\n\n'
 
         function_counter = 0
@@ -90,7 +86,7 @@ class ProtoConverter(Converter):
         result = "@nonreentrant(\"" + ret.key + "\")"
         return result
 
-    def visit_var_decl(self, variable, available_vars, func_params, is_global=False):
+    def visit_var_decl(self, variable, available_vars, is_global=False):
         vyper_type = ""
         idx = 0
 
@@ -115,35 +111,84 @@ class ProtoConverter(Converter):
         if not is_global:
             result += " = "
 
-            result += self.visit_expression(variable.expr,
-                                            available_vars, func_params, 1)
-
+            tmp_res, _ = self.visit_expression(variable.expr,
+                                               available_vars, [current_type], 1)
+            result += tmp_res
         return result
 
-    def visit_expression(self, expr, available_vars, func_params, expr_level) -> str:
+    def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level):
 
+        current_type = None
         result = ''
-        if expr_level == MAX_EXPRESSION_LEVEL:
-            # has to be right literal?
-            result = "True"
-        elif expr.HasField("varref"):
+        if expr.HasField("varref"):
 
-            result = self.visit_var_ref(
-                expr.varref, available_vars, func_params)
+            (tmp_res, tmp_type) = self.visit_var_ref(
+                expr.varref, available_vars)
+
+            if tmp_type not in needed_types:  # we should call visit, because type is set during visit()
+
+                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                current_type = get_random_element(needed_types)
+                # think about conversions and vyper_type
+                result = str(get_random_token(current_type))
+            else:
+
+                current_type = tmp_type
+                result = tmp_res
+
+        elif expr.HasField("cons"):
+
+            # make inside literal converter checking for type
+            (tmp_res, tmp_type) = self.visit_literal(expr.cons)
+
+            if tmp_type not in needed_types:
+
+                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                current_type = get_random_element(needed_types)
+                result = str(get_random_token(current_type))
+            else:
+
+                current_type = tmp_type
+                result = tmp_res
+
+        elif expr_level == MAX_EXPRESSION_LEVEL:
+
+            # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+            current_type = get_random_element(needed_types)
+            result = str(get_random_token(current_type))
+
         elif expr.HasField("binop"):
 
-            result = self.visit_bin_op(expr.binop, func_params, 1)
+            (tmp_res, tmp_type) = self.visit_bin_op(
+                expr.binop, available_vars, expr_level)
+
+            if tmp_type not in needed_types:
+
+                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                current_type = get_random_element(needed_types)
+                result = str(get_random_token(current_type))
+            else:
+                current_type = tmp_type
+                result = tmp_res
+
         elif expr.HasField("unop"):
 
-            result = self.visit_unary_op(
-                expr.unop, available_vars, func_params, expr_level)
-        else:  # cons, had to remove else cuz of oneof
-            # i think this might lead to something like `literal` = ...
-            result = self.visit_literal(expr.cons)
+            (tmp_res, tmp_type) = self.visit_unary_op(
+                expr.unop, available_vars, expr_level)
 
-        return result
+            if tmp_type not in needed_types:
 
-    def visit_var_ref(self, var_ref, available_vars, func_params, is_assign=False):
+                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                current_type = get_random_element(needed_types)
+                result = str(get_random_token(current_type))
+            else:
+                current_type = tmp_type
+                result = tmp_res
+
+        return result, current_type
+
+    def visit_var_ref(self, var_ref, available_vars, func_params=None, is_assign=False):
+        assert is_assign == (func_params != None) # if var ref is not used as assigned var then func_params not needed
 
         current_type = None
         result = ''
@@ -162,21 +207,22 @@ class ProtoConverter(Converter):
             available_vars_type_max_idx = available_vars[current_type] - 1
 
         func_param_type_max_idx = -1
-        if current_type in func_params:
-            func_param_type_max_idx = func_params[current_type] - 1
+        if func_params:
+            if current_type in func_params:
+                func_param_type_max_idx = func_params[current_type] - 1
 
         idx = -1
 
         if available_vars_type_max_idx >= 0:
             idx = var_ref.varnum % (available_vars_type_max_idx + 1)
         else:
-            # has to return some typed literal
+            # IF IT IS NOT ASSIGNEMENT VAR REF THEN RETURN LITERAL - CONSTANT, ELSE RETURN NONE AND ADD PROCESSING FOR THIS CASE
             if current_type == Type.INT:
                 result = "1"
             else:
                 result = "True"
 
-            return result
+            return result, current_type
 
         if not is_assign:  # REFACTOR THIS IF STATEMENT AND CHECK WHAT TO DO IF WE DON'T HAVE ANY FREE VARIABLES
             if idx <= global_vars_type_max_idx:
@@ -196,37 +242,155 @@ class ProtoConverter(Converter):
 
         result += current_type.name + "_" + str(idx)
 
-        return result
+        return result, current_type
 
-    def visit_bin_op(self, binop, func_params, expr_level):
-        return ""
+    def visit_bin_op(self, binop, available_vars, expr_level):
+        symbol = ""
+        needed_types = [None]
+        op_type = None
 
-    def visit_unary_op(self, unop, available_vars, func_params, expr_level: int):
+        if binop.op == BinaryOp.BOp.ADD:
+            needed_types = [Type.INT]  # ADD can have multiple types
+            symbol = "+"
 
-        result = ''
+        elif binop.op == BinaryOp.BOp.SUB:
+            needed_types = [Type.INT]
+            symbol = "-"
+
+        elif binop.op == BinaryOp.BOp.DIV:
+            needed_types = [Type.INT]
+            symbol = "/"
+
+        elif binop.op == BinaryOp.BOp.MOD:
+            needed_types = [Type.INT]
+            symbol = "%"
+
+        elif binop.op == BinaryOp.BOp.EXP:
+            needed_types = [Type.INT]
+            symbol = "**"
+
+        elif binop.op == BinaryOp.BOp.AND:
+            op_type = Type.BOOL
+
+            needed_types = [Type.BOOL]
+            symbol = "and"
+
+        elif binop.op == BinaryOp.BOp.OR:
+            op_type = Type.BOOL
+
+            needed_types = [Type.BOOL]
+            symbol = "or"
+
+        elif binop.op == BinaryOp.BOp.EQ:
+            op_type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "=="
+
+        elif binop.op == BinaryOp.BOp.INEQ:
+            op_type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "!="
+
+        elif binop.op == BinaryOp.BOp.LESS:
+            op_type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "<"
+
+        elif binop.op == BinaryOp.BOp.LESSEQ:
+            op_type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = "<="
+
+        elif binop.op == BinaryOp.BOp.GREATER:
+            op_type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = ">"
+
+        elif binop.op == BinaryOp.BOp.GREATEREQ:
+            op_type = Type.BOOL
+
+            needed_types = [Type.INT, Type.BOOL]
+            symbol = ">="
+
+        elif binop.op == BinaryOp.BOp.BIT_AND:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]
+            symbol = "&"
+
+        elif binop.op == BinaryOp.BOp.BIT_OR:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]
+            symbol = "|"
+
+        elif binop.op == BinaryOp.BOp.BIT_XOR:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]
+            symbol = "^"
+
+        elif binop.op == BinaryOp.BOp.LEFT_SHIFT:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+            needed_types = [Type.INT]
+            symbol = "<<"
+
+        #elif binop.op == BinaryOp.BOp.RIGHT_SHIFT:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+        else:
+            needed_types = [Type.INT]
+            symbol = ">>"
+
+        left_expr, left_type = self.visit_expression(binop.left, available_vars,
+                                                     needed_types, expr_level + 1)
+        if op_type == None:
+            # EXPRESSION TYPE IS BASED ON LEFT EXPRESSION, WE CAN COMPARE WITH PARENT TYPE OR LEFT IT AS IT IS
+            op_type = left_type
+
+        right_expr, right_type = self.visit_expression(binop.right, available_vars,
+                                                       needed_types, expr_level + 1)
+
+        result = "( " + left_expr + f" {symbol} "
+        if left_type != right_type:  # check here for conversion !
+            result += "dictionaryToken()"  # CHANGE dictionary token to random value
+        else:
+            result += right_expr
+        result += " )"
+
+        return result, op_type
+
+    def visit_unary_op(self, unop, available_vars, expr_level: int):
+
+        symbol = ''
+        needed_types = [None]
+
         if unop.op == UnaryOp.UOp.NOT:
-            result = "not "
+            needed_types = [Type.BOOL]
+            symbol = "not "
         elif unop.op == UnaryOp.UOp.MINUS:
-            result = "-"
-        elif unop.op == UnaryOp.UOp.BIT_NOT:
-            result = "~"
+            needed_types = [Type.INT]
+            symbol = "-"
+        #elif unop.op == UnaryOp.UOp.BIT_NOT:
+        else:
+            needed_types = [Type.INT]
+            symbol = "~"
 
-        result += self.visit_expression(unop.expr, available_vars,
-                                        func_params, expr_level + 1)
+        tmp_res, current_type = self.visit_expression(unop.expr, available_vars,
+                                                      needed_types, expr_level + 1)
 
-        return result
+        result = "( " + symbol + " " + tmp_res + " )"
+
+        return (result, current_type)
 
     def visit_literal(self, literal):
         result = ''
+        cur_type = None
         if literal.HasField("intval"):
             result = str(literal.intval)
-        elif literal.HasField("strval"):
-            result = literal.strval
+            cur_type = Type.INT
         elif literal.HasField("boolval"):
             # TO-DO check format of str(bool), uppercase
             result = str(literal.boolval)
+            cur_type = Type.BOOL
 
-        return result
+        return (result, cur_type)
 
     def visit_func(self, function, nesting_level):
 
@@ -322,7 +486,7 @@ class ProtoConverter(Converter):
 
         if current_type not in available_vars:
             available_vars[current_type] = 1
-            # self.func_params[self.type] = 1
+            # self.func_params[current_type] = 1
         else:
             idx = available_vars[current_type]
             available_vars[current_type] += 1
@@ -366,10 +530,10 @@ class ProtoConverter(Converter):
             statement_converter = self.visit_statement(
                 statement, available_vars, func_params, nesting_level)
 
-            result += get_spaces(nesting_level) + statement_converter
+            result += get_spaces(nesting_level) + statement_converter + '\n'
 
         if len(block.statements) == 0:
-            result += get_spaces(nesting_level) + "pass"
+            result += get_spaces(nesting_level) + "pass\n"
 
         return result
 
@@ -397,20 +561,21 @@ class ProtoConverter(Converter):
         return result
 
     def visit_assignment_statement(self, assign, available_vars, func_params):
-        var_ref_converter = self.visit_var_ref(
+        var_ref, var_ref_type = self.visit_var_ref(
             assign.ref_id, available_vars, func_params, is_assign=True)
 
-        result = var_ref_converter + " = "
+        result = var_ref + " = "
 
-        result += self.visit_expression(assign.expr,
-                                        available_vars, func_params, 1)
-
+        tmp_res, _ = self.visit_expression(assign.expr,
+                                        available_vars, [var_ref_type], 1)
+        result += tmp_res
+        
         return result
 
     def visit_if_stmt_case(self, ifstmtcase, available_vars, func_params, nesting_level):
 
-        result = self.visit_expression(
-            ifstmtcase.cond, available_vars, func_params, 1)
+        result, _ = self.visit_expression(
+            ifstmtcase.cond, available_vars, [Type.BOOL], 1)
         result += ":\n"
         result += self.visit_block(ifstmtcase.if_body,
                                    available_vars, func_params, nesting_level + 1)
@@ -448,12 +613,12 @@ class ProtoConverter(Converter):
         result = f"range({start},{stop}):\n"
         return result
 
-    def visit_for_stmt_var(self, for_stmt_var, available_vars, func_params):
+    def visit_for_stmt_var(self, for_stmt_var, available_vars):
         length = for_stmt_var.length
         if for_stmt_var.HasField("ref_id"):
             # gets bool if no ints :(
             var = self.visit_var_ref(
-                for_stmt_var.ref_id, available_vars, func_params)
+                for_stmt_var.ref_id, available_vars)
             result = f"range({var},{var}+{length}):\n"
         else:
             result = f"range({length}):\n"
@@ -463,21 +628,21 @@ class ProtoConverter(Converter):
     def visit_for_stmt(self, forstmt, available_vars, func_params, nesting_level):
         # local vars
         idx = 0
-        
+
         if Type.INT not in available_vars:
             available_vars[Type.INT] = 1
         else:
             idx = available_vars[Type.INT]
             available_vars[Type.INT] += 1
 
-        loop_var = f"x_INT{idx}"
+        loop_var = f"x_INT_{idx}"
         result = f"for {loop_var} in "
 
         if forstmt.HasField("ranged"):
             result += self.visit_for_stmt_range(forstmt.ranged)
         else:
             result += self.visit_for_stmt_var(forstmt.variable,
-                                              available_vars, func_params)
+                                              available_vars)
 
         result += self.visit_block(forstmt.body,
                                    available_vars, func_params, nesting_level + 1)
