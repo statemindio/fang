@@ -488,7 +488,8 @@ class AssignmentStatementConverter(Converter):
 
         self.result = var_ref_converter.visit() + " = "
 
-        expr = ExpressionConverter(self.assign.expr, self.global_vars, self.available_vars, 1)
+        needed_types = [var_ref_converter.type]
+        expr = ExpressionConverter(self.assign.expr, needed_types, self.global_vars, self.available_vars, 1)
         self.result += expr.visit()
 
         return self.result
@@ -669,7 +670,8 @@ class VarDeclConverter(Converter):
         if not self.is_global:
             self.result += " = "
 
-            expr = ExpressionConverter(self.variable.expr, self.global_vars, self.available_vars, 1)
+            needed_types = [self.type]
+            expr = ExpressionConverter(self.variable.expr, needed_types, self.global_vars, self.available_vars, 1)
             self.result += expr.visit()
 
         return self.result
@@ -726,7 +728,8 @@ class IfStmtCaseConverter(Converter):
         self.available_vars = available_vars.copy()
 
     def visit(self):
-        expr = ExpressionConverter(self.variable.expr, self.global_vars, self.available_vars, 1)
+        needed_types = [Type.BOOL]
+        expr = ExpressionConverter(self.variable.expr, needed_types, self.global_vars, self.available_vars, 1)
         self.result += expr.visit()
         self.result += ":\n"
         block = BlockConverter(self.variable.b, self.global_vars, self.available_vars, self.nesting_level + 1)
