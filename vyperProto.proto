@@ -21,6 +21,12 @@ message String {
     uint32 max_len = 1;
 }
 
+message Address{}
+
+message ByteArray{
+    uint32 maxlen = 1;
+}
+
 
 message VarRef {
     oneof type {
@@ -29,11 +35,11 @@ message VarRef {
         Decimal d = 3;
         BytesM bM = 4;
         String s = 5;
-        Address adr = 3;
-        ByteArray barr = 4;
+        Address adr = 6;
+        ByteArray barr = 7;
     }
 
-    uint32 varnum = 6;
+    uint32 varnum = 8;
 }
 
 message Literal {
@@ -43,8 +49,8 @@ message Literal {
         uint64 decimalval = 3;
         bytes bMval = 4;
         string strval = 5;
-        uint32 addval = 3;
-        uint32 barrval = 4;
+        uint32 addval = 6;
+        uint32 barrval = 7;
     }
 }
 
@@ -102,12 +108,6 @@ message Expression {
     }
 }
 
-message Address{}
-
-message ByteArray{
-    uint32 maxlen = 1;
-}
-
 message IfStmtCase {
     Expression cond = 1;
     Block if_body = 2;
@@ -145,10 +145,10 @@ message VarDecl {
         Decimal d = 3;
         BytesM bM = 4;
         String s = 5;
-        Address adr = 3;
-        ByteArray barr = 4;
+        Address adr = 6;
+        ByteArray barr = 7;
     }
-    Expression expr = 6;
+    Expression expr = 8;
 }
 
 message AssignmentStatement {
@@ -180,8 +180,8 @@ message FuncParam {
         Decimal d = 3;
         BytesM bM = 4;
         String s = 5;
-        Address adr = 3;
-        ByteArray barr = 4;
+        Address adr = 6;
+        ByteArray barr = 7;
     }
 }
 

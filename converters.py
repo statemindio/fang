@@ -128,6 +128,14 @@ class ProtoConverter(Converter):
 
             vyper_type = self.visit_string(instance.s)
             current_type = Type.STRING
+        elif instance.HasField("adr"):
+
+            vyper_type = self.visit_address()
+            current_type = Type.ADDRESS
+        elif instance.HasField("barr"):
+
+            vyper_type = self.visit_byte_array(instance.barr.maxLen)
+            current_type = Type.BYTEARRAY
 
         return vyper_type, current_type
 

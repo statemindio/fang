@@ -6,5 +6,5 @@ class Type(Enum):
     DECIMAL = 2
     BytesM = 3
     STRING = 4
-    ADDRESS = 2
-    BYTEARRAY = 3
+    ADDRESS = 5
+    BYTEARRAY = 6
