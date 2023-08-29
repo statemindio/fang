@@ -4,15 +4,19 @@ message VarRef {
     oneof type {
         Int i = 1;
         Bool b = 2;
+        Address adr = 3;
+        ByteArray barr = 4;
     }
 
-    uint32 varnum = 3;
+    uint32 varnum = 5;
 }
 
 message Literal {
     oneof literal_oneof {
         uint64 intval = 1;  // check if we can make it just int
         bool boolval = 2;
+        uint32 addval = 3;
+        uint32 barrval = 4;
     }
 }
 
@@ -49,6 +53,11 @@ message UnaryOp {
         NOT = 0;
         MINUS = 1;
         BIT_NOT = 2;
+        BALANCE = 3;
+        CODEHASH = 4;
+        CODESIZE = 5;
+        IS_CONTRACT = 6;
+        CODE = 7;
     }
 
     UOp op = 1;
@@ -74,6 +83,12 @@ message Bool {
 
 }
 
+message Address{}
+
+message ByteArray{
+    uint32 maxlen = 1;
+}
+
 message IfStmtCase {
     Expression cond = 1;
     Block if_body = 2;
@@ -89,7 +104,7 @@ message ForStmtRanged {
     int32 start = 1;
     int32 stop = 2;
 }
-
+// imo should be expression, but there are restrictions 
 // ref_id for range(x, x + N)
 message ForStmtVariable {
     optional VarRef ref_id = 1;
@@ -108,8 +123,10 @@ message VarDecl {
     oneof type {
         Int i = 1;
         Bool b = 2;
+        Address adr = 3;
+        ByteArray barr = 4;
     }
-    Expression expr = 3;
+    Expression expr = 5;
 }
 
 message AssignmentStatement {
@@ -138,6 +155,8 @@ message FuncParam {
     oneof type {
         Int i = 1;
         Bool b = 2;
+        Address adr = 3;
+        ByteArray barr = 4;
     }
 }
 
@@ -167,3 +186,8 @@ message Contract {
     repeated Func functions = 2;
 }
 
+message CreateMinimalProxy{
+    Expression target = 1;
+    Expression value = 2;
+    optional Expression salt = 3;
+}
