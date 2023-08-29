@@ -81,6 +81,54 @@ class ProtoConverter(Converter):
     def visit_bool(self):
         result = "bool"
         return result
+    
+    def visit_decimal(self):
+        result = "decimal"
+        return result
+
+    def visit_bytes_m(self, bytesM):
+        result = "bytes"
+
+        m = bytesM.m % 32 + 1
+        result += str(m)
+
+        return result
+
+    def visit_string(self, string):
+        result = "String["
+
+        l = string.max_len
+        result += str(l) + "]"
+
+        return result
+    
+    def visit_type(self, instance):
+        vyper_type = ""
+        current_type = None
+
+        if instance.HasField("i"):
+
+            vyper_type = self.visit_int(instance.i)
+            current_type = Type.INT
+        elif instance.HasField("b"):
+
+            vyper_type = self.visit_bool()
+            current_type = Type.BOOL
+        elif instance.HasField("d"):
+
+            vyper_type = self.visit_decimal()
+            current_type = Type.DECIMAL
+        elif instance.HasField("bM"):
+
+            vyper_type = self.visit_bytes_m(instance.bM)
+            current_type = Type.BytesM
+        elif instance.HasField("s"):
+
+            vyper_type = self.visit_string(instance.s)
+            current_type = Type.STRING
+
+        return vyper_type, current_type
+
 
     def visit_reentrancy(self, ret):
         result = "@nonreentrant(\"" + ret.key + "\")"
@@ -92,13 +140,8 @@ class ProtoConverter(Converter):
 
         current_type = None
 
-        if variable.HasField("i"):
+        vyper_type, current_type = self.visit_type(variable)
 
-            vyper_type = self.visit_int(variable.i)
-            current_type = Type.INT
-        else:
-            vyper_type += self.visit_bool()
-            current_type = Type.BOOL
 
         if current_type not in available_vars:
             available_vars[current_type] = 1
@@ -250,23 +293,23 @@ class ProtoConverter(Converter):
         op_type = None
 
         if binop.op == BinaryOp.BOp.ADD:
-            needed_types = [Type.INT]  # ADD can have multiple types
+            needed_types = [Type.INT, Type.DECIMAL]  # ADD can have multiple types
             symbol = "+"
 
         elif binop.op == BinaryOp.BOp.SUB:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "-"
 
         elif binop.op == BinaryOp.BOp.DIV:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "/"
 
         elif binop.op == BinaryOp.BOp.MOD:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "%"
 
         elif binop.op == BinaryOp.BOp.EXP:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "**"
 
         elif binop.op == BinaryOp.BOp.AND:
@@ -284,37 +327,37 @@ class ProtoConverter(Converter):
         elif binop.op == BinaryOp.BOp.EQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = "=="
 
         elif binop.op == BinaryOp.BOp.INEQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = "!="
 
         elif binop.op == BinaryOp.BOp.LESS:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = "<"
 
         elif binop.op == BinaryOp.BOp.LESSEQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = "<="
 
         elif binop.op == BinaryOp.BOp.GREATER:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = ">"
 
         elif binop.op == BinaryOp.BOp.GREATEREQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = ">="
 
         elif binop.op == BinaryOp.BOp.BIT_AND:  # CHECK IMPLEMENTATION FOR OTHER TYPES
@@ -349,7 +392,7 @@ class ProtoConverter(Converter):
 
         result = "( " + left_expr + f" {symbol} "
         if left_type != right_type:  # check here for conversion !
-            result += "dictionaryToken()"  # CHANGE dictionary token to random value
+            result += get_random_token(left_type)
         else:
             result += right_expr
         result += " )"
@@ -365,7 +408,7 @@ class ProtoConverter(Converter):
             needed_types = [Type.BOOL]
             symbol = "not "
         elif unop.op == UnaryOp.UOp.MINUS:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "-"
         #elif unop.op == UnaryOp.UOp.BIT_NOT:
         else:
@@ -474,15 +517,7 @@ class ProtoConverter(Converter):
         idx = 0
         current_type = None
 
-        if param.HasField("i"):
-
-            vyper_type += self.visit_int(param.i)
-            current_type = Type.INT
-
-        else:
-
-            vyper_type += self.visit_bool()
-            current_type = Type.BOOL
+        vyper_type, current_type = self.visit_type(param)
 
         if current_type not in available_vars:
             available_vars[current_type] = 1
@@ -511,15 +546,7 @@ class ProtoConverter(Converter):
         vyper_type = ""
         current_type = None
 
-        if param.HasField("i"):
-
-            vyper_type += self.visit_int(param.i)
-            current_type = Type.INT
-
-        else:
-
-            vyper_type += self.visit_bool()
-            current_type = Type.BOOL
+        vyper_type, current_type = self.visit_type(param)
 
         return vyper_type
 

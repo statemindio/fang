@@ -1,18 +1,43 @@
 syntax = "proto3";
 
+message Int {
+    uint32 n = 1;
+    bool sign = 2;
+}
+
+message Bool {
+
+}
+
+message Decimal {
+
+}
+
+message BytesM {
+    uint32 m = 1;
+}
+
+message String {
+    uint32 max_len = 1;
+}
+
+
 message VarRef {
     oneof type {
         Int i = 1;
         Bool b = 2;
+        Decimal d = 3;
+        BytesM bM = 4;
+        String s = 5;
     }
 
-    uint32 varnum = 3;
+    uint32 varnum = 6;
 }
 
 message Literal {
     oneof literal_oneof {
         uint64 intval = 1;  // check if we can make it just int
-        bool boolval = 2;
+        bool boolval = 2;  // add literals for decimal, bytesM and string
     }
 }
 
@@ -65,15 +90,6 @@ message Expression {
     }
 }
 
-message Int {
-    uint32 n = 1;
-    bool sign = 2;
-}
-
-message Bool {
-
-}
-
 message IfStmtCase {
     Expression cond = 1;
     Block if_body = 2;
@@ -108,8 +124,11 @@ message VarDecl {
     oneof type {
         Int i = 1;
         Bool b = 2;
+        Decimal d = 3;
+        BytesM bM = 4;
+        String s = 5;
     }
-    Expression expr = 3;
+    Expression expr = 6;
 }
 
 message AssignmentStatement {
@@ -138,6 +157,9 @@ message FuncParam {
     oneof type {
         Int i = 1;
         Bool b = 2;
+        Decimal d = 3;
+        BytesM bM = 4;
+        String s = 5;
     }
 }
 
