@@ -24,13 +24,12 @@ message String {
 message Address{}
 
 message ByteArray{
-    uint32 maxlen = 1;
+    uint32 max_len = 1;
 }
 
 
 message VarRef {
     oneof type {
-        Int i = 1;
         Bool b = 2;
         Decimal d = 3;
         BytesM bM = 4;
@@ -38,13 +37,12 @@ message VarRef {
         Address adr = 6;
         ByteArray barr = 7;
     }
-
+    Int i = 1;
     uint32 varnum = 8;
 }
 
 message Literal {
     oneof literal_oneof {
-        uint64 intval = 1;  // check if we can make it just int
         bool boolval = 2;  // add literals for decimal, bytesM and string
         uint64 decimalval = 3;
         bytes bMval = 4;
@@ -52,6 +50,7 @@ message Literal {
         uint32 addval = 6;
         uint32 barrval = 7;
     }
+    uint64 intval = 1;  // check if we can make it just int
 }
 
 message BinaryOp {
@@ -100,12 +99,12 @@ message UnaryOp {
 
 message Expression {
     oneof expr_oneof {
-        VarRef varref = 1;
         Literal cons = 2;
         BinaryOp binop = 3;
         UnaryOp unop = 4;
         // NullaryOp nop = 5;
     }
+    VarRef varref = 1;
 }
 
 message IfStmtCase {
@@ -132,15 +131,14 @@ message ForStmtVariable {
 
 message ForStmt {
     oneof for_oneof {
-        ForStmtRanged       ranged              = 1;
         ForStmtVariable     variable            = 2;
     }
+    ForStmtRanged       ranged              = 1;
     Block body = 3;
 }
 
 message VarDecl {
     oneof type {
-        Int i = 1;
         Bool b = 2;
         Decimal d = 3;
         BytesM bM = 4;
@@ -148,6 +146,7 @@ message VarDecl {
         Address adr = 6;
         ByteArray barr = 7;
     }
+    Int i = 1;
     Expression expr = 8;
 }
 
@@ -159,10 +158,10 @@ message AssignmentStatement {
 message Statement {
     oneof stmt_oneof {
       VarDecl             decl            = 1;
-      AssignmentStatement assignment      = 2;
       ForStmt             for_stmt        = 3;
       IfStmt              if_stmt         = 4;
     }
+    AssignmentStatement assignment      = 2;
 }
 
 message Block {
@@ -175,7 +174,6 @@ message Reentrancy {
 
 message FuncParam {
     oneof type {
-        Int i = 1;
         Bool b = 2;
         Decimal d = 3;
         BytesM bM = 4;
@@ -183,6 +181,7 @@ message FuncParam {
         Address adr = 6;
         ByteArray barr = 7;
     }
+    Int i = 1;
 }
 
 message Func {

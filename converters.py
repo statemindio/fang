@@ -108,11 +108,7 @@ class ProtoConverter(Converter):
         vyper_type = ""
         current_type = None
 
-        if instance.HasField("i"):
-
-            vyper_type = self.visit_int(instance.i)
-            current_type = Type.INT
-        elif instance.HasField("b"):
+        if instance.HasField("b"):
 
             vyper_type = self.visit_bool()
             current_type = Type.BOOL
@@ -134,8 +130,13 @@ class ProtoConverter(Converter):
             current_type = Type.ADDRESS
         elif instance.HasField("barr"):
 
-            vyper_type = self.visit_byte_array(instance.barr.maxLen)
+            vyper_type = self.visit_byte_array(instance.barr.max_len)
             current_type = Type.BYTEARRAY
+        else:
+
+            vyper_type = self.visit_int(instance.i)
+            current_type = Type.INT
+        
 
         return vyper_type, current_type
 
@@ -143,8 +144,8 @@ class ProtoConverter(Converter):
     def visit_address(self):
         return "address"
 
-    def visit_byte_array(self, maxLen):
-        return f"Bytes[{maxLen}]"
+    def visit_byte_array(self, max_len):
+        return f"Bytes[{max_len}]"
 
     def visit_reentrancy(self, ret):
         result = "@nonreentrant(\"" + ret.key + "\")"
@@ -180,23 +181,7 @@ class ProtoConverter(Converter):
 
         current_type = None
         result = ''
-        if expr.HasField("varref"):
-
-            tmp_res, tmp_type = self.visit_var_ref(
-                expr.varref, available_vars)
-
-            if tmp_type not in needed_types:  # we should call visit, because type is set during visit()
-
-                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
-                current_type = get_random_element(needed_types)
-                # think about conversions and vyper_type
-                result = str(get_random_token(current_type))
-            else:
-
-                current_type = tmp_type
-                result = tmp_res
-
-        elif expr.HasField("cons"):
+        if expr.HasField("cons"):
 
             # make inside literal converter checking for type
             tmp_res, tmp_type = self.visit_literal(expr.cons)
@@ -245,11 +230,26 @@ class ProtoConverter(Converter):
                 current_type = tmp_type
                 result = tmp_res
         else:
+
+            tmp_res, tmp_type = self.visit_var_ref(
+                expr.varref, available_vars)
+
+            if tmp_type not in needed_types:  # we should call visit, because type is set during visit()
+
+                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
+                current_type = get_random_element(needed_types)
+                # think about conversions and vyper_type
+                result = str(get_random_token(current_type))
+            else:
+
+                current_type = tmp_type
+                result = tmp_res
+            """
             # should fix if oneof is null
             # if random does not account for type size
             current_type = get_random_element(needed_types)
             result = str(get_random_token(current_type))
-
+            """
         return result, current_type
 
     def visit_var_ref(self, var_ref, available_vars, func_params=None, is_assign=False, needed_type: Type = None):
@@ -259,9 +259,7 @@ class ProtoConverter(Converter):
         current_type = None
         result = ''
 
-        if var_ref.HasField('i'):
-            current_type = Type.INT
-        elif var_ref.HasField('adr'):
+        if var_ref.HasField('adr'):
             current_type = Type.ADDRESS
         elif var_ref.HasField('barr'):
             current_type = Type.BYTEARRAY
@@ -273,6 +271,8 @@ class ProtoConverter(Converter):
             current_type = Type.BytesM
         elif var_ref.HasField('s'):
             current_type = Type.STRING
+        else:
+            current_type = Type.INT
 
         global_vars_type_max_idx = -1
         if current_type in self.global_vars:
@@ -295,7 +295,7 @@ class ProtoConverter(Converter):
             if is_assign:
                 return None, current_type
             else:
-                return get_random_token(current_type), current_type
+                return str(get_random_token(current_type)), current_type
 
         if not is_assign:  # REFACTOR THIS IF STATEMENT AND CHECK WHAT TO DO IF WE DON'T HAVE ANY FREE VARIABLES
             if idx <= global_vars_type_max_idx:
@@ -315,7 +315,7 @@ class ProtoConverter(Converter):
                 result = "x_"
 
         if result == '' or result + current_type.name + "_" + str(idx) == self.current_declared_variable:
-            return get_random_token(current_type), current_type
+            return str(get_random_token(current_type)), current_type
         
         result += current_type.name + "_" + str(idx)
 
@@ -426,7 +426,7 @@ class ProtoConverter(Converter):
 
         result = "( " + left_expr + f" {symbol} "
         if left_type != right_type:  # check here for conversion !
-            result += get_random_token(left_type)
+            result += str(get_random_token(left_type))
         else:
             result += right_expr
         result += " )"
@@ -460,8 +460,8 @@ class ProtoConverter(Converter):
         elif unop.op == UnaryOp.UOp.CODE:
             needed_types = [Type.ADDRESS]
             symbol = "code"
-        # elif unop.op == UnaryOp.UOp.BIT_NOT:
-        else:
+        elif unop.op == UnaryOp.UOp.BIT_NOT:
+        #else:
             needed_types = [Type.INT]
             symbol = "~"
 
@@ -484,19 +484,18 @@ class ProtoConverter(Converter):
     def visit_literal(self, literal):
         result = ''
         cur_type = None
-        if literal.HasField("intval"):
-            result = str(literal.intval)
-            cur_type = Type.INT
-        elif literal.HasField("addval"):
+        
+        if literal.HasField("addval"):
 
             adr = str(hex(literal.addval))[:42]
-
             result = checksum_encode(fill_address(adr))
             cur_type = Type.ADDRESS
         elif literal.HasField("barrval"):
+            
             result = f"b\"{hex(literal.barrval)}\""
             cur_type = Type.BYTEARRAY
         elif literal.HasField("boolval"):
+            
             # TO-DO check format of str(bool), uppercase
             result = str(literal.boolval)
             cur_type = Type.BOOL
@@ -512,6 +511,9 @@ class ProtoConverter(Converter):
 
             result = literal.strval  # CHECK RESTRICTIONS ON STRING LEN
             cur_type = Type.STRING
+        else:
+            result = str(literal.intval)
+            cur_type = Type.INT
 
         return result, cur_type
 
@@ -653,10 +655,6 @@ class ProtoConverter(Converter):
                                           available_vars, func_params)
             self.current_declared_variable = None
         # can be NoneType
-        elif statement.HasField('assignment'):
-
-            result += self.visit_assignment_statement(
-                statement.assignment, available_vars, func_params)
         elif statement.HasField('for_stmt'):
 
             result += self.visit_for_stmt(statement.for_stmt,
@@ -665,7 +663,10 @@ class ProtoConverter(Converter):
 
             result += self.visit_if_stmt(statement.if_stmt,
                                          available_vars, func_params, nesting_level)
+        else:
 
+            result += self.visit_assignment_statement(
+                statement.assignment, available_vars, func_params)
         return result
 
     def visit_assignment_statement(self, assign, available_vars, func_params):
@@ -749,11 +750,11 @@ class ProtoConverter(Converter):
         loop_var = f"x_INT_{idx}"
         result = f"for {loop_var} in "
 
-        if forstmt.HasField("ranged"):
-            result += self.visit_for_stmt_range(forstmt.ranged)
-        else:
+        if forstmt.HasField("variable"):
             result += self.visit_for_stmt_var(forstmt.variable,
                                               available_vars)
+        else:
+            result += self.visit_for_stmt_range(forstmt.ranged)
 
         result += self.visit_block(forstmt.body,
                                    available_vars, func_params, nesting_level + 1)

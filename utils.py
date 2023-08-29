@@ -35,7 +35,7 @@ def get_random_token(type: Type):
     elif type == Type.BytesM:
         return "0x" + os.urandom(32).hex()
     elif type == Type.STRING:
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=10000))
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=100))
 
 
 def get_random_element(arr):
