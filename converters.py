@@ -35,6 +35,8 @@ class ProtoConverter(Converter):
         # Based on nesting_level we will calculate tabulations
         self.nesting_level = 0  # In other instances this should be limited by config
 
+        self.current_declared_variable = None
+
     def get_func_idx(self):
         return self.func_count
 
@@ -150,6 +152,7 @@ class ProtoConverter(Converter):
             available_vars[current_type] += 1
 
         result = 'x_' + current_type.name + "_" + str(idx) + " : " + vyper_type
+        self.current_declared_variable = 'x_' + current_type.name + "_" + str(idx)
 
         if not is_global:
             result += " = "
@@ -238,8 +241,14 @@ class ProtoConverter(Converter):
 
         if var_ref.HasField('i'):
             current_type = Type.INT
-        else:
+        elif var_ref.HasField('b'):
             current_type = Type.BOOL
+        elif var_ref.HasField('d'):
+            current_type = Type.DECIMAL
+        elif var_ref.HasField('bM'):
+            current_type = Type.BytesM
+        elif var_ref.HasField('s'):
+            current_type = Type.STRING
 
         global_vars_type_max_idx = -1
         if current_type in self.global_vars:
@@ -259,13 +268,10 @@ class ProtoConverter(Converter):
         if available_vars_type_max_idx >= 0:
             idx = var_ref.varnum % (available_vars_type_max_idx + 1)
         else:
-            # IF IT IS NOT ASSIGNEMENT VAR REF THEN RETURN LITERAL - CONSTANT, ELSE RETURN NONE AND ADD PROCESSING FOR THIS CASE
-            if current_type == Type.INT:
-                result = "1"
+            if is_assign:
+                return None, current_type
             else:
-                result = "True"
-
-            return result, current_type
+                return get_random_token(current_type), current_type
 
         if not is_assign:  # REFACTOR THIS IF STATEMENT AND CHECK WHAT TO DO IF WE DON'T HAVE ANY FREE VARIABLES
             if idx <= global_vars_type_max_idx:
@@ -274,6 +280,7 @@ class ProtoConverter(Converter):
                 result = "x_"
         else:
             if idx <= global_vars_type_max_idx:
+
                 result = "self.x_"
             elif idx <= func_param_type_max_idx:
 
@@ -283,6 +290,9 @@ class ProtoConverter(Converter):
             else:
                 result = "x_"
 
+        if result == '' or result + current_type.name + "_" + str(idx) == self.current_declared_variable:
+            return get_random_token(current_type), current_type
+        
         result += current_type.name + "_" + str(idx)
 
         return result, current_type
@@ -571,6 +581,7 @@ class ProtoConverter(Converter):
 
             result += self.visit_var_decl(statement.decl,
                                           available_vars, func_params)
+            self.current_declared_variable = None
         # can be NoneType
         elif statement.HasField('assignment'):
 
@@ -590,6 +601,9 @@ class ProtoConverter(Converter):
     def visit_assignment_statement(self, assign, available_vars, func_params):
         var_ref, var_ref_type = self.visit_var_ref(
             assign.ref_id, available_vars, func_params, is_assign=True)
+        
+        if var_ref is None :
+            return ""  # JUST RETURN EMPTY LINE
 
         result = var_ref + " = "
 
