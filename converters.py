@@ -703,17 +703,17 @@ class ProtoConverter(Converter):
             result += get_spaces(nesting_level) + "    pass\n"
         else:
             result += self.visit_if_stmt_case(
-                ifstmt.cases[0], available_vars, func_params, nesting_level)
+                ifstmt.cases[0], available_vars.copy(), func_params, nesting_level)
 
         for case_num in range(1, branches):
             result += get_spaces(nesting_level) + "elif "
             result += self.visit_if_stmt_case(
-                ifstmt.cases[case_num], available_vars, func_params, nesting_level)
+                ifstmt.cases[case_num], available_vars.copy(), func_params, nesting_level)
 
         if ifstmt.HasField("else_case"):
             result += get_spaces(nesting_level) + "else:\n"
             result += self.visit_block(ifstmt.else_case,
-                                       available_vars, func_params, nesting_level + 1)
+                                       available_vars.copy(), func_params, nesting_level + 1)
 
         return result
 
