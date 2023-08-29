@@ -168,7 +168,7 @@ class ProtoConverter(Converter):
         result = ''
         if expr.HasField("varref"):
 
-            (tmp_res, tmp_type) = self.visit_var_ref(
+            tmp_res, tmp_type = self.visit_var_ref(
                 expr.varref, available_vars)
 
             if tmp_type not in needed_types:  # we should call visit, because type is set during visit()
@@ -185,7 +185,7 @@ class ProtoConverter(Converter):
         elif expr.HasField("cons"):
 
             # make inside literal converter checking for type
-            (tmp_res, tmp_type) = self.visit_literal(expr.cons)
+            tmp_res, tmp_type = self.visit_literal(expr.cons)
 
             if tmp_type not in needed_types:
 
@@ -442,8 +442,20 @@ class ProtoConverter(Converter):
             # TO-DO check format of str(bool), uppercase
             result = str(literal.boolval)
             cur_type = Type.BOOL
+        elif literal.HasField("decimalval"):
 
-        return (result, cur_type)
+            result = str(literal.decimalval / 10**10)
+            cur_type = Type.DECIMAL
+        elif literal.HasField("bMval"):
+
+            result = "0x" + literal.bMval.hex()[:64]  # get only first 64 characters
+            cur_type = Type.BytesM
+        elif literal.HasField("strval"):
+
+            result = literal.strval  # CHECK RESTRICTIONS ON STRING LEN
+            cur_type = Type.STRING
+
+        return result, cur_type
 
     def visit_func(self, function, nesting_level):
 
@@ -659,7 +671,7 @@ class ProtoConverter(Converter):
         if for_stmt_var.HasField("ref_id"):
             # gets bool if no ints :(
             var = self.visit_var_ref(
-                for_stmt_var.ref_id, available_vars)
+                for_stmt_var.ref_id, available_vars)  # VISIT_VAR_REF() RETURNS TWO VALUES
             result = f"range({var},{var}+{length}):\n"
         else:
             result = f"range({length}):\n"

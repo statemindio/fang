@@ -38,6 +38,9 @@ message Literal {
     oneof literal_oneof {
         uint64 intval = 1;  // check if we can make it just int
         bool boolval = 2;  // add literals for decimal, bytesM and string
+        uint64 decimalval = 3;
+        bytes bMval = 4;
+        string strval = 5;
     }
 }
 
