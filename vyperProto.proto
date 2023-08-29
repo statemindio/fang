@@ -154,12 +154,16 @@ message AssignmentStatement {
     VarRef ref_id = 1;
     Expression expr = 2;
 }
-
+// probably add builtins to expression too
 message Statement {
     oneof stmt_oneof {
       VarDecl             decl            = 1;
       ForStmt             for_stmt        = 3;
       IfStmt              if_stmt         = 4;
+      CreateMinimalProxy  cr_min_proxy    = 5;
+      CreateFromBlueprint cr_bp           = 6;
+      Selfdestruct        selfd           = 7;
+      Sha256              sha             = 8;
     }
     AssignmentStatement assignment      = 2;
 }
@@ -212,6 +216,22 @@ message Contract {
 
 message CreateMinimalProxy{
     Expression target = 1;
-    Expression value = 2;
+    optional Expression value = 2;
     optional Expression salt = 3;
+}
+
+message CreateFromBlueprint{
+    Expression target = 1;
+    repeated Expression args = 2;
+    optional Expression value = 3;
+    optional Expression code_offset = 4;
+    optional Expression salt = 5;
+}
+
+message Selfdestruct{
+    Expression to = 1;
+}
+
+message Sha256{
+    Expression value = 1;
 }
