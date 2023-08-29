@@ -1,4 +1,6 @@
+import os
 import random
+import string
 import math
 from data_types import Type
 
@@ -18,7 +20,7 @@ def get_nearest_multiple(num, mul):
 
 def get_random_token(type: Type):
     if type == Type.INT:
-        # returns only positive values, not very good for ints. Maybe return hex ?
+        # returns only positive values, not very good for ints. Hex not working 
         return random.randint(0, 2**256 - 1)
     elif type == Type.ADDRESS:
         rval = fill_address(hex(random.randint(0, 2**160 - 1)))
@@ -28,6 +30,12 @@ def get_random_token(type: Type):
         return f"b\"{hex(rval)}\""
     elif type == Type.BOOL:
         return bool(random.getrandbits(1))
+    elif type == Type.DECIMAL:
+        return random.randint(0, 2**168 - 1) / 10**10 
+    elif type == Type.BytesM:
+        return "0x" + os.urandom(32).hex()
+    elif type == Type.STRING:
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=10000))
 
 
 def get_random_element(arr):

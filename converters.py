@@ -35,6 +35,8 @@ class ProtoConverter(Converter):
         # Based on nesting_level we will calculate tabulations
         self.nesting_level = 0  # In other instances this should be limited by config
 
+        self.current_declared_variable = None
+
     def get_func_idx(self):
         return self.func_count
 
@@ -81,6 +83,54 @@ class ProtoConverter(Converter):
     def visit_bool(self):
         result = "bool"
         return result
+    
+    def visit_decimal(self):
+        result = "decimal"
+        return result
+
+    def visit_bytes_m(self, bytesM):
+        result = "bytes"
+
+        m = bytesM.m % 32 + 1
+        result += str(m)
+
+        return result
+
+    def visit_string(self, string):
+        result = "String["
+
+        l = string.max_len
+        result += str(l) + "]"
+
+        return result
+    
+    def visit_type(self, instance):
+        vyper_type = ""
+        current_type = None
+
+        if instance.HasField("i"):
+
+            vyper_type = self.visit_int(instance.i)
+            current_type = Type.INT
+        elif instance.HasField("b"):
+
+            vyper_type = self.visit_bool()
+            current_type = Type.BOOL
+        elif instance.HasField("d"):
+
+            vyper_type = self.visit_decimal()
+            current_type = Type.DECIMAL
+        elif instance.HasField("bM"):
+
+            vyper_type = self.visit_bytes_m(instance.bM)
+            current_type = Type.BytesM
+        elif instance.HasField("s"):
+
+            vyper_type = self.visit_string(instance.s)
+            current_type = Type.STRING
+
+        return vyper_type, current_type
+
 
     def visit_address(self):
         return "address"
@@ -98,19 +148,8 @@ class ProtoConverter(Converter):
 
         current_type = None
 
-        if variable.HasField("i"):
+        vyper_type, current_type = self.visit_type(variable)
 
-            vyper_type = self.visit_int(variable.i)
-            current_type = Type.INT
-        elif variable.HasField("adr"):
-            vyper_type = self.visit_address()
-            current_type = Type.ADDRESS
-        elif variable.HasField("barr"):
-            vyper_type = self.visit_byte_array(variable.barr.maxlen)
-            current_type = Type.BYTEARRAY
-        else:
-            vyper_type += self.visit_bool()
-            current_type = Type.BOOL
 
         if current_type not in available_vars:
             available_vars[current_type] = 1
@@ -119,6 +158,7 @@ class ProtoConverter(Converter):
             available_vars[current_type] += 1
 
         result = 'x_' + current_type.name + "_" + str(idx) + " : " + vyper_type
+        self.current_declared_variable = 'x_' + current_type.name + "_" + str(idx)
 
         if not is_global:
             result += " = "
@@ -134,7 +174,7 @@ class ProtoConverter(Converter):
         result = ''
         if expr.HasField("varref"):
 
-            (tmp_res, tmp_type) = self.visit_var_ref(
+            tmp_res, tmp_type = self.visit_var_ref(
                 expr.varref, available_vars)
 
             if tmp_type not in needed_types:  # we should call visit, because type is set during visit()
@@ -151,7 +191,7 @@ class ProtoConverter(Converter):
         elif expr.HasField("cons"):
 
             # make inside literal converter checking for type
-            (tmp_res, tmp_type) = self.visit_literal(expr.cons)
+            tmp_res, tmp_type = self.visit_literal(expr.cons)
 
             if tmp_type not in needed_types:
 
@@ -217,11 +257,14 @@ class ProtoConverter(Converter):
             current_type = Type.ADDRESS
         elif var_ref.HasField('barr'):
             current_type = Type.BYTEARRAY
-        else:
+        elif var_ref.HasField('b'):
             current_type = Type.BOOL
-        # should fix for range taking bool value and etc
-        if needed_type is not None:
-            current_type = needed_type
+        elif var_ref.HasField('d'):
+            current_type = Type.DECIMAL
+        elif var_ref.HasField('bM'):
+            current_type = Type.BytesM
+        elif var_ref.HasField('s'):
+            current_type = Type.STRING
 
         global_vars_type_max_idx = -1
         if current_type in self.global_vars:
@@ -241,17 +284,10 @@ class ProtoConverter(Converter):
         if available_vars_type_max_idx >= 0:
             idx = var_ref.varnum % (available_vars_type_max_idx + 1)
         else:
-            # IF IT IS NOT ASSIGNEMENT VAR REF THEN RETURN LITERAL - CONSTANT, ELSE RETURN NONE AND ADD PROCESSING FOR THIS CASE
-            if current_type == Type.INT:
-                result = "1"
-            elif current_type == Type.ADDRESS:
-                result = "0x" + '00' * 20
-            elif current_type == Type.BYTEARRAY:
-                result = '0xb"\x00"'
+            if is_assign:
+                return None, current_type
             else:
-                result = "True"
-
-            return result, current_type
+                return get_random_token(current_type), current_type
 
         if not is_assign:  # REFACTOR THIS IF STATEMENT AND CHECK WHAT TO DO IF WE DON'T HAVE ANY FREE VARIABLES
             if idx <= global_vars_type_max_idx:
@@ -260,6 +296,7 @@ class ProtoConverter(Converter):
                 result = "x_"
         else:
             if idx <= global_vars_type_max_idx:
+
                 result = "self.x_"
             elif idx <= func_param_type_max_idx:
 
@@ -269,6 +306,9 @@ class ProtoConverter(Converter):
             else:
                 result = "x_"
 
+        if result == '' or result + current_type.name + "_" + str(idx) == self.current_declared_variable:
+            return get_random_token(current_type), current_type
+        
         result += current_type.name + "_" + str(idx)
 
         return result, current_type
@@ -279,23 +319,23 @@ class ProtoConverter(Converter):
         op_type = None
 
         if binop.op == BinaryOp.BOp.ADD:
-            needed_types = [Type.INT]  # ADD can have multiple types
+            needed_types = [Type.INT, Type.DECIMAL]  # ADD can have multiple types
             symbol = "+"
 
         elif binop.op == BinaryOp.BOp.SUB:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "-"
 
         elif binop.op == BinaryOp.BOp.DIV:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "/"
 
         elif binop.op == BinaryOp.BOp.MOD:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "%"
 
         elif binop.op == BinaryOp.BOp.EXP:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "**"
 
         elif binop.op == BinaryOp.BOp.AND:
@@ -313,37 +353,37 @@ class ProtoConverter(Converter):
         elif binop.op == BinaryOp.BOp.EQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL, Type.ADDRESS, Type.BYTEARRAY]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL, Type.ADDRESS, Type.BYTEARRAY]
             symbol = "=="
 
         elif binop.op == BinaryOp.BOp.INEQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL, Type.ADDRESS, Type.BYTEARRAY]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL, Type.ADDRESS, Type.BYTEARRAY]
             symbol = "!="
 
         elif binop.op == BinaryOp.BOp.LESS:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = "<"
 
         elif binop.op == BinaryOp.BOp.LESSEQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = "<="
 
         elif binop.op == BinaryOp.BOp.GREATER:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = ">"
 
         elif binop.op == BinaryOp.BOp.GREATEREQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL]
+            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = ">="
 
         elif binop.op == BinaryOp.BOp.BIT_AND:  # CHECK IMPLEMENTATION FOR OTHER TYPES
@@ -378,7 +418,7 @@ class ProtoConverter(Converter):
 
         result = "( " + left_expr + f" {symbol} "
         if left_type != right_type:  # check here for conversion !
-            result += "dictionaryToken()"  # CHANGE dictionary token to random value
+            result += get_random_token(left_type)
         else:
             result += right_expr
         result += " )"
@@ -395,7 +435,7 @@ class ProtoConverter(Converter):
             needed_types = [Type.BOOL]
             symbol = "not "
         elif unop.op == UnaryOp.UOp.MINUS:
-            needed_types = [Type.INT]
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "-"
         elif unop.op == UnaryOp.UOp.BALANCE:
             needed_types = [Type.ADDRESS]
@@ -452,8 +492,20 @@ class ProtoConverter(Converter):
             # TO-DO check format of str(bool), uppercase
             result = str(literal.boolval)
             cur_type = Type.BOOL
+        elif literal.HasField("decimalval"):
 
-        return (result, cur_type)
+            result = str(literal.decimalval / 10**10)
+            cur_type = Type.DECIMAL
+        elif literal.HasField("bMval"):
+
+            result = "0x" + literal.bMval.hex()[:64]  # get only first 64 characters
+            cur_type = Type.BytesM
+        elif literal.HasField("strval"):
+
+            result = literal.strval  # CHECK RESTRICTIONS ON STRING LEN
+            cur_type = Type.STRING
+
+        return result, cur_type
 
     def visit_func(self, function, nesting_level):
 
@@ -537,19 +589,7 @@ class ProtoConverter(Converter):
         idx = 0
         current_type = None
 
-        if param.HasField("i"):
-
-            vyper_type += self.visit_int(param.i)
-            current_type = Type.INT
-        elif param.HasField("adr"):
-            vyper_type += self.visit_address()
-            current_type = Type.ADDRESS
-        elif param.HasField("barr"):
-            vyper_type += self.visit_byte_array(param.barr.maxlen)
-            current_type = Type.BYTEARRAY
-        else:
-            vyper_type += self.visit_bool()
-            current_type = Type.BOOL
+        vyper_type, current_type = self.visit_type(param)
 
         if current_type not in available_vars:
             available_vars[current_type] = 1
@@ -578,20 +618,7 @@ class ProtoConverter(Converter):
         vyper_type = ""
         current_type = None
 
-        if param.HasField("i"):
-
-            vyper_type += self.visit_int(param.i)
-            current_type = Type.INT
-        elif param.HasField("adr"):
-            vyper_type += self.visit_address()
-            current_type = Type.ADDRESS
-        elif param.HasField("barr"):
-            vyper_type += self.visit_byte_array(param.barr.maxlen)
-            current_type = Type.BYTEARRAY
-        else:
-
-            vyper_type += self.visit_bool()
-            current_type = Type.BOOL
+        vyper_type, current_type = self.visit_type(param)
 
         return vyper_type
 
@@ -616,6 +643,7 @@ class ProtoConverter(Converter):
 
             result += self.visit_var_decl(statement.decl,
                                           available_vars, func_params)
+            self.current_declared_variable = None
         # can be NoneType
         elif statement.HasField('assignment'):
 
@@ -635,6 +663,9 @@ class ProtoConverter(Converter):
     def visit_assignment_statement(self, assign, available_vars, func_params):
         var_ref, var_ref_type = self.visit_var_ref(
             assign.ref_id, available_vars, func_params, is_assign=True)
+        
+        if var_ref is None :
+            return ""  # JUST RETURN EMPTY LINE
 
         result = var_ref + " = "
 
