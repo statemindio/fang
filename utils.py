@@ -14,28 +14,33 @@ def get_spaces(nesting_level):
 def get_nearest_multiple(num, mul):
     return mul * math.ceil(num / mul)  # round returns 0
 
-# THIS IMLEMENTATION USES RANDOM VALUES
-# IF NEEDED DIFFERENT DICTIONARIES FOR DIFFERENT TYPE COULD BE CREATED
+# THINK: instead of using random values, we can create big dictionaries and take randomly values from them
 
 
 def get_random_token(type: Type):
     if type == Type.INT:
-        # returns only positive values, not very good for ints. Hex not working 
+        
         return random.randint(0, 2**256 - 1)
     elif type == Type.ADDRESS:
+
         rval = fill_address(hex(random.randint(0, 2**160 - 1)))
         return checksum_encode(rval)
     elif type == Type.BYTEARRAY:
-        rval = random.randint(0, 2**256 - 1)
+
+        rval = random.randint(0, 2**256 - 1)  # TO-DO: check range of random.randint
         return f"b\"{hex(rval)}\""
     elif type == Type.BOOL:
+
         return bool(random.getrandbits(1))
     elif type == Type.DECIMAL:
+
         return random.randint(0, 2**168 - 1) / 10**10 
     elif type == Type.BytesM:
+
         return "0x" + os.urandom(32).hex()
     elif type == Type.STRING:
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=100))
+        l = random.randint(0, 2**256 - 1)  # EXPLAINED: randomly generate len of string
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=l))  # TO-DO: Add more characters, String can have not only letters and digits
 
 
 def get_random_element(arr):

@@ -32,8 +32,8 @@ class ProtoConverter(Converter):
         self.func_count = 0
 
         self.global_vars = {}  # dict type => number of variables
-        # Based on nesting_level we will calculate tabulations
-        self.nesting_level = 0  # In other instances this should be limited by config
+        
+        self.nesting_level = 0  # 
 
         self.current_declared_variable = None
 
@@ -47,7 +47,7 @@ class ProtoConverter(Converter):
             if variable_counter == MAX_STORAGE_VARIABLES:
                 break
             variable_counter += 1
-            # passing empty func_params
+            
             variable_converter = self.visit_var_decl(variable,
                                                      self.global_vars.copy(),
                                                      is_global=True)
@@ -99,7 +99,7 @@ class ProtoConverter(Converter):
     def visit_string(self, string):
         result = "String["
 
-        l = string.max_len
+        l = string.max_len  # TO-DO: max_len is uint64, but len of String can be up to MAX_UINT256
         result += str(l) + "]"
 
         return result
@@ -188,8 +188,7 @@ class ProtoConverter(Converter):
 
             if tmp_type not in needed_types:
 
-                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
-                current_type = get_random_element(needed_types)
+                current_type = get_random_element(needed_types)  # THINK: type is chosen randomly, but we can take first or last one
                 result = str(get_random_token(current_type))
             else:
 
@@ -198,7 +197,6 @@ class ProtoConverter(Converter):
 
         elif expr_level == MAX_EXPRESSION_LEVEL:
 
-            # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
             current_type = get_random_element(needed_types)
             result = str(get_random_token(current_type))
 
@@ -209,7 +207,6 @@ class ProtoConverter(Converter):
 
             if tmp_type not in needed_types:
 
-                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
                 current_type = get_random_element(needed_types)
                 result = str(get_random_token(current_type))
             else:
@@ -223,7 +220,6 @@ class ProtoConverter(Converter):
 
             if tmp_type not in needed_types:
 
-                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
                 current_type = get_random_element(needed_types)
                 result = str(get_random_token(current_type))
             else:
@@ -234,9 +230,8 @@ class ProtoConverter(Converter):
             tmp_res, tmp_type = self.visit_var_ref(
                 expr.varref, available_vars)
 
-            if tmp_type not in needed_types:  # we should call visit, because type is set during visit()
+            if tmp_type not in needed_types:
 
-                # RANDOMLY CHOOSE TYPE, BUT WE CAN CHOOSE FIRST ELEMENT or etc
                 current_type = get_random_element(needed_types)
                 # think about conversions and vyper_type
                 result = str(get_random_token(current_type))
@@ -253,8 +248,7 @@ class ProtoConverter(Converter):
         return result, current_type
 
     def visit_var_ref(self, var_ref, available_vars, func_params=None, is_assign=False, needed_type: Type = None):
-        # if var ref is not used as assigned var then func_params not needed
-        assert is_assign == (func_params != None)
+        assert is_assign == (func_params != None)  # EXPLAINED:  if var ref is not used as assigned var then func_params not needed
 
         current_type = None
         result = ''
@@ -297,7 +291,7 @@ class ProtoConverter(Converter):
             else:
                 return str(get_random_token(current_type)), current_type
 
-        if not is_assign:  # REFACTOR THIS IF STATEMENT AND CHECK WHAT TO DO IF WE DON'T HAVE ANY FREE VARIABLES
+        if not is_assign:  # TO-DO: refactor this if - statement
             if idx <= global_vars_type_max_idx:
                 result = "self.x_"
             else:
@@ -327,7 +321,7 @@ class ProtoConverter(Converter):
         op_type = None
 
         if binop.op == BinaryOp.BOp.ADD:
-            needed_types = [Type.INT, Type.DECIMAL]  # ADD can have multiple types
+            needed_types = [Type.INT, Type.DECIMAL] 
             symbol = "+"
 
         elif binop.op == BinaryOp.BOp.SUB:
@@ -394,23 +388,22 @@ class ProtoConverter(Converter):
             needed_types = [Type.INT, Type.BOOL, Type.DECIMAL]
             symbol = ">="
 
-        elif binop.op == BinaryOp.BOp.BIT_AND:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+        elif binop.op == BinaryOp.BOp.BIT_AND:
             needed_types = [Type.INT]
             symbol = "&"
 
-        elif binop.op == BinaryOp.BOp.BIT_OR:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+        elif binop.op == BinaryOp.BOp.BIT_OR:
             needed_types = [Type.INT]
             symbol = "|"
 
-        elif binop.op == BinaryOp.BOp.BIT_XOR:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+        elif binop.op == BinaryOp.BOp.BIT_XOR:
             needed_types = [Type.INT]
             symbol = "^"
 
-        elif binop.op == BinaryOp.BOp.LEFT_SHIFT:  # CHECK IMPLEMENTATION FOR OTHER TYPES
+        elif binop.op == BinaryOp.BOp.LEFT_SHIFT:
             needed_types = [Type.INT]
             symbol = "<<"
 
-        # elif binop.op == BinaryOp.BOp.RIGHT_SHIFT:  # CHECK IMPLEMENTATION FOR OTHER TYPES
         else:
             needed_types = [Type.INT]
             symbol = ">>"
@@ -418,8 +411,7 @@ class ProtoConverter(Converter):
         left_expr, left_type = self.visit_expression(binop.left, available_vars,
                                                      needed_types, expr_level + 1)
         if op_type == None:
-            # EXPRESSION TYPE IS BASED ON LEFT EXPRESSION, WE CAN COMPARE WITH PARENT TYPE OR LEFT IT AS IT IS
-            op_type = left_type
+            op_type = left_type  # EXPLAINED: expression type is based on type of left expression
 
         right_expr, right_type = self.visit_expression(binop.right, available_vars,
                                                        needed_types, expr_level + 1)
@@ -496,7 +488,6 @@ class ProtoConverter(Converter):
             cur_type = Type.BYTEARRAY
         elif literal.HasField("boolval"):
             
-            # TO-DO check format of str(bool), uppercase
             result = str(literal.boolval)
             cur_type = Type.BOOL
         elif literal.HasField("decimalval"):
@@ -505,11 +496,11 @@ class ProtoConverter(Converter):
             cur_type = Type.DECIMAL
         elif literal.HasField("bMval"):
 
-            result = "0x" + literal.bMval.hex()[:64]  # get only first 64 characters
+            result = "0x" + literal.bMval.hex()[:64]  # get only first 64 characters, 32 bytes
             cur_type = Type.BytesM
         elif literal.HasField("strval"):
 
-            result = literal.strval  # CHECK RESTRICTIONS ON STRING LEN
+            result = literal.strval  # TO-DO: check maximal len of string in proto and vyper
             cur_type = Type.STRING
         else:
             result = str(literal.intval)
@@ -551,8 +542,6 @@ class ProtoConverter(Converter):
 
         result += "def func_" + str(idx) + "("
 
-        # here can be set input length
-        # does not add to local vars
         input_counter = 0
         for input_param in function.input_params:
             if input_counter == MAX_FUNCTION_INPUT:
@@ -573,7 +562,6 @@ class ProtoConverter(Converter):
 
             result += " -> ("
 
-            # can move to utility to not replicate code
             output_counter = 0
             for output_param in function.output_params:
                 if output_counter == MAX_FUNCTION_OUTPUT:
@@ -594,7 +582,6 @@ class ProtoConverter(Converter):
         return result
 
     def visit_func_input(self, param, available_vars, func_params):
-        # refactor to avoid code duplication with VarDecl
         vyper_type = ""
         idx = 0
         current_type = None
@@ -608,8 +595,7 @@ class ProtoConverter(Converter):
             idx = available_vars[current_type]
             available_vars[current_type] += 1
 
-        # CHECK IF THIS HOLDS IN EVERY CASE
-        func_params[current_type] = available_vars[current_type]
+        func_params[current_type] = available_vars[current_type]  # TO-DO check if this holds in every case
 
         result = 'x_' + current_type.name + "_" + str(idx)
         result += " : " + vyper_type
@@ -674,7 +660,7 @@ class ProtoConverter(Converter):
             assign.ref_id, available_vars, func_params, is_assign=True)
         
         if var_ref is None :
-            return ""  # JUST RETURN EMPTY LINE
+            return ""  # EXPLAINED: just return empty line if there is no variable to assign to
 
         result = var_ref + " = "
 
