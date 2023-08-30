@@ -20,6 +20,12 @@ class Int:
             return 2**(self.n - 1) - 1
         else:
             return 2**self.n - 1
+    
+    def get_min_value(self):
+        if self.is_signed:
+            return -2**self.n
+        else:
+            return 0
 
 @dataclass
 class Bytes:
@@ -32,8 +38,12 @@ class Address:
 @dataclass
 class Decimal:
     n: int = 168
+
     def get_max_value(self):
         return (2**167 - 1) / 10**10
+    
+    def get_min_value(self):
+        return - 2**167 / 10**10
 
 @dataclass
 class String:  # THINK: String is equal to Bytes
