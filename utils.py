@@ -53,7 +53,7 @@ def get_random_token(type: Type):
 def get_random_element(arr):
     return random.choice(arr)
 
-def adjust_and_convert(instance, from_type, to_type, is_variable):  # types are in vyper_type format
+def convert(instance, from_type, to_type):  # TO-DO: add check for instance, if it is literal (int, bytes, string) then we can adjust it. We can check this by having "()" inside it
     from_type_obj = extract_type(from_type)
     to_type_obj = extract_type(to_type)
 
@@ -62,34 +62,53 @@ def adjust_and_convert(instance, from_type, to_type, is_variable):  # types are 
     if isinstance(from_type_obj, Bool) or isinstance(to_type_obj, Bool):
         return "convert(" + instance + ", " + to_type + ")"
 
-    # TO-DO:
+    if isinstance(from_type_obj, Int | Decimal) and isinstance(to_type_obj, Int | Decimal):
+        return "convert(" + instance + ", " + to_type + ")"
+    
+    if isinstance(from_type_obj, Address) and isinstance(to_type_obj, Int):
+        if to_type_obj.is_signed:  # EXPLAINED: in this case we should convert firstly address to bytes
+            intermediate = "convert(" + instance + ", bytes20)"
+        elif to_type_obj.n // 8 < 20:
+            pass # TO-DO: THINK: here we have two options: 1) place get random_token and adjust it to uint8, or convert as for signed case
+    
+    if isinstance(from_type_obj, Int) and isinstance(to_type_obj, Address):
+        if from_type_obj.is_signed:  
+            if from_type_obj.n // 8 > 20:
+                pass # TO-DO: place get random_token and adjust
+            intermediate = "convert(" + instance + ", bytes20)"
+
+
+    if isinstance(from_type_obj, Bytes) and isinstance(to_type_obj, Bytes):
+        return "convert(" + instance + ", " + to_type + ")"
+    
+    #  TO-DO:
     #  converting integers <-> decimal doesn't require size check of type
     #  converting any integer <-> any integer doesn't require size check of type
     #  converting numeric -> bytes require size check of type, size of bytes >= than numeric (can be made via triple convert)
     #  converting bytes -> numeric doesn't require size check of type
 
     if not is_variable:
-        pass  # TO-DO: instance is constant, adjust its value. Maybe track bytes, track if should be possitive value
+        pass  # TO-DO: instance is constant, adjust its value. Maybe track bytes, track if should be positive value
 
-    if isinstance(from_type_obj, Address) and isinstance(to_type_obj, Int):
-        if to_type_obj.is_signed:  # EXPLAINED: in this case we should convert firstly address to bytes
-            intermediate = "convert(" + instance + ", bytes20)"
-        # TO-DO: here we should check that size of bytes20 is less or equal than to_type size
-
-    if isinstance(from_type_obj, Int) and isinstance(to_type_obj, Address):
-        if from_type_obj.is_signed:  
-            intermediate = "convert(" + instance + ", bytes20)"
-        # TO-DO: here we should check that size of bytes20 is less or equal than to_type size
-
-    if isinstance(from_type_obj, Int) and isinstance(to_type_obj, Int):
-        return "convert(" + instance + ", " + to_type + ")"
-
-    if isinstance(from_type_obj, Bytes) and isinstance(to_type_obj, Bytes):
-        return "convert(" + instance + ", " + to_type + ")"
     
     
 
     pass
+
+def adjust_value(value, bits):
+    if isinstance(value, int):
+
+        value = value % 2**bits
+    elif isinstance(value, str):
+
+        if value[:2] == "0x":
+
+            value = "0x" + value[2: (bits // 4)]
+        elif value[0] == "b":
+
+            value = "0x" + value[2: (bits // 4)]
+        else:
+            pass  # TO-DO: check how to adjust str to certain number of bits
 
 def extract_type(_type):
     res = None

@@ -173,7 +173,7 @@ class ProtoConverter(Converter):
             result += " = "
 
             tmp_res, _, _ = self.visit_expression(variable.expr,
-                                               available_vars, [current_type], 1)  # TO-DO: add conversion here
+                                               available_vars, [current_type], 1)  # TO-DO: add conversion here. Conversion should be done after the expression is constructed
             result += tmp_res
         return result
 
@@ -520,7 +520,7 @@ class ProtoConverter(Converter):
         #     # tmp_type not in needed_types:
         #     current_type = None
 
-        if op_type is None:
+        if op_type is None:  # TO-DO: add assert statement which check op_type == None -> vyper_type == None, op_type != None -> vyper_type != None
             op_type = tmp_type
             vyper_type = tmp_vyper_type
 

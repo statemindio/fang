@@ -44,7 +44,7 @@ message VarRef {
 message Literal {
     oneof literal_oneof {
         bool boolval = 2;
-        uint64 decimalval = 3;
+        uint64 decimalval = 3;  // TO-DO: make this as int64 to enable signed variables
         bytes bMval = 4;
         string strval = 5;
         uint32 addval = 6;
