@@ -58,8 +58,13 @@ def get_random_element(arr):
 #  converting any integer <-> any integer doesn't require size check of type
 #  converting numeric -> bytes require size check of type, size of bytes >= than numeric (can be made via triple convert)
 #  converting bytes -> numeric doesn't require size check of type
+#  LINKS:
+#  https://github.com/vyperlang/vyper/issues/2507
+#  https://docs.vyperlang.org/en/stable/types.html#type-conversions
 
 def convert(instance, from_type, to_type, is_literal):
+    if from_type == to_type:
+        return instance
     
     from_type_obj = extract_type(from_type)
     to_type_obj = extract_type(to_type)
@@ -78,8 +83,8 @@ def convert(instance, from_type, to_type, is_literal):
                 type = Type.DECIMAL
 
             value = get_value_from_str(instance, type)
-            if value > to_type_obj.get_max_value():  # TO-DO: check this case for decimal
-                instance = str(adjust_value(value, to_type_obj.n))
+            if value > to_type_obj.get_max_value() or value < to_type_obj.get_min_value():  # TO-DO: check this case for decimal
+                instance = str(adjust_value(value, to_type_obj.n, to_type_obj.is_signed))
     
         return "convert(" + instance + ", " + to_type + ")"
     
@@ -123,11 +128,14 @@ def get_value_from_str(value, type):
     except Exception as e:
         raise e 
 
-def adjust_value(value, bits):
+def adjust_value(value, bits, singed=False):
 
     if isinstance(value, int):
-
-        value = value % 2**bits
+        
+        if singed:
+            value = value % 2**(bits - 1)
+        else:
+            value = value % 2**bits
     elif isinstance(value, str):
 
         if value[:2] == "0x":

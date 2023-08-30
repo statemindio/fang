@@ -1,5 +1,6 @@
 from data_types import Type
 
+from utils import convert
 from utils import get_spaces, get_nearest_multiple
 from utils import get_random_token, get_random_element
 from utils import checksum_encode, fill_address
@@ -170,9 +171,10 @@ class ProtoConverter(Converter):
         if not is_global:
             result += " = "
 
-            tmp_res, _, _, _ = self.visit_expression(variable.expr,
-                                               available_vars, [current_type], 1)  # TO-DO: add conversion here. Conversion should be done after the expression is constructed
-            result += tmp_res
+            tmp_res, _, tmp_vyper_type, is_literal = self.visit_expression(variable.expr,
+                                               available_vars, [current_type], 1)
+            converted_res = convert(tmp_res, tmp_vyper_type, vyper_type, is_literal)
+            result += converted_res
         return result
 
     def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level):
@@ -459,15 +461,18 @@ class ProtoConverter(Converter):
             op_type = left_type  # EXPLAINED: expression type is based on type of left expression
             vyper_type = left_vyper_type
 
-        right_expr, right_type, right_vyper_type, _ = self.visit_expression(binop.right, available_vars,
+        right_expr, right_type, right_vyper_type, right_is_literal = self.visit_expression(binop.right, available_vars,
                                                        needed_types, expr_level + 1)
 
         result = "( " + left_expr + f" {symbol} "
-        if left_type != right_type:  # check here for conversion !
-            result, tmp_vyper_type = get_random_token(left_type)
-            result += str(result)
-        else:
-            result += right_expr
+        # if left_type != right_type:  # check here for conversion !
+        #     result, tmp_vyper_type = get_random_token(left_type)
+        #     result += str(result)
+        # else:
+        #     result += right_expr
+        if left_vyper_type != right_vyper_type:
+            converted_right_expr = convert(right_expr, right_vyper_type, left_vyper_type, right_is_literal)
+            result += converted_right_expr
         result += " )"
 
         return result, op_type, vyper_type
@@ -756,9 +761,10 @@ class ProtoConverter(Converter):
 
         result = var_ref + " = "
 
-        tmp_res, _, _, _ = self.visit_expression(assign.expr,
+        tmp_res, _, tmp_vyper_type, tmp_is_litera = self.visit_expression(assign.expr,
                                            available_vars, [var_ref_type], 1)
-        result += tmp_res
+        converted_tmp_res = convert(tmp_res, tmp_vyper_type, var_ref_vyper_type, tmp_is_litera)
+        result += converted_tmp_res
 
         return result
 
