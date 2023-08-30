@@ -849,17 +849,17 @@ class ProtoConverter(Converter):
     def visit_create_min_proxy(self, cmp, available_vars):
         result = 'create_minimal_proxy_to('
 
-        target_res, _ = self.visit_expression(
+        target_res, _, _, _ = self.visit_expression(
             cmp.target, available_vars, [Type.ADDRESS], 1)
 
         result += target_res
 
         if cmp.HasField("value"):
-            value_res, _ = self.visit_expression(
+            value_res, _, _, _ = self.visit_expression(
                 cmp.value, available_vars, [Type.INT], 1)
             result += ', value=' + value_res
         if cmp.HasField("salt"):
-            salt_res, _ = self.visit_expression(
+            salt_res, _, _, _ = self.visit_expression(
                 cmp.salt, available_vars, [Type.BytesM], 1)
             result += ', salt=' + salt_res
 
@@ -870,26 +870,26 @@ class ProtoConverter(Converter):
     def visit_create_from_blueprint(self, cfb, available_vars):
         result = 'create_from_blueprint('
 
-        target_res, _ = self.visit_expression(
+        target_res, _, _, _ = self.visit_expression(
             cfb.target, available_vars, [Type.ADDRESS], 1)
 
         result += target_res
 
         for arg in cfb.args:
-            arg_r, arg_t = self.visit_expression(
+            arg_r, arg_t, _, _ = self.visit_expression(
                 arg, available_vars, [i for i in Type], 1)
             result += ',' + arg_r
 
         if cfb.HasField("value"):
-            value_res, _ = self.visit_expression(
+            value_res, _, _, _ = self.visit_expression(
                 cfb.value, available_vars, [Type.INT], 1)
             result += ', value=' + value_res
         if cfb.HasField("code_offset"):
-            value_res, _ = self.visit_expression(
+            value_res, _, _, _ = self.visit_expression(
                 cfb.value, available_vars, [Type.INT], 1)
             result += ', code_offset=' + value_res
         if cfb.HasField("salt"):
-            salt_res, _ = self.visit_expression(
+            salt_res, _, _, _= self.visit_expression(
                 cfb.salt, available_vars, [Type.BytesM], 1)
             result += ', salt=' + salt_res
 
@@ -901,7 +901,7 @@ class ProtoConverter(Converter):
         
         result = "selfdestruct("
         
-        to_res, _ = self.visit_expression(sd.to, available_vars, [Type.ADDRESS], 1)
+        to_res, _, _, _ = self.visit_expression(sd.to, available_vars, [Type.ADDRESS], 1)
         
         result += to_res + ")"
         
@@ -911,7 +911,7 @@ class ProtoConverter(Converter):
         
         result = "sha256("
         
-        to_res, _ = self.visit_expression(sha.value, available_vars, [Type.BYTEARRAY, Type.STRING, Type.BytesM], 1)
+        to_res, _, _, _ = self.visit_expression(sha.value, available_vars, [Type.BYTEARRAY, Type.STRING, Type.BytesM], 1)
         
         result += to_res + ")"
         
