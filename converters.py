@@ -172,7 +172,7 @@ class ProtoConverter(Converter):
         if not is_global:
             result += " = "
 
-            tmp_res, _, _ = self.visit_expression(variable.expr,
+            tmp_res, _, _, _ = self.visit_expression(variable.expr,
                                                available_vars, [current_type], 1)  # TO-DO: add conversion here. Conversion should be done after the expression is constructed
             result += tmp_res
         return result
@@ -182,6 +182,8 @@ class ProtoConverter(Converter):
         current_type = None
         vyper_type = None
         result = ''
+
+        is_literal = False
 
         if expr.HasField("cons"):
 
@@ -193,6 +195,8 @@ class ProtoConverter(Converter):
                 current_type = get_random_element(needed_types)  # THINK: type is chosen randomly, but we can take first or last one
                 result, vyper_type = get_random_token(current_type)
                 result = str(result)
+
+                is_literal = True
             else:
 
                 current_type = tmp_type
@@ -205,6 +209,8 @@ class ProtoConverter(Converter):
             result, vyper_type = get_random_token(current_type)
             result = str(result)
 
+            is_literal = True
+
         elif expr.HasField("binop"):
 
             (tmp_res, tmp_type) = self.visit_bin_op(
@@ -215,6 +221,8 @@ class ProtoConverter(Converter):
                 current_type = get_random_element(needed_types)
                 result, vyper_type = get_random_token(current_type)
                 result = str(result)
+
+                is_literal = True
             else:
                 current_type = tmp_type
                 result = tmp_res
@@ -229,6 +237,8 @@ class ProtoConverter(Converter):
                 current_type = get_random_element(needed_types)
                 result, vyper_type = get_random_token(current_type)
                 result = str(result)
+
+                is_literal = True
             else:
                 current_type = tmp_type
                 result = tmp_res
@@ -242,6 +252,8 @@ class ProtoConverter(Converter):
                 current_type = get_random_element(needed_types)
                 result, vyper_type = get_random_token(current_type)
                 result = str(result)
+
+                is_literal = True
             else:
 
                 current_type = tmp_type
@@ -253,7 +265,7 @@ class ProtoConverter(Converter):
             current_type = get_random_element(needed_types)
             result = str(get_random_token(current_type))
             """
-        return result, current_type, vyper_type
+        return result, current_type, vyper_type, is_literal
 
     def visit_var_ref(self, var_ref, available_vars, func_params=None, is_assign=False, needed_type: Type = None):
         assert is_assign == (func_params != None)  # EXPLAINED:  if var ref is not used as assigned var then func_params not needed
@@ -441,13 +453,13 @@ class ProtoConverter(Converter):
             needed_types = [Type.INT]
             symbol = ">>"
 
-        left_expr, left_type, left_vyper_type = self.visit_expression(binop.left, available_vars,
+        left_expr, left_type, left_vyper_type, _ = self.visit_expression(binop.left, available_vars,
                                                      needed_types, expr_level + 1)
         if op_type == None:
             op_type = left_type  # EXPLAINED: expression type is based on type of left expression
             vyper_type = left_vyper_type
 
-        right_expr, right_type, right_vyper_type = self.visit_expression(binop.right, available_vars,
+        right_expr, right_type, right_vyper_type, _ = self.visit_expression(binop.right, available_vars,
                                                        needed_types, expr_level + 1)
 
         result = "( " + left_expr + f" {symbol} "
@@ -512,7 +524,7 @@ class ProtoConverter(Converter):
             symbol = "~"
 
         # generates 0x0...0.symbol which is wrong
-        tmp_res, tmp_type, tmp_vyper_type = self.visit_expression(unop.expr, available_vars,
+        tmp_res, tmp_type, tmp_vyper_type, _ = self.visit_expression(unop.expr, available_vars,
                                                       needed_types, expr_level + 1)
 
         # if current_type == Type.ADDRESS and len(tmp_res) == 42: 
@@ -733,7 +745,7 @@ class ProtoConverter(Converter):
 
         result = var_ref + " = "
 
-        tmp_res, _ = self.visit_expression(assign.expr,
+        tmp_res, _, _, _ = self.visit_expression(assign.expr,
                                            available_vars, [var_ref_type], 1)
         result += tmp_res
 
@@ -741,7 +753,7 @@ class ProtoConverter(Converter):
 
     def visit_if_stmt_case(self, ifstmtcase, available_vars, func_params, nesting_level):
 
-        result, _ = self.visit_expression(
+        result, _, _, _ = self.visit_expression(
             ifstmtcase.cond, available_vars, [Type.BOOL], 1)
         result += ":\n"
         result += self.visit_block(ifstmtcase.if_body,

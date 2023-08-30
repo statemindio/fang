@@ -53,7 +53,14 @@ def get_random_token(type: Type):
 def get_random_element(arr):
     return random.choice(arr)
 
-def convert(instance, from_type, to_type):  # TO-DO: add check for instance, if it is literal (int, bytes, string) then we can adjust it. We can check this by having "()" inside it
+
+#  converting integers <-> decimal doesn't require size check of type
+#  converting any integer <-> any integer doesn't require size check of type
+#  converting numeric -> bytes require size check of type, size of bytes >= than numeric (can be made via triple convert)
+#  converting bytes -> numeric doesn't require size check of type
+
+def convert(instance, from_type, to_type, is_literal):
+    
     from_type_obj = extract_type(from_type)
     to_type_obj = extract_type(to_type)
 
@@ -63,39 +70,61 @@ def convert(instance, from_type, to_type):  # TO-DO: add check for instance, if 
         return "convert(" + instance + ", " + to_type + ")"
 
     if isinstance(from_type_obj, Int | Decimal) and isinstance(to_type_obj, Int | Decimal):
+        if is_literal:
+            type = None
+            if isinstance(from_type_obj, Int):
+                type = Type.INT
+            else:
+                type = Type.DECIMAL
+
+            value = get_value_from_str(instance, type)
+            if value > to_type_obj.get_max_value():  # TO-DO: check this case for decimal
+                instance = str(adjust_value(value, to_type_obj.n))
+    
         return "convert(" + instance + ", " + to_type + ")"
     
     if isinstance(from_type_obj, Address) and isinstance(to_type_obj, Int):
-        if to_type_obj.is_signed:  # EXPLAINED: in this case we should convert firstly address to bytes
-            intermediate = "convert(" + instance + ", bytes20)"
-        elif to_type_obj.n // 8 < 20:
-            pass # TO-DO: THINK: here we have two options: 1) place get random_token and adjust it to uint8, or convert as for signed case
+          # EXPLAINED: in this case we should convert firstly address to bytes
+        intermediate = "convert(" + instance + ", bytes20)"
+        return "convert(" + intermediate + ", " + to_type + ")"
     
-    if isinstance(from_type_obj, Int) and isinstance(to_type_obj, Address):
-        if from_type_obj.is_signed:  
-            if from_type_obj.n // 8 > 20:
-                pass # TO-DO: place get random_token and adjust
+    if isinstance(from_type_obj, Int) and isinstance(to_type_obj, Address):  # THINK: maybe make other conversions based on this scheme: 1) Check is literal, 2) Check dimensions 3) Check sign 
+        if is_literal:
+
+            value = get_value_from_str(instance, Type.INT)
+
+            if value >= 2**(20 * 8):
+                instance = str(adjust_value(value, 20 * 8))
             intermediate = "convert(" + instance + ", bytes20)"
+        elif from_type_obj.n // 8 > 20:
+
+            value, _ = get_random_token(Type.INT) 
+
+            instance = str(adjust_value(value, 20 * 8))
+        elif from_type_obj.is_signed:  
+
+            intermediate = "convert(" + instance + ", bytes20)"
+        if intermediate != None:
+            return "convert(" + intermediate + ", " + to_type + ")"
+        else:
+            return "convert(" + instance + ", " + to_type + ")"
 
 
     if isinstance(from_type_obj, Bytes) and isinstance(to_type_obj, Bytes):
         return "convert(" + instance + ", " + to_type + ")"
     
-    #  TO-DO:
-    #  converting integers <-> decimal doesn't require size check of type
-    #  converting any integer <-> any integer doesn't require size check of type
-    #  converting numeric -> bytes require size check of type, size of bytes >= than numeric (can be made via triple convert)
-    #  converting bytes -> numeric doesn't require size check of type
 
-    if not is_variable:
-        pass  # TO-DO: instance is constant, adjust its value. Maybe track bytes, track if should be positive value
-
-    
-    
-
-    pass
+def get_value_from_str(value, type):
+    try:
+        if type == Type.INT:
+            return int(value)
+        elif type == Type.Decimal:
+            return float(value)
+    except Exception as e:
+        raise e 
 
 def adjust_value(value, bits):
+
     if isinstance(value, int):
 
         value = value % 2**bits
