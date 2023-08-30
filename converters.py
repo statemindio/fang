@@ -47,7 +47,6 @@ class ProtoConverter(Converter):
             if variable_counter == MAX_STORAGE_VARIABLES:
                 break
             variable_counter += 1
-            # passing empty func_params
             variable_converter = self.visit_var_decl(variable,
                                                      self.global_vars.copy(),
                                                      is_global=True)
@@ -83,7 +82,7 @@ class ProtoConverter(Converter):
     def visit_bool(self):
         result = "bool"
         return result
-    
+
     def visit_decimal(self):
         result = "decimal"
         return result
@@ -103,7 +102,7 @@ class ProtoConverter(Converter):
         result += str(l) + "]"
 
         return result
-    
+
     def visit_type(self, instance):
         vyper_type = ""
         current_type = None
@@ -136,10 +135,8 @@ class ProtoConverter(Converter):
 
             vyper_type = self.visit_int(instance.i)
             current_type = Type.INT
-        
 
         return vyper_type, current_type
-
 
     def visit_address(self):
         return "address"
@@ -159,7 +156,6 @@ class ProtoConverter(Converter):
 
         vyper_type, current_type = self.visit_type(variable)
 
-
         if current_type not in available_vars:
             available_vars[current_type] = 1
         else:
@@ -167,7 +163,8 @@ class ProtoConverter(Converter):
             available_vars[current_type] += 1
 
         result = 'x_' + current_type.name + "_" + str(idx) + " : " + vyper_type
-        self.current_declared_variable = 'x_' + current_type.name + "_" + str(idx)
+        self.current_declared_variable = 'x_' + \
+            current_type.name + "_" + str(idx)
 
         if not is_global:
             result += " = "
@@ -316,7 +313,7 @@ class ProtoConverter(Converter):
 
         if result == '' or result + current_type.name + "_" + str(idx) == self.current_declared_variable:
             return str(get_random_token(current_type)), current_type
-        
+
         result += current_type.name + "_" + str(idx)
 
         return result, current_type
@@ -327,7 +324,8 @@ class ProtoConverter(Converter):
         op_type = None
 
         if binop.op == BinaryOp.BOp.ADD:
-            needed_types = [Type.INT, Type.DECIMAL]  # ADD can have multiple types
+            # ADD can have multiple types
+            needed_types = [Type.INT, Type.DECIMAL]
             symbol = "+"
 
         elif binop.op == BinaryOp.BOp.SUB:
@@ -361,13 +359,15 @@ class ProtoConverter(Converter):
         elif binop.op == BinaryOp.BOp.EQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL, Type.ADDRESS, Type.BYTEARRAY]
+            needed_types = [Type.INT, Type.BOOL,
+                            Type.DECIMAL, Type.ADDRESS, Type.BYTEARRAY]
             symbol = "=="
 
         elif binop.op == BinaryOp.BOp.INEQ:
             op_type = Type.BOOL
 
-            needed_types = [Type.INT, Type.BOOL, Type.DECIMAL, Type.ADDRESS, Type.BYTEARRAY]
+            needed_types = [Type.INT, Type.BOOL,
+                            Type.DECIMAL, Type.ADDRESS, Type.BYTEARRAY]
             symbol = "!="
 
         elif binop.op == BinaryOp.BOp.LESS:
@@ -461,7 +461,7 @@ class ProtoConverter(Converter):
             needed_types = [Type.ADDRESS]
             symbol = "code"
         elif unop.op == UnaryOp.UOp.BIT_NOT:
-        #else:
+            # else:
             needed_types = [Type.INT]
             symbol = "~"
 
@@ -484,18 +484,18 @@ class ProtoConverter(Converter):
     def visit_literal(self, literal):
         result = ''
         cur_type = None
-        
+
         if literal.HasField("addval"):
 
             adr = str(hex(literal.addval))[:42]
             result = checksum_encode(fill_address(adr))
             cur_type = Type.ADDRESS
         elif literal.HasField("barrval"):
-            
+
             result = f"b\"{hex(literal.barrval)}\""
             cur_type = Type.BYTEARRAY
         elif literal.HasField("boolval"):
-            
+
             # TO-DO check format of str(bool), uppercase
             result = str(literal.boolval)
             cur_type = Type.BOOL
@@ -505,7 +505,8 @@ class ProtoConverter(Converter):
             cur_type = Type.DECIMAL
         elif literal.HasField("bMval"):
 
-            result = "0x" + literal.bMval.hex()[:64]  # get only first 64 characters
+            # get only first 64 characters
+            result = "0x" + literal.bMval.hex()[:64]
             cur_type = Type.BytesM
         elif literal.HasField("strval"):
 
@@ -543,8 +544,8 @@ class ProtoConverter(Converter):
                 result += "payable"
 
             result += "\n"
-
-        if function.HasField("ret"):
+        # at least 0.3.9
+        if function.HasField("ret") and function.mut != Func.Mutability.PURE:
             result += self.visit_reentrancy(function.ret)
 
             result += '\n'
@@ -663,6 +664,17 @@ class ProtoConverter(Converter):
 
             result += self.visit_if_stmt(statement.if_stmt,
                                          available_vars, func_params, nesting_level)
+        elif statement.HasField('cr_min_proxy'):
+            result += self.visit_create_min_proxy(
+                statement.cr_min_proxy, available_vars)
+
+        elif statement.HasField('cr_bp'):
+            result += self.visit_create_from_blueprint(
+                statement.cr_bp, available_vars)
+        elif statement.HasField('selfd'):
+            result += self.visit_selfdestruct(statement.selfd, available_vars)
+        elif statement.HasField('sha'):
+            result += self.visit_sha256(statement.sha, available_vars)
         else:
 
             result += self.visit_assignment_statement(
@@ -672,8 +684,8 @@ class ProtoConverter(Converter):
     def visit_assignment_statement(self, assign, available_vars, func_params):
         var_ref, var_ref_type = self.visit_var_ref(
             assign.ref_id, available_vars, func_params, is_assign=True)
-        
-        if var_ref is None :
+
+        if var_ref is None:
             return ""  # JUST RETURN EMPTY LINE
 
         result = var_ref + " = "
@@ -703,17 +715,17 @@ class ProtoConverter(Converter):
             result += get_spaces(nesting_level) + "    pass\n"
         else:
             result += self.visit_if_stmt_case(
-                ifstmt.cases[0], available_vars, func_params, nesting_level)
+                ifstmt.cases[0], available_vars.copy(), func_params, nesting_level)
 
         for case_num in range(1, branches):
             result += get_spaces(nesting_level) + "elif "
             result += self.visit_if_stmt_case(
-                ifstmt.cases[case_num], available_vars, func_params, nesting_level)
+                ifstmt.cases[case_num], available_vars.copy(), func_params, nesting_level)
 
         if ifstmt.HasField("else_case"):
             result += get_spaces(nesting_level) + "else:\n"
             result += self.visit_block(ifstmt.else_case,
-                                       available_vars, func_params, nesting_level + 1)
+                                       available_vars.copy(), func_params, nesting_level + 1)
 
         return result
 
@@ -722,7 +734,7 @@ class ProtoConverter(Converter):
         stop = for_stmt_range.stop
         if start > stop:
             start, stop = stop, start
-        result = f"range({start},{stop}):\n"
+        result = f"range({start},{stop + 1}):\n"
         return result
 
     def visit_for_stmt_var(self, for_stmt_var, available_vars):
@@ -741,22 +753,100 @@ class ProtoConverter(Converter):
         # local vars
         idx = 0
 
+        range_string = ''
+        # cannot have iterator in range()
+        if forstmt.HasField("variable"):
+            range_string += self.visit_for_stmt_var(forstmt.variable,
+                                                    available_vars)
+        else:
+            range_string += self.visit_for_stmt_range(forstmt.ranged)
+
         if Type.INT not in available_vars:
             available_vars[Type.INT] = 1
         else:
             idx = available_vars[Type.INT]
             available_vars[Type.INT] += 1
 
-        loop_var = f"x_INT_{idx}"
-        result = f"for {loop_var} in "
-
-        if forstmt.HasField("variable"):
-            result += self.visit_for_stmt_var(forstmt.variable,
-                                              available_vars)
+        if Type.INT not in func_params:
+            func_params[Type.INT] = 1
         else:
-            result += self.visit_for_stmt_range(forstmt.ranged)
+            func_params[Type.INT] += 1
+
+        loop_var = f"x_INT_{idx}"
+        result = f"for {loop_var} in " + range_string
 
         result += self.visit_block(forstmt.body,
                                    available_vars, func_params, nesting_level + 1)
 
+        return result
+
+    def visit_create_min_proxy(self, cmp, available_vars):
+        result = 'create_minimal_proxy_to('
+
+        target_res, _ = self.visit_expression(
+            cmp.target, available_vars, [Type.ADDRESS], 1)
+
+        result += target_res
+
+        if cmp.HasField("value"):
+            value_res, _ = self.visit_expression(
+                cmp.value, available_vars, [Type.INT], 1)
+            result += ', value=' + value_res
+        if cmp.HasField("salt"):
+            salt_res, _ = self.visit_expression(
+                cmp.salt, available_vars, [Type.BytesM], 1)
+            result += ', salt=' + salt_res
+
+        result += ')'
+
+        return result
+
+    def visit_create_from_blueprint(self, cfb, available_vars):
+        result = 'create_from_blueprint('
+
+        target_res, _ = self.visit_expression(
+            cfb.target, available_vars, [Type.ADDRESS], 1)
+
+        result += target_res
+
+        for arg in cfb.args:
+            arg_r, arg_t = self.visit_expression(
+                arg, available_vars, [i for i in Type], 1)
+            result += ',' + arg_r
+
+        if cfb.HasField("value"):
+            value_res, _ = self.visit_expression(
+                cfb.value, available_vars, [Type.INT], 1)
+            result += ', value=' + value_res
+        if cfb.HasField("code_offset"):
+            value_res, _ = self.visit_expression(
+                cfb.value, available_vars, [Type.INT], 1)
+            result += ', code_offset=' + value_res
+        if cfb.HasField("salt"):
+            salt_res, _ = self.visit_expression(
+                cfb.salt, available_vars, [Type.BytesM], 1)
+            result += ', salt=' + salt_res
+
+        result += ')'
+
+        return result
+    
+    def visit_selfdestruct(self, sd, available_vars):
+        
+        result = "selfdestruct("
+        
+        to_res, _ = self.visit_expression(sd.to, available_vars, [Type.ADDRESS], 1)
+        
+        result += to_res + ")"
+        
+        return result
+        
+    def visit_sha256(self, sha, available_vars):
+        
+        result = "sha256("
+        
+        to_res, _ = self.visit_expression(sha.value, available_vars, [Type.BYTEARRAY, Type.STRING, Type.BytesM], 1)
+        
+        result += to_res + ")"
+        
         return result
