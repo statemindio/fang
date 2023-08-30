@@ -43,7 +43,7 @@ message VarRef {
 
 message Literal {
     oneof literal_oneof {
-        bool boolval = 2;  // add literals for decimal, bytesM and string
+        bool boolval = 2;
         uint64 decimalval = 3;
         bytes bMval = 4;
         string strval = 5;
