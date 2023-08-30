@@ -173,8 +173,8 @@ class ProtoConverter(Converter):
 
             tmp_res, _, tmp_vyper_type, is_literal = self.visit_expression(variable.expr,
                                                available_vars, [current_type], 1)
-            converted_res = convert(tmp_res, tmp_vyper_type, vyper_type, is_literal)
-            result += converted_res
+           # converted_res = convert(tmp_res, tmp_vyper_type, vyper_type, is_literal)
+            result += tmp_res
         return result
 
     def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level):
@@ -213,7 +213,7 @@ class ProtoConverter(Converter):
 
         elif expr.HasField("binop"):
 
-            (tmp_res, tmp_type) = self.visit_bin_op(
+            (tmp_res, tmp_type, tmp_vyper_type) = self.visit_bin_op(
                 expr.binop, available_vars, expr_level)
 
             if tmp_type not in needed_types:
@@ -226,10 +226,11 @@ class ProtoConverter(Converter):
             else:
                 current_type = tmp_type
                 result = tmp_res
+                vyper_type = tmp_vyper_type
 
         elif expr.HasField("unop"):
 
-            (tmp_res, tmp_type) = self.visit_unary_op(
+            (tmp_res, tmp_type, tmp_vyper_type) = self.visit_unary_op(
                 expr.unop, available_vars, expr_level)
 
             if tmp_type not in needed_types:
@@ -242,6 +243,7 @@ class ProtoConverter(Converter):
             else:
                 current_type = tmp_type
                 result = tmp_res
+                vyper_type = tmp_vyper_type
         else:
 
             tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
@@ -472,7 +474,8 @@ class ProtoConverter(Converter):
         #     result += right_expr
         if left_vyper_type != right_vyper_type:
             converted_right_expr = convert(right_expr, right_vyper_type, left_vyper_type, right_is_literal)
-            result += converted_right_expr
+            if converted_right_expr is not None:
+                result += converted_right_expr
         result += " )"
 
         return result, op_type, vyper_type
@@ -724,7 +727,7 @@ class ProtoConverter(Converter):
         if statement.HasField('decl'):
 
             result += self.visit_var_decl(statement.decl,
-                                          available_vars, func_params)
+                                          available_vars)
             self.current_declared_variable = None
         # can be NoneType
         elif statement.HasField('for_stmt'):
@@ -763,8 +766,8 @@ class ProtoConverter(Converter):
 
         tmp_res, _, tmp_vyper_type, tmp_is_litera = self.visit_expression(assign.expr,
                                            available_vars, [var_ref_type], 1)
-        converted_tmp_res = convert(tmp_res, tmp_vyper_type, var_ref_vyper_type, tmp_is_litera)
-        result += converted_tmp_res
+        #converted_tmp_res = convert(tmp_res, tmp_vyper_type, var_ref_vyper_type, tmp_is_litera)
+        result += tmp_res
 
         return result
 

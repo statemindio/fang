@@ -46,8 +46,9 @@ def get_random_token(type: Type):
         return "0x" + os.urandom(m).hex(), f"bytes{m}"
     elif type == Type.STRING:
 
-        l = random.randint(0, 2**256 - 1)  # EXPLAINED: randomly generate len of string
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=l)), "String[{l}]"  # TO-DO: Add more characters, String can have not only letters and digits
+        l = random.randint(0, 2**8 - 1)  # EXPLAINED: randomly generate len of string
+        res = ''.join(random.choices(string.ascii_letters + string.digits, k=l))
+        return f"\"{res}\"", f"String[{l}]"  # TO-DO: Add more characters, String can have not only letters and digits
 
 
 def get_random_element(arr):
@@ -83,7 +84,7 @@ def convert(instance, from_type, to_type, is_literal):
                 type = Type.DECIMAL
 
             value = get_value_from_str(instance, type)
-            if value > to_type_obj.get_max_value() or value < to_type_obj.get_min_value():  # TO-DO: check this case for decimal
+            if isinstance(to_type_obj, Int) and value > to_type_obj.get_max_value() or value < to_type_obj.get_min_value():  # TO-DO: check this case for decimal
                 instance = str(adjust_value(value, to_type_obj.n, to_type_obj.is_signed))
     
         return "convert(" + instance + ", " + to_type + ")"
@@ -117,13 +118,14 @@ def convert(instance, from_type, to_type, is_literal):
 
     if isinstance(from_type_obj, Bytes) and isinstance(to_type_obj, Bytes):
         return "convert(" + instance + ", " + to_type + ")"
+
     
 
 def get_value_from_str(value, type):
     try:
         if type == Type.INT:
             return int(value)
-        elif type == Type.Decimal:
+        elif type == Type.DECIMAL:
             return float(value)
     except Exception as e:
         raise e 
@@ -152,12 +154,12 @@ def extract_type(_type):
     if 'int' in _type:
         is_signed = _type[0] != 'u'
 
-        n = re.match(r'\d+', _type).group(0)
+        n = re.search(r'\d+', _type).group(0)
         n = int(n)
 
         res = Int(is_signed, n)
     elif 'bytes' in _type.lower():
-        l = re.match(r'\d+', _type).group(0)
+        l = re.search(r'\d+', _type).group(0)
         l = int(l)
 
         res = Bytes(l)
@@ -169,7 +171,7 @@ def extract_type(_type):
         res = Decimal()
     elif 'string' in _type.lower():
 
-        l = re.match(r'\d+', _type).group(0)
+        l = re.search(r'\d+', _type).group(0)
         l = int(l)
 
         res = String(l)

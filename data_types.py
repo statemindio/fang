@@ -24,6 +24,8 @@ class Int:
     def get_min_value(self):
         if self.is_signed:
             return -2**self.n
+        else:
+            return 0
 
 @dataclass
 class Bytes:
