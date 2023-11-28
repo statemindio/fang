@@ -244,6 +244,17 @@ class ProtoConverter(Converter):
                 current_type = tmp_type
                 result = tmp_res
                 vyper_type = tmp_vyper_type
+        elif expr.HasField("cr_min_proxy"):
+            result = self.visit_create_min_proxy(expr.cr_min_proxy, available_vars)
+            current_type = Type.ADDRESS
+            vyper_type = "address"
+
+            if current_type not in needed_types:
+                current_type = get_random_element(needed_types)
+                result, vyper_type = get_random_token(current_type)
+                result = str(result)
+
+                is_literal = True
         else:
 
             tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
@@ -738,9 +749,9 @@ class ProtoConverter(Converter):
 
             result += self.visit_if_stmt(statement.if_stmt,
                                          available_vars, func_params, nesting_level)
-        elif statement.HasField('cr_min_proxy'):
-            result += self.visit_create_min_proxy(
-                statement.cr_min_proxy, available_vars)
+        # elif statement.HasField('cr_min_proxy'):
+        #     result += self.visit_create_min_proxy(
+        #         statement.cr_min_proxy, available_vars)
 
         elif statement.HasField('cr_bp'):
             result += self.visit_create_from_blueprint(
