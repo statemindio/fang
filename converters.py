@@ -266,6 +266,19 @@ class ProtoConverter(Converter):
                 result = str(result)
 
                 is_literal = True
+
+        elif expr.HasField('sha'):
+            result = self.visit_sha256(expr.sha, available_vars)
+            current_type = Type.BytesM
+            vyper_type = "bytes32"
+            if current_type not in needed_types:
+                current_type = get_random_element(needed_types)
+                # FIXME: `get_random_token(BytesM)` returns a token of length within a range [1; 32]
+                #  and a corresponding vyper_type. Meanwhile it must be exactly 32 bytes length
+                result, vyper_type = get_random_token(current_type)
+                result = str(result)
+
+                is_literal = True
         else:
 
             tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
@@ -769,8 +782,8 @@ class ProtoConverter(Converter):
         #         statement.cr_bp, available_vars)
         elif statement.HasField('selfd'):
             result += self.visit_selfdestruct(statement.selfd, available_vars)
-        elif statement.HasField('sha'):
-            result += self.visit_sha256(statement.sha, available_vars)
+        # elif statement.HasField('sha'):
+        #     result += self.visit_sha256(statement.sha, available_vars)
         else:
 
             result += self.visit_assignment_statement(
