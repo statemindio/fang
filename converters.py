@@ -249,12 +249,9 @@ class ProtoConverter(Converter):
             current_type = Type.ADDRESS
             vyper_type = "address"
 
-            if current_type not in needed_types:
-                current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
-                result = str(result)
+            result, current_type, vyper_type, is_literal = check_type_requirements(
+                result, current_type, vyper_type, needed_types)
 
-                is_literal = True
         elif expr.HasField('cr_bp'):
             result = self.visit_create_from_blueprint(expr.cr_bp, available_vars)
             current_type = Type.ADDRESS
