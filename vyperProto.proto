@@ -163,10 +163,7 @@ message Statement {
       VarDecl             decl            = 1;
       ForStmt             for_stmt        = 3;
       IfStmt              if_stmt         = 4;
-//      CreateMinimalProxy  cr_min_proxy    = 5;
-//      CreateFromBlueprint cr_bp           = 6;
       Selfdestruct        selfd           = 7;
-//      Sha256              sha             = 8;
     }
     AssignmentStatement assignment      = 2;
 }

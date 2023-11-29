@@ -761,17 +761,8 @@ class ProtoConverter(Converter):
 
             result += self.visit_if_stmt(statement.if_stmt,
                                          available_vars, func_params, nesting_level)
-        # elif statement.HasField('cr_min_proxy'):
-        #     result += self.visit_create_min_proxy(
-        #         statement.cr_min_proxy, available_vars)
-
-        # elif statement.HasField('cr_bp'):
-        #     result += self.visit_create_from_blueprint(
-        #         statement.cr_bp, available_vars)
         elif statement.HasField('selfd'):
             result += self.visit_selfdestruct(statement.selfd, available_vars)
-        # elif statement.HasField('sha'):
-        #     result += self.visit_sha256(statement.sha, available_vars)
         else:
 
             result += self.visit_assignment_statement(
