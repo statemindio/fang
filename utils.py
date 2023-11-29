@@ -220,6 +220,8 @@ def check_type_requirements(result, current_type, vyper_type, needed_types):
         return result, current_type, vyper_type, False
 
     current_type = get_random_element(needed_types)
+    # FIXME: `get_random_token(BytesM)` returns a token of length within a range [1; 32]
+    #  and a corresponding vyper_type. Meanwhile it must be exactly 32 bytes length
     result, vyper_type = get_random_token(current_type)
     result = str(result)
 
