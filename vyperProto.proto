@@ -104,7 +104,7 @@ message Expression {
         UnaryOp unop = 4;
         // NullaryOp nop = 5;
         CreateMinimalProxy  cr_min_proxy    = 5;
-//        CreateFromBlueprint cr_bp           = 6;
+        CreateFromBlueprint cr_bp           = 6;
     }
     VarRef varref = 1;
 }
@@ -163,7 +163,7 @@ message Statement {
       ForStmt             for_stmt        = 3;
       IfStmt              if_stmt         = 4;
 //      CreateMinimalProxy  cr_min_proxy    = 5;
-      CreateFromBlueprint cr_bp           = 6;
+//      CreateFromBlueprint cr_bp           = 6;
       Selfdestruct        selfd           = 7;
       Sha256              sha             = 8;
     }

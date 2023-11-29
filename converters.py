@@ -255,6 +255,17 @@ class ProtoConverter(Converter):
                 result = str(result)
 
                 is_literal = True
+        elif expr.HasField('cr_bp'):
+            result = self.visit_create_from_blueprint(expr.cr_bp, available_vars)
+            current_type = Type.ADDRESS
+            vyper_type = "address"
+
+            if current_type not in needed_types:
+                current_type = get_random_element(needed_types)
+                result, vyper_type = get_random_token(current_type)
+                result = str(result)
+
+                is_literal = True
         else:
 
             tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
@@ -753,9 +764,9 @@ class ProtoConverter(Converter):
         #     result += self.visit_create_min_proxy(
         #         statement.cr_min_proxy, available_vars)
 
-        elif statement.HasField('cr_bp'):
-            result += self.visit_create_from_blueprint(
-                statement.cr_bp, available_vars)
+        # elif statement.HasField('cr_bp'):
+        #     result += self.visit_create_from_blueprint(
+        #         statement.cr_bp, available_vars)
         elif statement.HasField('selfd'):
             result += self.visit_selfdestruct(statement.selfd, available_vars)
         elif statement.HasField('sha'):
