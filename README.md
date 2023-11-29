@@ -1,9 +1,9 @@
 # Vyper Structure aware fuzzing
 
 ## Install dependencies
-Before installing the main, the necessary Python libs are required to install:
+Before installing the main, the necessary Python libs are required to install:  
 `cmake` >= 3.20  
-`python3.10`
+`python3.10`  
 Once the requirements above are satisfied, run
 ```bash
 ./install.sh
