@@ -3,7 +3,7 @@ from data_types import Type
 from utils import convert
 from utils import get_spaces, get_nearest_multiple
 from utils import get_random_token, get_random_element
-from utils import checksum_encode, fill_address
+from utils import checksum_encode, fill_address, check_type_requirements
 from config import MAX_NESTING_LEVEL, MAX_EXPRESSION_LEVEL, MAX_FUNCTION_INPUT, MAX_FUNCTIONS
 from config import MAX_FUNCTION_OUTPUT, MAX_STORAGE_VARIABLES, MAX_LOCAL_VARIABLES
 
@@ -260,12 +260,8 @@ class ProtoConverter(Converter):
             current_type = Type.ADDRESS
             vyper_type = "address"
 
-            if current_type not in needed_types:
-                current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
-                result = str(result)
-
-                is_literal = True
+            result, current_type, vyper_type, is_literal = check_type_requirements(
+                result, current_type, vyper_type, needed_types)
 
         elif expr.HasField('sha'):
             result = self.visit_sha256(expr.sha, available_vars)
