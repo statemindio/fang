@@ -21,7 +21,7 @@ def get_nearest_multiple(num, mul):
 # THINK: instead of using random values, we can create big dictionaries and take randomly values from them
 
 
-def get_random_token(type: Type):
+def get_random_token(type: Type, length=None):
     if type == Type.INT:
         
         return random.randint(0, 2**256 - 1), "uint256"
@@ -41,8 +41,7 @@ def get_random_token(type: Type):
         
         return random.randint(0, 2**168 - 1) / 10**10 - (2**167 / 10**10), "decimal"
     elif type == Type.BytesM:
-
-        m = random.randint(0, 32)
+        m = random.randint(0, 32) if length is None else length
         return "0x" + os.urandom(m).hex(), f"bytes{m}"
     elif type == Type.STRING:
 
@@ -215,14 +214,14 @@ def checksum_encode(addr):  # Expects an input of the form 0x<40 hex chars>
     return "0x" + o
 
 
-def check_type_requirements(result, current_type, vyper_type, needed_types):
+def check_type_requirements(result, current_type, vyper_type, needed_types, length=None):
     if current_type in needed_types:
         return result, current_type, vyper_type, False
 
     current_type = get_random_element(needed_types)
     # FIXME: `get_random_token(BytesM)` returns a token of length within a range [1; 32]
     #  and a corresponding vyper_type. Meanwhile it must be exactly 32 bytes length
-    result, vyper_type = get_random_token(current_type)
+    result, vyper_type = get_random_token(current_type, length)
     result = str(result)
 
     return result, current_type, vyper_type, True

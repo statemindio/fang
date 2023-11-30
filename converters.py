@@ -177,7 +177,7 @@ class ProtoConverter(Converter):
             result += tmp_res
         return result
 
-    def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level):
+    def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level, length=None):
 
         current_type = None
         vyper_type = None
@@ -193,7 +193,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)  # THINK: type is chosen randomly, but we can take first or last one
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -206,7 +206,7 @@ class ProtoConverter(Converter):
         elif expr_level == MAX_EXPRESSION_LEVEL:
 
             current_type = get_random_element(needed_types)
-            result, vyper_type = get_random_token(current_type)
+            result, vyper_type = get_random_token(current_type, length)
             result = str(result)
 
             is_literal = True
@@ -219,7 +219,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -236,7 +236,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -250,7 +250,7 @@ class ProtoConverter(Converter):
             vyper_type = "address"
 
             result, current_type, vyper_type, is_literal = check_type_requirements(
-                result, current_type, vyper_type, needed_types)
+                result, current_type, vyper_type, needed_types, length)
 
         elif expr.HasField('cr_bp'):
             result = self.visit_create_from_blueprint(expr.cr_bp, available_vars)
@@ -258,7 +258,7 @@ class ProtoConverter(Converter):
             vyper_type = "address"
 
             result, current_type, vyper_type, is_literal = check_type_requirements(
-                result, current_type, vyper_type, needed_types)
+                result, current_type, vyper_type, needed_types, length)
 
         elif expr.HasField('sha'):
             result = self.visit_sha256(expr.sha, available_vars)
@@ -266,7 +266,7 @@ class ProtoConverter(Converter):
             vyper_type = "bytes32"
 
             result, current_type, vyper_type, is_literal = check_type_requirements(
-                result, current_type, vyper_type, needed_types)
+                result, current_type, vyper_type, needed_types, length)
         else:
 
             tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
@@ -275,7 +275,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -883,7 +883,7 @@ class ProtoConverter(Converter):
             result += ', value=' + value_res
         if cmp.HasField("salt"):
             salt_res, _, _, _ = self.visit_expression(
-                cmp.salt, available_vars, [Type.BytesM], 1)
+                cmp.salt, available_vars, [Type.BytesM], 1, 32)
             result += ', salt=' + salt_res
 
         result += ')'
@@ -913,7 +913,7 @@ class ProtoConverter(Converter):
             result += ', code_offset=' + value_res
         if cfb.HasField("salt"):
             salt_res, _, _, _= self.visit_expression(
-                cfb.salt, available_vars, [Type.BytesM], 1)
+                cfb.salt, available_vars, [Type.BytesM], 1, 32)
             result += ', salt=' + salt_res
 
         result += ')'
