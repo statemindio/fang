@@ -202,6 +202,7 @@ def bytes_to_int(bytez):
         o = o * 256 + b
     return o
 
+
 def checksum_encode(addr):  # Expects an input of the form 0x<40 hex chars>
     assert addr[:2] == "0x" and len(addr) == 42, addr
     o = ""
@@ -212,3 +213,16 @@ def checksum_encode(addr):  # Expects an input of the form 0x<40 hex chars>
         else:
             o += c.upper() if (v & (2 ** (255 - 4 * i))) else c.lower()
     return "0x" + o
+
+
+def check_type_requirements(result, current_type, vyper_type, needed_types):
+    if current_type in needed_types:
+        return result, current_type, vyper_type, False
+
+    current_type = get_random_element(needed_types)
+    # FIXME: `get_random_token(BytesM)` returns a token of length within a range [1; 32]
+    #  and a corresponding vyper_type. Meanwhile it must be exactly 32 bytes length
+    result, vyper_type = get_random_token(current_type)
+    result = str(result)
+
+    return result, current_type, vyper_type, True
