@@ -5,7 +5,8 @@ __all__ = [
     "Bool",
     "Decimal",
     "String",
-    "Address"
+    "Address",
+    "TypeRangeError"
 ]
 
-from .types import Bytes, BytesM, Int, Bool, Decimal, String, Address
+from .types import Bytes, BytesM, Int, Bool, Decimal, String, Address, TypeRangeError

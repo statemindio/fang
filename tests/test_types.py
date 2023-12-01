@@ -1,5 +1,6 @@
-from types_d import BytesM, String
+import pytest
 
+from types_d import BytesM, String, TypeRangeError
 
 def test_bytes_m_type():
     bt = BytesM()
@@ -16,3 +17,8 @@ def test_bytes_m_eq():
     assert bt == bt1
     assert bt != bt2
     assert bt != st
+
+
+def test_bytes_m_boundaries():
+    with pytest.raises(TypeRangeError):
+        bt = BytesM(33)
