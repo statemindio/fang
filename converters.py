@@ -3,7 +3,7 @@ from data_types import Type
 from utils import convert
 from utils import get_spaces, get_nearest_multiple
 from utils import get_random_token, get_random_element
-from utils import checksum_encode, fill_address, check_type_requirements
+from utils import checksum_encode, fill_address, check_type_requirements, extract_type_length
 from config import MAX_NESTING_LEVEL, MAX_EXPRESSION_LEVEL, MAX_FUNCTION_INPUT, MAX_FUNCTIONS
 from config import MAX_FUNCTION_OUTPUT, MAX_STORAGE_VARIABLES, MAX_LOCAL_VARIABLES
 
@@ -171,13 +171,14 @@ class ProtoConverter(Converter):
         if not is_global:
             result += " = "
 
+            type_length = extract_type_length(current_type, vyper_type)
             tmp_res, _, tmp_vyper_type, is_literal = self.visit_expression(variable.expr,
-                                               available_vars, [current_type], 1)
+                                               available_vars, [current_type], 1, type_length)
            # converted_res = convert(tmp_res, tmp_vyper_type, vyper_type, is_literal)
             result += tmp_res
         return result
 
-    def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level):
+    def visit_expression(self, expr, available_vars, needed_types: [Type], expr_level, length=None):
 
         current_type = None
         vyper_type = None
@@ -190,10 +191,11 @@ class ProtoConverter(Converter):
             # make inside literal converter checking for type
             tmp_res, tmp_type, tmp_vyper_type = self.visit_literal(expr.cons)
 
-            if tmp_type not in needed_types:
+            current_type_length = extract_type_length(tmp_type, tmp_vyper_type)
+            if tmp_type not in needed_types or (current_type_length is not None and current_type_length != length):
 
                 current_type = get_random_element(needed_types)  # THINK: type is chosen randomly, but we can take first or last one
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -206,7 +208,7 @@ class ProtoConverter(Converter):
         elif expr_level == MAX_EXPRESSION_LEVEL:
 
             current_type = get_random_element(needed_types)
-            result, vyper_type = get_random_token(current_type)
+            result, vyper_type = get_random_token(current_type, length)
             result = str(result)
 
             is_literal = True
@@ -219,7 +221,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -236,7 +238,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -250,7 +252,7 @@ class ProtoConverter(Converter):
             vyper_type = "address"
 
             result, current_type, vyper_type, is_literal = check_type_requirements(
-                result, current_type, vyper_type, needed_types)
+                result, current_type, vyper_type, needed_types, length)
 
         elif expr.HasField('cr_bp'):
             result = self.visit_create_from_blueprint(expr.cr_bp, available_vars)
@@ -258,7 +260,7 @@ class ProtoConverter(Converter):
             vyper_type = "address"
 
             result, current_type, vyper_type, is_literal = check_type_requirements(
-                result, current_type, vyper_type, needed_types)
+                result, current_type, vyper_type, needed_types, length)
 
         elif expr.HasField('sha'):
             result = self.visit_sha256(expr.sha, available_vars)
@@ -266,7 +268,7 @@ class ProtoConverter(Converter):
             vyper_type = "bytes32"
 
             result, current_type, vyper_type, is_literal = check_type_requirements(
-                result, current_type, vyper_type, needed_types)
+                result, current_type, vyper_type, needed_types, length)
         else:
 
             tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
@@ -275,7 +277,7 @@ class ProtoConverter(Converter):
             if tmp_type not in needed_types:
 
                 current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type)
+                result, vyper_type = get_random_token(current_type, length)
                 result = str(result)
 
                 is_literal = True
@@ -348,7 +350,8 @@ class ProtoConverter(Converter):
             if is_assign:
                 return None, current_type, vyper_type
             else:
-                result, vyper_type = get_random_token(current_type)
+                length = extract_type_length(current_type, vyper_type)
+                result, vyper_type = get_random_token(current_type, length)
                 return str(result), current_type, vyper_type
 
         if not is_assign:  # TO-DO: refactor this if - statement
@@ -369,7 +372,8 @@ class ProtoConverter(Converter):
                 result = "x_"
 
         if result == '' or result + current_type.name + "_" + str(idx) == self.current_declared_variable:
-            result, vyper_type = get_random_token(current_type)
+            length = extract_type_length(current_type, vyper_type)
+            result, vyper_type = get_random_token(current_type, length)
             return str(result), current_type, vyper_type
         
         result += current_type.name + "_" + str(idx)
@@ -607,7 +611,7 @@ class ProtoConverter(Converter):
             hex_val = literal.bMval.hex()[:64]
             result = "0x" + hex_val
             cur_type = Type.BytesM
-            vyper_type = f"bytes{len(hex_val) / 2}"
+            vyper_type = f"bytes{int(len(hex_val) / 2)}"
         elif literal.HasField("strval"):
 
             result = literal.strval  # TO-DO: check maximal len of string in proto and vyper
@@ -883,7 +887,7 @@ class ProtoConverter(Converter):
             result += ', value=' + value_res
         if cmp.HasField("salt"):
             salt_res, _, _, _ = self.visit_expression(
-                cmp.salt, available_vars, [Type.BytesM], 1)
+                cmp.salt, available_vars, [Type.BytesM], 1, 32)
             result += ', salt=' + salt_res
 
         result += ')'
@@ -913,7 +917,7 @@ class ProtoConverter(Converter):
             result += ', code_offset=' + value_res
         if cfb.HasField("salt"):
             salt_res, _, _, _= self.visit_expression(
-                cfb.salt, available_vars, [Type.BytesM], 1)
+                cfb.salt, available_vars, [Type.BytesM], 1, 32)
             result += ', salt=' + salt_res
 
         result += ')'
