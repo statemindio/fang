@@ -1,6 +1,6 @@
 import pytest
 
-from types_d import BytesM, String, Int, TypeRangeError, Bytes
+from types_d import BytesM, String, Int, TypeRangeError, Bytes, Bool, Decimal, Address
 
 data = [
     [i, f"bytes{i}"] for i in range(1, 33)
@@ -86,3 +86,21 @@ def test_bytes_array_eq():
     assert bt == bt1
     assert bt != bt2
     assert bt != st
+
+
+def test_bool_type():
+    b = Bool()
+    assert b.vyper_type == "bool"
+    assert str(b) == "bool"
+
+
+def test_decimal_type():
+    d = Decimal()
+    assert d.vyper_type == "decimal"
+    assert str(d) == "decimal"
+
+
+def test_address_type():
+    a = Address()
+    assert a.vyper_type == "address"
+    assert str(a) == "address"
