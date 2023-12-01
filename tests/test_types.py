@@ -1,6 +1,6 @@
 import pytest
 
-from types_d import BytesM, String, Int, TypeRangeError
+from types_d import BytesM, String, Int, TypeRangeError, Bytes
 
 data = [
     [i, f"bytes{i}"] for i in range(1, 33)
@@ -63,3 +63,26 @@ def test_int_eq():
     assert it != it3
     assert it3 != it4
     assert it4 == it5
+
+
+bytes_array_data = [
+    [m, f"Bytes[{m}]"] for m in range(80, 110, 4)
+]
+
+
+@pytest.mark.parametrize("m,vyper_type", bytes_array_data)
+def test_bytes_array_type(m, vyper_type):
+    bt = Bytes(m)
+    assert bt.vyper_type == vyper_type
+    assert str(bt) == vyper_type
+
+
+def test_bytes_array_eq():
+    bt = Bytes(8)
+    bt1 = Bytes(8)
+    bt2 = Bytes(9)
+    st = String(8)
+
+    assert bt == bt1
+    assert bt != bt2
+    assert bt != st
