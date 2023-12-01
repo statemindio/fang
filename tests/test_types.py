@@ -28,3 +28,5 @@ def test_bytes_m_eq():
 def test_bytes_m_boundaries():
     with pytest.raises(TypeRangeError):
         bt = BytesM(33)
+    with pytest.raises(TypeRangeError):
+        bt = BytesM(0)

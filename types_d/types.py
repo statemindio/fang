@@ -26,7 +26,7 @@ class Bytes(BaseType):
 class BytesM(Bytes):
     def __init__(self, m=32):
         super().__init__(m)
-        if not 0 <= m <= 32:
+        if not 0 < m <= 32:
             raise TypeRangeError(m)
 
     @property
