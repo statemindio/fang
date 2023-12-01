@@ -2,10 +2,16 @@ import pytest
 
 from types_d import BytesM, String, TypeRangeError
 
-def test_bytes_m_type():
-    bt = BytesM()
-    assert bt.m == 32
-    assert bt.vyper_type == "bytes32"
+data = [
+    [i, f"bytes{i}"] for i in range(1, 33)
+]
+
+
+@pytest.mark.parametrize("m,vyper_type", data)
+def test_bytes_m_type(m, vyper_type):
+    bt = BytesM(m)
+    assert bt.m == m
+    assert bt.vyper_type == vyper_type
 
 
 def test_bytes_m_eq():
