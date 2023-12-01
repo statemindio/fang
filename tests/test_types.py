@@ -104,3 +104,27 @@ def test_address_type():
     a = Address()
     assert a.vyper_type == "address"
     assert str(a) == "address"
+
+
+str_data = [
+    [m, f"String[{m}]"] for m in range(40, 140, 10)
+]
+
+
+@pytest.mark.parametrize("m,vyper_type", str_data)
+def test_string_type(m, vyper_type):
+    s = String(m)
+    assert s.vyper_type == vyper_type
+    assert str(s) == vyper_type
+
+
+def test_string_eq():
+    s = String(40)
+    s1 = String(40)
+    assert s == s1
+
+    s2 = String(50)
+    assert s != s2
+
+    it = Int(16, False)
+    assert s2 != it
