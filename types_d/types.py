@@ -34,11 +34,11 @@ class BytesM(Bytes):
         return f"bytes{self._m}"
 
 
-class Int:
+class Int(BaseType):
     def __init__(self, n=256, signed=False):
         if n not in [2 ** i for i in range(3, 9)]:
             raise TypeRangeError(n)
-        self._n = 256
+        self._n = n
         self._signed = signed
 
     def __eq__(self, other):
