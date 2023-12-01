@@ -40,3 +40,26 @@ def test_int_type(n, signed, vyper_type):
     it = Int(n, signed)
     assert it.vyper_type == vyper_type
     assert str(it) == vyper_type
+
+
+def test_int_boundaries():
+    with pytest.raises(TypeRangeError):
+        it = Int(3)
+    with pytest.raises(TypeRangeError):
+        it = Int(10)
+
+
+def test_int_eq():
+    it = Int(8, True)
+    it1 = Int(8, True)
+    assert it == it1
+
+    it2 = Int(8, False)
+    assert it != it2
+
+    it3 = Int(16, True)
+    it4 = Int(16, False)
+    it5 = Int(16, False)
+    assert it != it3
+    assert it3 != it4
+    assert it4 == it5
