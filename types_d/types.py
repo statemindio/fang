@@ -1,4 +1,4 @@
-from base import BaseType
+from types_d.base import BaseType
 
 
 class TypeRangeError(Exception):
