@@ -1,5 +1,7 @@
 from data_types import Type
 
+from types_d import Int, Bool, Decimal, BytesM, String
+
 from utils import convert
 from utils import get_spaces, get_nearest_multiple
 from utils import get_random_token, get_random_element
@@ -9,7 +11,7 @@ from config import MAX_FUNCTION_OUTPUT, MAX_STORAGE_VARIABLES, MAX_LOCAL_VARIABL
 
 
 from vyperProto_pb2 import Contract, Func, FuncParam, Reentrancy,  Block, Statement
-from vyperProto_pb2 import VarDecl, AssignmentStatement, Expression, Int, Bool
+# from vyperProto_pb2 import VarDecl, AssignmentStatement, Expression
 from vyperProto_pb2 import VarRef, Literal, BinaryOp, UnaryOp
 from vyperProto_pb2 import IfStmtCase, IfStmt, ForStmtRanged, ForStmtVariable, ForStmt
 
@@ -67,43 +69,31 @@ class ProtoConverter(Converter):
             self.func_count += 1
 
     def visit_int(self, int):
-
-        result = ""
-        if int.sign:
-            result = "int"
-        else:
-            result = "uint"
-
         n = int.n % 256 + 1
         n = get_nearest_multiple(n, 8)
+        int_type = Int(n, int.sign)
 
-        result += str(n)
-
-        return result
+        return int_type.vyper_type
 
     def visit_bool(self):
-        result = "bool"
-        return result
+        b = Bool()
+        return b.vyper_type
 
     def visit_decimal(self):
-        result = "decimal"
-        return result
+        d = Decimal()
+        return d.vyper_type
 
     def visit_bytes_m(self, bytesM):
-        result = "bytes"
-
         m = bytesM.m % 32 + 1
-        result += str(m)
+        bm = BytesM(m)
 
-        return result
+        return bm.vyper_type
 
     def visit_string(self, string):
-        result = "String["
-
         l = string.max_len  # TO-DO: max_len is uint64, but len of String can be up to MAX_UINT256
-        result += str(l) + "]"
+        s = String(l)
 
-        return result
+        return s.vyper_type
 
     def visit_type(self, instance):
         vyper_type = ""
