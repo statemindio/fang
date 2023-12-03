@@ -36,7 +36,7 @@ class BytesM(Bytes):
 
 class Int(BaseType):
     def __init__(self, n=256, signed=False):
-        if n not in [2 ** i for i in range(3, 9)]:
+        if n % 8 != 0:
             raise TypeRangeError(n)
         self._n = n
         self._signed = signed
