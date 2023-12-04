@@ -8,3 +8,6 @@ class BaseType:
     @property
     def vyper_type(self):
         raise NotImplementedError()
+
+    def generate(self):
+        raise NotImplementedError()
