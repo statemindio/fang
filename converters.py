@@ -181,24 +181,12 @@ class ProtoConverter(Converter):
         if expr.HasField("cons"):
 
             # make inside literal converter checking for type
-            tmp_res, tmp_type, tmp_vyper_type = self.visit_literal(expr.cons)
+            result, current_type, vyper_type = self.visit_literal(expr.cons)
 
-            current_type_length = extract_type_length(tmp_type, tmp_vyper_type)
-            if tmp_type not in needed_types or (current_type_length is not None and current_type_length != length):
-
-                current_type = get_random_element(needed_types)  # THINK: type is chosen randomly, but we can take first or last one
-                result, vyper_type = get_random_token(current_type, length)
-                result = str(result)
-
-                is_literal = True
-            else:
-
-                current_type = tmp_type
-                vyper_type = tmp_vyper_type
-                result = tmp_res
+            result, current_type, vyper_type, is_literal = check_type_requirements(
+                result, current_type, vyper_type, needed_types, length)
 
         elif expr_level == MAX_EXPRESSION_LEVEL:
-
             current_type = get_random_element(needed_types)
             result, vyper_type = get_random_token(current_type, length)
             result = str(result)
@@ -206,38 +194,20 @@ class ProtoConverter(Converter):
             is_literal = True
 
         elif expr.HasField("binop"):
-
-            (tmp_res, tmp_type, tmp_vyper_type) = self.visit_bin_op(
+            (result, current_type, vyper_type) = self.visit_bin_op(
                 expr.binop, available_vars, expr_level)
 
-            if tmp_type not in needed_types:
-
-                current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type, length)
-                result = str(result)
-
-                is_literal = True
-            else:
-                current_type = tmp_type
-                result = tmp_res
-                vyper_type = tmp_vyper_type
+            result, current_type, vyper_type, is_literal = check_type_requirements(
+                result, current_type, vyper_type, needed_types, length)
 
         elif expr.HasField("unop"):
 
-            (tmp_res, tmp_type, tmp_vyper_type) = self.visit_unary_op(
+            (result, current_type, vyper_type) = self.visit_unary_op(
                 expr.unop, available_vars, expr_level)
 
-            if tmp_type not in needed_types:
+            result, current_type, vyper_type, is_literal = check_type_requirements(
+                result, current_type, vyper_type, needed_types, length)
 
-                current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type, length)
-                result = str(result)
-
-                is_literal = True
-            else:
-                current_type = tmp_type
-                result = tmp_res
-                vyper_type = tmp_vyper_type
         elif expr.HasField("cr_min_proxy"):
             result = self.visit_create_min_proxy(expr.cr_min_proxy, available_vars)
             current_type = Type.ADDRESS
@@ -262,22 +232,12 @@ class ProtoConverter(Converter):
             result, current_type, vyper_type, is_literal = check_type_requirements(
                 result, current_type, vyper_type, needed_types, length)
         else:
-
-            tmp_res, tmp_type, tmp_vyper_type = self.visit_var_ref(
+            result, current_type, vyper_type = self.visit_var_ref(
                 expr.varref, available_vars)
 
-            if tmp_type not in needed_types:
+            result, current_type, vyper_type, is_literal = check_type_requirements(
+                result, current_type, vyper_type, needed_types, length)
 
-                current_type = get_random_element(needed_types)
-                result, vyper_type = get_random_token(current_type, length)
-                result = str(result)
-
-                is_literal = True
-            else:
-
-                current_type = tmp_type
-                vyper_type = tmp_vyper_type
-                result = tmp_res
             """
             # should fix if oneof is null
             # if random does not account for type size
