@@ -1,6 +1,6 @@
 from data_types import Type
 
-from types_d import Int, Bool, Decimal, BytesM, String
+from types_d import Int, Bool, Decimal, BytesM, String, Address, Bytes
 
 from utils import convert
 from utils import get_spaces, get_nearest_multiple
@@ -131,10 +131,12 @@ class ProtoConverter(Converter):
         return vyper_type, current_type
 
     def visit_address(self):
-        return "address"
+        addr = Address()
+        return addr.vyper_type
 
     def visit_byte_array(self, max_len):
-        return f"Bytes[{max_len}]"
+        b_arr = Bytes(max_len)
+        return b_arr.vyper_type
 
     def visit_reentrancy(self, ret):
         result = "@nonreentrant(\"" + ret.key + "\")"
