@@ -128,3 +128,15 @@ def test_string_eq():
 
     it = Int(16, False)
     assert s2 != it
+
+
+def test_int_type_hashable():
+    i = Int()
+    d = {i: "data"}
+    assert d[i] == "data"
+
+
+def test_string_type_hashable():
+    i = String(100)
+    d = {i: "data"}
+    assert d[i] == "data"
