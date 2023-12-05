@@ -126,8 +126,8 @@ class ProtoConverter(Converter):
     def visit_var_decl(self, variable, available_vars, is_global=False):
         current_type = self.visit_type(variable)
 
-        idx = available_vars.get(current_type, 0)
-        available_vars[current_type] = idx + 1
+        idx = available_vars.get(current_type.name, 0)
+        available_vars[current_type.name] = idx + 1
 
         result = 'x_' + current_type.name + "_" + str(idx) + " : " + current_type.vyper_type
         self.current_declared_variable = 'x_' + \
@@ -136,8 +136,8 @@ class ProtoConverter(Converter):
         if not is_global:
             result += " = "
 
-            tmp_res, _, tmp_vyper_type, is_literal = self.visit_expression(variable.expr,
-                                               available_vars, [current_type], 1)
+            tmp_res, _, is_literal = self.visit_expression(variable.expr,
+                                                           available_vars, [current_type], 1)
             # converted_res = convert(tmp_res, tmp_vyper_type, vyper_type, is_literal)
             result += tmp_res
         return result
@@ -188,7 +188,7 @@ class ProtoConverter(Converter):
 
             result, current_type, is_literal = check_type_requirements(result, current_type, needed_types)
         else:
-            result, current_type, vyper_type = self.visit_var_ref(
+            result, current_type, _ = self.visit_var_ref(
                 expr.varref, available_vars)
 
             result, current_type, is_literal = check_type_requirements(result, current_type, needed_types)
@@ -199,7 +199,7 @@ class ProtoConverter(Converter):
             current_type = get_random_element(needed_types)
             result = str(get_random_token(current_type))
             """
-        return result, current_type, current_type.vyper_type, is_literal
+        return result, current_type, is_literal
 
     def visit_var_ref(self, var_ref, available_vars, func_params=None, is_assign=False, needed_type = None):
         assert is_assign == (func_params is not None)  # EXPLAINED:  if var ref is not used as assigned var then func_params not needed
@@ -222,17 +222,17 @@ class ProtoConverter(Converter):
             current_type = Int()
 
         global_vars_type_max_idx = -1
-        if current_type in self.global_vars:
-            global_vars_type_max_idx = self.global_vars[current_type] - 1
+        if current_type.name in self.global_vars:
+            global_vars_type_max_idx = self.global_vars[current_type.name] - 1
 
         available_vars_type_max_idx = -1
-        if current_type in available_vars:
-            available_vars_type_max_idx = available_vars[current_type] - 1
+        if current_type.name in available_vars:
+            available_vars_type_max_idx = available_vars[current_type.name] - 1
 
         func_param_type_max_idx = -1
         if func_params:
-            if current_type in func_params:
-                func_param_type_max_idx = func_params[current_type] - 1
+            if current_type.name in func_params:
+                func_param_type_max_idx = func_params[current_type.name] - 1
 
         idx = -1
 
@@ -272,7 +272,6 @@ class ProtoConverter(Converter):
 
     def visit_bin_op(self, binop, available_vars, expr_level):
         op_type = None
-        vyper_type = None
 
         if binop.op == BinaryOp.BOp.ADD:
             needed_types = [Int(), Decimal()]
@@ -296,21 +295,18 @@ class ProtoConverter(Converter):
 
         elif binop.op == BinaryOp.BOp.AND:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [op_type]
             symbol = "and"
 
         elif binop.op == BinaryOp.BOp.OR:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [op_type]
             symbol = "or"
 
         elif binop.op == BinaryOp.BOp.EQ:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [Int(), Bool(),
                             Decimal(), Address(), Bytes(100)]  # TODO: generate random length of bytes
@@ -318,7 +314,6 @@ class ProtoConverter(Converter):
 
         elif binop.op == BinaryOp.BOp.INEQ:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [Int(), Bool(),
                             Decimal(), Address(), Bytes(100)]
@@ -326,28 +321,24 @@ class ProtoConverter(Converter):
 
         elif binop.op == BinaryOp.BOp.LESS:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [Int(), Bool(), Decimal()]
             symbol = "<"
 
         elif binop.op == BinaryOp.BOp.LESSEQ:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [Int(), Bool(), Decimal()]
             symbol = "<="
 
         elif binop.op == BinaryOp.BOp.GREATER:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [Int(), Bool(), Decimal()]
             symbol = ">"
 
         elif binop.op == BinaryOp.BOp.GREATEREQ:
             op_type = Bool()
-            vyper_type = "bool"
 
             needed_types = [Int(), Bool(), Decimal()]
             symbol = ">="
@@ -372,14 +363,13 @@ class ProtoConverter(Converter):
             needed_types = [Int()]
             symbol = ">>"
 
-        left_expr, left_type, left_vyper_type, _ = self.visit_expression(binop.left, available_vars,
-                                                     needed_types, expr_level + 1)
+        left_expr, left_type, _ = self.visit_expression(binop.left, available_vars,
+                                                        needed_types, expr_level + 1)
         if op_type is None:
             op_type = left_type  # EXPLAINED: expression type is based on type of left expression
-            vyper_type = left_type.vyper_type
 
-        right_expr, right_type, right_vyper_type, right_is_literal = self.visit_expression(binop.right, available_vars,
-                                                       needed_types, expr_level + 1)
+        right_expr, right_type, right_is_literal = self.visit_expression(binop.right, available_vars,
+                                                                         needed_types, expr_level + 1)
 
         result = "( " + left_expr + f" {symbol} "
         # if left_type != right_type:  # check here for conversion !
@@ -387,13 +377,13 @@ class ProtoConverter(Converter):
         #     result += str(result)
         # else:
         #     result += right_expr
-        if left_vyper_type != right_vyper_type:
+        if left_type.vyper_type != right_type.vyper_type:
             converted_right_expr = convert(right_expr, right_type.vyper_type, left_type.vyper_type, right_is_literal)
             if converted_right_expr is not None:
                 result += converted_right_expr
         result += " )"
 
-        return result, op_type, vyper_type
+        return result, op_type, op_type.vyper_type
 
     def visit_unary_op(self, unop, available_vars, expr_level: int):
 
@@ -440,8 +430,8 @@ class ProtoConverter(Converter):
             symbol = "~"
 
         # generates 0x0...0.symbol which is wrong
-        tmp_res, tmp_type, tmp_vyper_type, _ = self.visit_expression(unop.expr, available_vars,
-                                                      needed_types, expr_level + 1)
+        tmp_res, tmp_type, _ = self.visit_expression(unop.expr, available_vars,
+                                                     needed_types, expr_level + 1)
 
         # if current_type == Address() and len(tmp_res) == 42:
         #     # in outer visit_expression will gen random value due to
@@ -572,10 +562,10 @@ class ProtoConverter(Converter):
     def visit_func_input(self, param, available_vars, func_params):
         current_type = self.visit_type(param)
 
-        idx = available_vars.get(current_type, 0)
-        available_vars[current_type] = idx + 1
+        idx = available_vars.get(current_type.name, 0)
+        available_vars[current_type.name] = idx + 1
 
-        func_params[current_type] = available_vars[current_type]  # TO-DO check if this holds in every case
+        func_params[current_type.name] = available_vars[current_type.name]  # TO-DO check if this holds in every case
 
         result = 'x_' + current_type.name + "_" + str(idx)
         result += " : " + current_type.vyper_type
@@ -642,17 +632,16 @@ class ProtoConverter(Converter):
 
         result = var_ref + " = "
 
-        tmp_res, _, tmp_vyper_type, tmp_is_litera = self.visit_expression(assign.expr,
-                                           available_vars, [var_ref_type], 1)
-        #converted_tmp_res = convert(tmp_res, tmp_vyper_type, var_ref_vyper_type, tmp_is_litera)
+        tmp_res, _, tmp_is_literal = self.visit_expression(assign.expr,
+                                                           available_vars, [var_ref_type], 1)
+        # converted_tmp_res = convert(tmp_res, tmp_vyper_type, var_ref_vyper_type, tmp_is_literal)
         result += tmp_res
 
         return result
 
     def visit_if_stmt_case(self, ifstmtcase, available_vars, func_params, nesting_level):
 
-        result, _, _, _ = self.visit_expression(
-            ifstmtcase.cond, available_vars, [Bool()], 1)
+        result, _, _ = self.visit_expression(ifstmtcase.cond, available_vars, [Bool()], 1)
         result += ":\n"
         result += self.visit_block(ifstmtcase.if_body,
                                    available_vars, func_params, nesting_level + 1)
@@ -715,16 +704,16 @@ class ProtoConverter(Converter):
             range_string += self.visit_for_stmt_range(forstmt.ranged)
 
         int_type = Int()
-        if int_type not in available_vars:
-            available_vars[int_type] = 1
+        if int_type.name not in available_vars:
+            available_vars[int_type.name] = 1
         else:
-            idx = available_vars[int_type]
-            available_vars[int_type] += 1
+            idx = available_vars[int_type.name]
+            available_vars[int_type.name] += 1
 
-        if int_type not in func_params:
-            func_params[int_type] = 1
+        if int_type.name not in func_params:
+            func_params[int_type.name] = 1
         else:
-            func_params[int_type] += 1
+            func_params[int_type.name] += 1
 
         loop_var = f"x_INT_{idx}"
         result = f"for {loop_var} in " + range_string
@@ -737,17 +726,17 @@ class ProtoConverter(Converter):
     def visit_create_min_proxy(self, cmp, available_vars):
         result = 'create_minimal_proxy_to('
 
-        target_res, _, _, _ = self.visit_expression(
+        target_res, _, _ = self.visit_expression(
             cmp.target, available_vars, [Address()], 1)
 
         result += target_res
 
         if cmp.HasField("value"):
-            value_res, _, _, _ = self.visit_expression(
+            value_res, _, _ = self.visit_expression(
                 cmp.value, available_vars, [Int()], 1)
             result += ', value=' + value_res
         if cmp.HasField("salt"):
-            salt_res, _, _, _ = self.visit_expression(
+            salt_res, _, _ = self.visit_expression(
                 cmp.salt, available_vars, [BytesM(32)], 1)
             result += ', salt=' + salt_res
 
@@ -758,27 +747,27 @@ class ProtoConverter(Converter):
     def visit_create_from_blueprint(self, cfb, available_vars):
         result = 'create_from_blueprint('
 
-        target_res, _, _, _ = self.visit_expression(
+        target_res, _, _ = self.visit_expression(
             cfb.target, available_vars, [Address()], 1)
 
         result += target_res
 
         for arg in cfb.args:
             type_list = [Int(), Bool(), Decimal(), BytesM(), String(100), Address(), Bytes(100)]
-            arg_r, arg_t, _, _ = self.visit_expression(
+            arg_r, arg_t, _ = self.visit_expression(
                 arg, available_vars, [i for i in type_list], 1)  # TODO: damn...
             result += ',' + arg_r
 
         if cfb.HasField("value"):
-            value_res, _, _, _ = self.visit_expression(
+            value_res, _, _ = self.visit_expression(
                 cfb.value, available_vars, [Int()], 1)
             result += ', value=' + value_res
         if cfb.HasField("code_offset"):
-            value_res, _, _, _ = self.visit_expression(
+            value_res, _, _ = self.visit_expression(
                 cfb.value, available_vars, [Int()], 1)
             result += ', code_offset=' + value_res
         if cfb.HasField("salt"):
-            salt_res, _, _, _ = self.visit_expression(
+            salt_res, _, _ = self.visit_expression(
                 cfb.salt, available_vars, [BytesM()], 1)
             result += ', salt=' + salt_res
 
@@ -790,7 +779,7 @@ class ProtoConverter(Converter):
 
         result = "selfdestruct("
 
-        to_res, _, _, _ = self.visit_expression(sd.to, available_vars, [Address()], 1)
+        to_res, _, _ = self.visit_expression(sd.to, available_vars, [Address()], 1)
 
         result += to_res + ")"
 
@@ -803,7 +792,7 @@ class ProtoConverter(Converter):
         # FIXME: a random length of bytes array must be here
         # FIXME: as well as String
         # FIXME: And BytesM :)
-        to_res, _, _, _ = self.visit_expression(sha.value, available_vars, [Bytes(100), String(100), BytesM()], 1)
+        to_res, _, _ = self.visit_expression(sha.value, available_vars, [Bytes(100), String(100), BytesM()], 1)
 
         result += to_res + ")"
 
