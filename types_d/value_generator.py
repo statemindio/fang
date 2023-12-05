@@ -2,13 +2,19 @@ import os
 import random
 import string
 
-from utils import fill_address, checksum_encode
+from vyper.utils import checksum_encode
+
+from utils import fill_address
 
 
 class BytesRandomGen:
     def generate(self, m):
         # TODO: it must be checked whether hex representation is allowed for bytes array
-        return "0x" + os.urandom(m).hex()
+        # FIXME: this is the previous implementation which is not necessary fit to Bytes[m] array
+        val = random.randint(0, 2 ** 256 - 1)  # TO-DO: check range of random.randint
+        hex_val = hex(val)
+        # return "0x" + os.urandom(m).hex()
+        return f"b\"{hex_val}\""
 
 
 class BytesMRandomGen:
@@ -38,7 +44,11 @@ class BoolRandomGen:
 
 class StringRandomGen:
     def generate(self, m):
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=m))
+        l = random.randint(0, 2 ** 8 - 1)  # EXPLAINED: randomly generate len of string
+        if l > m:
+            l = m
+        s = ''.join(random.choices(string.ascii_letters + string.digits, k=l))
+        return f'"{s}"'
 
 
 class AddressRandomGen:
