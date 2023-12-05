@@ -4,6 +4,10 @@ import string
 import math
 import re
 
+from vyper.utils import checksum_encode
+
+import types_d as t
+
 from data_types import Type
 from data_types import Int, Bytes, Address, Decimal, String, Bool
 
@@ -21,33 +25,33 @@ def get_nearest_multiple(num, mul):
 # THINK: instead of using random values, we can create big dictionaries and take randomly values from them
 
 
-def get_random_token(type: Type, length=None):
-    if type == Type.INT:
-        length = 256 if length is None else length
-        return random.randint(0, 2**length - 1), f"uint{length}"
-    elif type == Type.ADDRESS:
-
-        rval = fill_address(hex(random.randint(0, 2**160 - 1)))
-        return checksum_encode(rval), "address"
-    elif type == Type.BYTEARRAY:
-
-        rval = random.randint(0, 2**256 - 1)  # TO-DO: check range of random.randint
-        hex_val = hex(rval)
-        return f"b\"{hex_val}\"", f"Bytes[{len(hex_val) / 2}]"
-    elif type == Type.BOOL:
-
-        return bool(random.getrandbits(1)), "bool"
-    elif type == Type.DECIMAL:
-        
-        return random.randint(0, 2**168 - 1) / 10**10 - (2**167 / 10**10), "decimal"
-    elif type == Type.BytesM:
-        m = random.randint(0, 32) if length is None else length
-        return "0x" + os.urandom(m).hex(), f"bytes{m}"
-    elif type == Type.STRING:
-
-        l = random.randint(0, 2**8 - 1)  # EXPLAINED: randomly generate len of string
-        res = ''.join(random.choices(string.ascii_letters + string.digits, k=l))
-        return f"\"{res}\"", f"String[{l}]"  # TO-DO: Add more characters, String can have not only letters and digits
+# def get_random_token(type: Type, length=None):
+#     if type == Type.INT:
+#         length = 256 if length is None else length
+#         return random.randint(0, 2**length - 1), f"uint{length}"
+#     elif type == Type.ADDRESS:
+#
+#         rval = fill_address(hex(random.randint(0, 2**160 - 1)))
+#         return checksum_encode(rval), "address"
+#     elif type == Type.BYTEARRAY:
+#
+#         rval = random.randint(0, 2**256 - 1)  # TO-DO: check range of random.randint
+#         hex_val = hex(rval)
+#         return f"b\"{hex_val}\"", f"Bytes[{len(hex_val) / 2}]"
+#     elif type == Type.BOOL:
+#
+#         return bool(random.getrandbits(1)), "bool"
+#     elif type == Type.DECIMAL:
+#
+#         return random.randint(0, 2**168 - 1) / 10**10 - (2**167 / 10**10), "decimal"
+#     elif type == Type.BytesM:
+#         m = random.randint(0, 32) if length is None else length
+#         return "0x" + os.urandom(m).hex(), f"bytes{m}"
+#     elif type == Type.STRING:
+#
+#         l = random.randint(0, 2**8 - 1)  # EXPLAINED: randomly generate len of string
+#         res = ''.join(random.choices(string.ascii_letters + string.digits, k=l))
+#         return f"\"{res}\"", f"String[{l}]"  # TO-DO: Add more characters, String can have not only letters and digits
 
 
 def get_random_element(arr):
@@ -103,7 +107,7 @@ def convert(instance, from_type, to_type, is_literal):
             intermediate = "convert(" + instance + ", bytes20)"
         elif from_type_obj.n // 8 > 20:
 
-            value, _ = get_random_token(Type.INT) 
+            value = t.Int().generate()
 
             instance = str(adjust_value(value, 20 * 8))
         elif from_type_obj.is_signed:  
@@ -118,7 +122,6 @@ def convert(instance, from_type, to_type, is_literal):
     if isinstance(from_type_obj, Bytes) and isinstance(to_type_obj, Bytes):
         return "convert(" + instance + ", " + to_type + ")"
 
-    
 
 def get_value_from_str(value, type):
     try:
@@ -127,7 +130,8 @@ def get_value_from_str(value, type):
         elif type == Type.DECIMAL:
             return float(value)
     except Exception as e:
-        raise e 
+        raise e
+
 
 def adjust_value(value, bits, singed=False):
 
@@ -147,6 +151,7 @@ def adjust_value(value, bits, singed=False):
             value = "0x" + value[2: (bits // 4)]
         else:
             pass  # TO-DO: check how to adjust str to certain number of bits
+
 
 def extract_type(_type):
     res = None
@@ -180,6 +185,7 @@ def extract_type(_type):
 
     return res
 
+
 # https://github.com/vyperlang/vyper/blob/158099b9c1a49b5472293c1fb7a4baf3cd015eb5/vyper/utils.py#L44C1-L51C67
 try:
     from Crypto.Hash import keccak  # type: ignore
@@ -190,10 +196,12 @@ except ImportError:
 
     keccak256 = lambda x: _sha3.sha3_256(x).digest()  # noqa: E731
 
+
 def fill_address(adr):
     if len(adr) < 42:
         adr += "0" * (42 - len(adr))
     return adr
+
 
 def bytes_to_int(bytez):
     o = 0
@@ -202,48 +210,48 @@ def bytes_to_int(bytez):
     return o
 
 
-def checksum_encode(addr):  # Expects an input of the form 0x<40 hex chars>
-    assert addr[:2] == "0x" and len(addr) == 42, addr
-    o = ""
-    v = bytes_to_int(keccak256(addr[2:].lower().encode("utf-8")))
-    for i, c in enumerate(addr[2:]):
-        if c in "0123456789":
-            o += c
-        else:
-            o += c.upper() if (v & (2 ** (255 - 4 * i))) else c.lower()
-    return "0x" + o
+# def checksum_encode(addr):  # Expects an input of the form 0x<40 hex chars>
+#     assert addr[:2] == "0x" and len(addr) == 42, addr
+#     o = ""
+#     v = bytes_to_int(keccak256(addr[2:].lower().encode("utf-8")))
+#     for i, c in enumerate(addr[2:]):
+#         if c in "0123456789":
+#             o += c
+#         else:
+#             o += c.upper() if (v & (2 ** (255 - 4 * i))) else c.lower()
+#     return "0x" + o
 
 
-def check_type_requirements(result, current_type, vyper_type, needed_types, length=None):
+def check_type_requirements(result, current_type, needed_types, length=None):
     if current_type in needed_types:
-        return result, current_type, vyper_type, False
+        return result, current_type, False
 
     current_type = get_random_element(needed_types)
     # FIXME: `get_random_token(BytesM)` returns a token of length within a range [1; 32]
     #  and a corresponding vyper_type. Meanwhile it must be exactly 32 bytes length
-    result, vyper_type = get_random_token(current_type, length)
+    result = current_type.generate()
     result = str(result)
 
-    return result, current_type, vyper_type, True
+    return result, current_type, True
 
 
-def extract_type_length(current_type, vyper_type):
-    if current_type not in (Type.INT, Type.BytesM):
-        return None
-
-    def _extract_int_length(_vyper_type):
-        split = _vyper_type.split("int")
-        return int(split[1])
-
-    def _extract_bytes_length(_vyper_type):
-        print(_vyper_type)
-        split = _vyper_type.split("bytes")
-        return int(split[1])
-
-    extractor_map = {
-        Type.INT: _extract_int_length,
-        Type.BytesM: _extract_bytes_length
-    }
-
-    type_length = extractor_map[current_type](vyper_type)
-    return type_length
+# def extract_type_length(current_type, vyper_type):
+#     if current_type not in (Type.INT, Type.BytesM):
+#         return None
+#
+#     def _extract_int_length(_vyper_type):
+#         split = _vyper_type.split("int")
+#         return int(split[1])
+#
+#     def _extract_bytes_length(_vyper_type):
+#         print(_vyper_type)
+#         split = _vyper_type.split("bytes")
+#         return int(split[1])
+#
+#     extractor_map = {
+#         Type.INT: _extract_int_length,
+#         Type.BytesM: _extract_bytes_length
+#     }
+#
+#     type_length = extractor_map[current_type](vyper_type)
+#     return type_length
