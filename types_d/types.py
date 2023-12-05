@@ -17,6 +17,9 @@ class Bytes(BaseType):
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self._m == other.m
 
+    def __hash__(self):
+        return hash(self.name)
+
     @property
     def m(self):
         return self._m
@@ -51,6 +54,9 @@ class Int(BaseType):
 
     def __eq__(self, other):
         return isinstance(other, Int) and self._n == other.n and self._signed == other.signed
+
+    def __hash__(self):
+        return hash(self.name)
 
     @property
     def n(self):
