@@ -83,6 +83,9 @@ class Bool(BaseType):
     def vyper_type(self):
         return "bool"
 
+    def generate(self):
+        return self._value_generator.generate()
+
 
 class Decimal(BaseType):
     def __init__(self):
