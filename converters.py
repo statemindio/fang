@@ -309,7 +309,7 @@ class ProtoConverter(Converter):
             op_type = Bool()
 
             needed_types = [Int(), Bool(),
-                            Decimal(), Address(), Bytes(100)]  # TODO: generate random length of bytes
+                            Decimal(), Address(), Bytes(100)]
             symbol = "=="
 
         elif binop.op == BinaryOp.BOp.INEQ:
@@ -755,7 +755,7 @@ class ProtoConverter(Converter):
         for arg in cfb.args:
             type_list = [Int(), Bool(), Decimal(), BytesM(), String(100), Address(), Bytes(100)]
             arg_r, arg_t, _ = self.visit_expression(
-                arg, available_vars, [i for i in type_list], 1)  # TODO: damn...
+                arg, available_vars, type_list, 1)
             result += ',' + arg_r
 
         if cfb.HasField("value"):
