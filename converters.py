@@ -704,16 +704,11 @@ class ProtoConverter(Converter):
             range_string += self.visit_for_stmt_range(forstmt.ranged)
 
         int_type = Int()
-        if int_type.name not in available_vars:
-            available_vars[int_type.name] = 1
-        else:
-            idx = available_vars[int_type.name]
-            available_vars[int_type.name] += 1
+        idx = available_vars.get(int_type.name, 0)
+        available_vars[int_type.name] = idx + 1
 
-        if int_type.name not in func_params:
-            func_params[int_type.name] = 1
-        else:
-            func_params[int_type.name] += 1
+        func_params.setdefault(int_type.name, 0)
+        func_params[int_type.name] += 1
 
         loop_var = f"x_INT_{idx}"
         result = f"for {loop_var} in " + range_string
