@@ -36,23 +36,36 @@ message VarRef {
   uint32 varnum = 8;
 }
 
-message BoolOp {
+enum ArithmeticOp {
+  ADD = 0;
+  SUB = 1;
+  MUL = 2;
+  DIV = 3;
+  MOD = 4;
+  EXP = 5;
+}
+
+message BoolBinOp {
   enum BOp {
     AND = 0;
     OR = 1;
     EQ = 2;
     INEQ = 3;
-    LESS = 4;
-    LESSEQ = 5;
-    GREATER = 6;
-    GREATEREQ = 7;
   }
   BOp op = 1;
+  BoolExpression left = 2;
+  BoolExpression right = 3;
+}
+
+message BoolUnOp {
+  BoolExpression expr = 1;
 }
 
 message BoolExpression {
+  // TODO: add var references
   oneof expr {
-    BoolOp boolOp = 1;
+    BoolBinOp boolBinOp = 1;
+    BoolUnOp boolUnOp = 2;
   }
 }
 
@@ -279,7 +292,7 @@ message CreateMinimalProxy {
 
 message CreateFromBlueprint {
   AddressExpression target = 1;
-//  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
+  //  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
   repeated BoolExpression rawArgs = 3;
   optional IntExpression value = 4;
   optional IntExpression code_offset = 5;
