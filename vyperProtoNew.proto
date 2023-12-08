@@ -1,0 +1,299 @@
+syntax = "proto3";
+
+message Int {
+  uint32 n = 1;
+  bool sign = 2;
+}
+
+message Bool {}
+
+message Decimal {}
+
+message BytesM {
+  uint32 m = 1;
+}
+
+message String {
+  uint32 max_len = 1;
+}
+
+message Address {}
+
+message ByteArray {
+  uint32 max_len = 1;
+}
+
+message VarRef {
+  oneof type {
+    Bool b = 2;
+    Decimal d = 3;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+  }
+  Int i = 1;
+  uint32 varnum = 8;
+}
+
+message BoolOp {
+  enum BOp {
+    AND = 0;
+    OR = 1;
+    EQ = 2;
+    INEQ = 3;
+    LESS = 4;
+    LESSEQ = 5;
+    GREATER = 6;
+    GREATEREQ = 7;
+  }
+  BOp op = 1;
+}
+
+message BoolExpression {
+  oneof expr {
+    BoolOp boolOp = 1;
+  }
+}
+
+message AddressExpression {
+  // TODO: add var references
+  oneof expr {
+    CreateMinimalProxy cmp = 1;
+    CreateFromBlueprint cfb = 2;
+  }
+  Literal lit = 3;
+}
+
+message IntExpression {
+  // TODO: add var references
+  Literal lit = 3;
+}
+
+message BytesMExpression {
+  // TODO: add var references
+  Literal lit = 3;
+  oneof expr {
+    Sha256 sha = 1;
+  }
+}
+
+message BytesExpression {
+  // TODO: define
+}
+
+message StringExpression {
+  // TODO: define
+}
+
+message DecimalExpression {
+  // TODO: define
+}
+
+message TypedExpression {
+  AddressExpression addrExp = 1;
+  BoolExpression boolExp = 2;
+  BytesMExpression bmExp = 3;
+  BytesExpression bExp = 4;
+  StringExpression strExp = 5;
+  Decimal decExpression = 6;
+}
+
+message Literal {
+  bool boolval = 2;
+  uint64 decimalval = 3; // TO-DO: make this as int64 to enable signed variables
+  bytes bMval = 4;
+  string strval = 5;
+  uint32 addval = 6;
+  uint32 barrval = 7;
+  uint64 intval = 1; // check if we can make it just int
+}
+
+//message BinaryOp {
+//  enum BOp {
+//    ADD = 0;
+//    SUB = 1;
+//    MUL = 2;
+//    DIV = 3;
+//    MOD = 4;
+//    EXP = 5;
+//    AND = 6;
+//    OR = 7;
+//    EQ = 8;
+//    INEQ = 9;
+//    LESS = 10;
+//    LESSEQ = 11;
+//    GREATER = 12;
+//    GREATEREQ = 13;
+//    BIT_AND = 14;
+//    BIT_OR = 15;
+//    BIT_XOR = 16;
+//    LEFT_SHIFT = 17;
+//    RIGHT_SHIFT = 18;
+//  }
+//
+//  BOp op = 1;
+//  Expression left = 2;
+//  Expression right = 3;
+//}
+//
+//message UnaryOp {
+//  enum UOp {
+//    NOT = 0;
+//    MINUS = 1;
+//    BIT_NOT = 2;
+//    BALANCE = 3;
+//    CODEHASH = 4;
+//    CODESIZE = 5;
+//    IS_CONTRACT = 6;
+//    CODE = 7;
+//  }
+//
+//  UOp op = 1;
+//  Expression expr = 2;
+//}
+
+//message Expression {
+//  oneof expr_oneof {
+//    Literal cons = 2;
+//    BinaryOp binop = 3;
+//    UnaryOp unop = 4;
+//    // NullaryOp nop = 5;
+//    CreateMinimalProxy cr_min_proxy = 5;
+//    CreateFromBlueprint cr_bp = 6;
+//    Sha256 sha = 7;
+//  }
+//  VarRef varref = 1;
+//}
+//
+//message IfStmtCase {
+//  Expression cond = 1;
+//  Block if_body = 2;
+//}
+//
+//message IfStmt {
+//  repeated IfStmtCase cases = 1;
+//  optional Block else_case = 2;
+//}
+//
+//message ForStmtRanged {
+//  int32 start = 1;
+//  int32 stop = 2;
+//}
+//
+//// imo should be expression, but there are restrictions
+//// ref_id for range(x, x + N)
+//message ForStmtVariable {
+//  optional VarRef ref_id = 1;
+//  int32 length = 2;
+//}
+//
+//message ForStmt {
+//  oneof for_oneof {
+//    ForStmtVariable variable = 2;
+//  }
+//  ForStmtRanged ranged = 1;
+//  Block body = 3;
+//}
+//
+//message VarDecl {
+//  oneof type {
+//    Bool b = 2;
+//    Decimal d = 3;
+//    BytesM bM = 4;
+//    String s = 5;
+//    Address adr = 6;
+//    ByteArray barr = 7;
+//  }
+//  Int i = 1;
+//  Expression expr = 8;
+//}
+//
+//message AssignmentStatement {
+//  VarRef ref_id = 1;
+//  Expression expr = 2;
+//}
+//
+//// probably add builtins to expression too
+//message Statement {
+//  oneof stmt_oneof {
+//    VarDecl decl = 1;
+//    ForStmt for_stmt = 3;
+//    IfStmt if_stmt = 4;
+//    Selfdestruct selfd = 7;
+//  }
+//  AssignmentStatement assignment = 2;
+//}
+//
+//message Block {
+//  repeated Statement statements = 1;
+//}
+//
+//message Reentrancy {
+//  string key = 1;
+//}
+//
+//message FuncParam {
+//  oneof type {
+//    Bool b = 2;
+//    Decimal d = 3;
+//    BytesM bM = 4;
+//    String s = 5;
+//    Address adr = 6;
+//    ByteArray barr = 7;
+//  }
+//  Int i = 1;
+//}
+//
+//message Func {
+//  enum Visibility {
+//    EXTERNAL = 0;
+//    INTERNAL = 1;
+//  }
+//
+//  enum Mutability {
+//    PURE = 0;
+//    VIEW = 1;
+//    NONPAYABLE = 2;
+//    PAYABLE = 3;
+//  }
+//
+//  Visibility vis = 1;
+//  Mutability mut = 2;
+//  optional Reentrancy ret = 3;
+//  repeated FuncParam input_params = 4;
+//  repeated FuncParam output_params = 5;
+//  Block block = 6;
+//}
+
+//message Contract {
+//  repeated VarDecl decls = 1;
+//  repeated Func functions = 2;
+//}
+
+message CreateMinimalProxy {
+  AddressExpression target = 1;
+  optional IntExpression value = 2;
+  optional BytesMExpression salt = 3;
+}
+
+message CreateFromBlueprint {
+  AddressExpression target = 1;
+//  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
+  repeated BoolExpression rawArgs = 3;
+  optional IntExpression value = 4;
+  optional IntExpression code_offset = 5;
+  optional BytesMExpression salt = 6;
+}
+
+message Selfdestruct {
+  AddressExpression to = 1;
+}
+
+message Sha256 {
+  oneof typed_value {
+    StringExpression strVal = 1;
+    BytesExpression bVal = 2;
+  }
+  BytesMExpression bmVal = 3;
+}
