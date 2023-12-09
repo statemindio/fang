@@ -57,6 +57,34 @@ message BoolBinOp {
   BoolExpression right = 3;
 }
 
+message IntBoolBinOp {
+  enum BOp {
+    EQ = 0;
+    INEQ = 1;
+    LESS = 2;
+    LESSEQ = 3;
+    GREATER = 4;
+    GREATEREQ = 5;
+  }
+  BOp op = 1;
+  IntExpression left = 2;
+  IntExpression right = 3;
+}
+
+message DecimalBoolBinOp {
+  enum BOp {
+    EQ = 0;
+    INEQ = 1;
+    LESS = 2;
+    LESSEQ = 3;
+    GREATER = 4;
+    GREATEREQ = 5;
+  }
+  BOp op = 1;
+  DecimalExpression left = 2;
+  DecimalExpression right = 3;
+}
+
 message BoolUnOp {
   BoolExpression expr = 1;
 }
@@ -66,6 +94,8 @@ message BoolExpression {
   oneof expr {
     BoolBinOp boolBinOp = 1;
     BoolUnOp boolUnOp = 2;
+    IntBoolBinOp intBoolBinOp = 3;
+    DecimalBoolBinOp decBoolBinOp = 4;
   }
 }
 
