@@ -108,9 +108,31 @@ message AddressExpression {
   Literal lit = 3;
 }
 
+message IntBinOp {
+  enum BOp {
+    ADD = 0;
+    SUB = 1;
+    MUL = 2;
+    DIV = 3;
+    MOD = 4;
+    EXP = 5;
+    BIT_AND = 6;
+    BIT_OR = 7;
+    BIT_XOR = 8;
+    LEFT_SHIFT = 9;
+    RIGHT_SHIFT = 10;
+  }
+
+  BOp op = 1;
+  IntExpression left = 2;
+}
+
 message IntExpression {
   // TODO: add var references
-  Literal lit = 3;
+  Literal lit = 1;
+  oneof expr {
+    IntBoolBinOp binOp = 2;
+  }
 }
 
 message BytesMExpression {
