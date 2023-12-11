@@ -230,111 +230,111 @@ message Literal {
 //  }
 //  VarRef varref = 1;
 //}
-//
-//message IfStmtCase {
-//  Expression cond = 1;
-//  Block if_body = 2;
-//}
-//
-//message IfStmt {
-//  repeated IfStmtCase cases = 1;
-//  optional Block else_case = 2;
-//}
-//
-//message ForStmtRanged {
-//  int32 start = 1;
-//  int32 stop = 2;
-//}
-//
-//// imo should be expression, but there are restrictions
-//// ref_id for range(x, x + N)
-//message ForStmtVariable {
-//  optional VarRef ref_id = 1;
-//  int32 length = 2;
-//}
-//
-//message ForStmt {
-//  oneof for_oneof {
-//    ForStmtVariable variable = 2;
-//  }
-//  ForStmtRanged ranged = 1;
-//  Block body = 3;
-//}
-//
-//message VarDecl {
-//  oneof type {
-//    Bool b = 2;
-//    Decimal d = 3;
-//    BytesM bM = 4;
-//    String s = 5;
-//    Address adr = 6;
-//    ByteArray barr = 7;
-//  }
-//  Int i = 1;
-//  Expression expr = 8;
-//}
-//
-//message AssignmentStatement {
-//  VarRef ref_id = 1;
-//  Expression expr = 2;
-//}
-//
-//// probably add builtins to expression too
-//message Statement {
-//  oneof stmt_oneof {
-//    VarDecl decl = 1;
-//    ForStmt for_stmt = 3;
-//    IfStmt if_stmt = 4;
-//    Selfdestruct selfd = 7;
-//  }
-//  AssignmentStatement assignment = 2;
-//}
-//
-//message Block {
-//  repeated Statement statements = 1;
-//}
-//
-//message Reentrancy {
-//  string key = 1;
-//}
-//
-//message FuncParam {
-//  oneof type {
-//    Bool b = 2;
-//    Decimal d = 3;
-//    BytesM bM = 4;
-//    String s = 5;
-//    Address adr = 6;
-//    ByteArray barr = 7;
-//  }
-//  Int i = 1;
-//}
-//
-//message Func {
-//  enum Visibility {
-//    EXTERNAL = 0;
-//    INTERNAL = 1;
-//  }
-//
-//  enum Mutability {
-//    PURE = 0;
-//    VIEW = 1;
-//    NONPAYABLE = 2;
-//    PAYABLE = 3;
-//  }
-//
-//  Visibility vis = 1;
-//  Mutability mut = 2;
-//  optional Reentrancy ret = 3;
-//  repeated FuncParam input_params = 4;
-//  repeated FuncParam output_params = 5;
-//  Block block = 6;
-//}
 
-//message Contract {
-//  repeated VarDecl decls = 1;
-//  repeated Func functions = 2;
-//}
+message IfStmtCase {
+  BoolExpression cond = 1;
+  Block if_body = 2;
+}
+
+message IfStmt {
+  repeated IfStmtCase cases = 1;
+  optional Block else_case = 2;
+}
+
+message ForStmtRanged {
+  int32 start = 1;
+  int32 stop = 2;
+}
+
+// imo should be expression, but there are restrictions
+// ref_id for range(x, x + N)
+message ForStmtVariable {
+  optional VarRef ref_id = 1;
+  int32 length = 2;
+}
+
+message ForStmt {
+  oneof for_oneof {
+    ForStmtVariable variable = 2;
+  }
+  ForStmtRanged ranged = 1;
+  Block body = 3;
+}
+
+message VarDecl {
+  oneof type {
+    Bool b = 2;
+    Decimal d = 3;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+  }
+  Int i = 1;
+  TypedExpression expr = 8;
+}
+
+message AssignmentStatement {
+  VarRef ref_id = 1;
+  TypedExpression expr = 2;
+}
+
+// probably add builtins to expression too
+message Statement {
+  oneof stmt_oneof {
+    VarDecl decl = 1;
+    ForStmt for_stmt = 3;
+    IfStmt if_stmt = 4;
+    Selfdestruct selfd = 7;
+  }
+  AssignmentStatement assignment = 2;
+}
+//
+message Block {
+  repeated Statement statements = 1;
+}
+
+message Reentrancy {
+  string key = 1;
+}
+
+message FuncParam {
+  oneof type {
+    Bool b = 2;
+    Decimal d = 3;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+  }
+  Int i = 1;
+}
+
+message Func {
+  enum Visibility {
+    EXTERNAL = 0;
+    INTERNAL = 1;
+  }
+
+  enum Mutability {
+    PURE = 0;
+    VIEW = 1;
+    NONPAYABLE = 2;
+    PAYABLE = 3;
+  }
+
+  Visibility vis = 1;
+  Mutability mut = 2;
+  optional Reentrancy ret = 3;
+  repeated FuncParam input_params = 4;
+  repeated FuncParam output_params = 5;
+  Block block = 6;
+}
+
+message Contract {
+  repeated VarDecl decls = 1;
+  repeated Func functions = 2;
+}
 
 message CreateMinimalProxy {
   AddressExpression target = 1;
