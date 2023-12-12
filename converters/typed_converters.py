@@ -8,12 +8,13 @@ class TypedConverter:
         self.type_stack = []
         self._expression_handlers = {}  # TODO: define expression handlers
         self._available_vars = {}
+        self.result = ""
 
     def visit(self):
         for i, var in enumerate(self.contract.decl):
             if i >= MAX_STORAGE_VARIABLES:
                 break
-            # TODO: handle a storage variable
+            self.result += self.visit_var_decl(var, True)
 
         for i, func in enumerate(self.contract.functions):
             if i >= MAX_FUNCTIONS:
