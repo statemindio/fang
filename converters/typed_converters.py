@@ -61,14 +61,23 @@ class TypedConverter:
 
     def visit_address_expression(self, expr, current_type):
         if expr.HasField("cmp"):
-            return self.visit_create_min_proxy(expr.cmp)
+            return self.visit_create_min_proxy(expr.cmp, current_type)
         if expr.HasField("cfb"):
             return self.visit_create_from_blueprint(expr.cfb)
         return self.create_literal(expr.lit, current_type)
 
-    def visit_create_min_proxy(self, cmp):
-        # TODO: implement
-        pass
+    def visit_create_min_proxy(self, cmp, current_type):
+        target = self.visit_address_expression(cmp.target, current_type)
+        result = f"create_minimal_proxy_to({target}"
+        if cmp.HasField("value"):
+            value = self._visit_int_expression(cmp.value, Int(256))
+            result = f"{result}, value = {value}"
+        if cmp.HasField("salt"):
+            salt = self._visit_bytes_expression(cmp.salt, BytesM(32))
+            result = f"{result}, salt = {salt}"
+        result = f"{result})"
+
+        return result
 
     def visit_create_from_blueprint(self, cfb):
         # TODO: implement
