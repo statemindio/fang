@@ -104,3 +104,15 @@ class TypedConverter:
     def create_literal(self, lit, current_type):
         # TODO: implement
         pass
+
+    def _visit_bool_expression(self, expr):
+        # TODO: implement
+        pass
+
+    def _visit_int_expression(self, expr, current_type):
+        # TODO: implement
+        pass
+
+    def _visit_bytes_m_expression(self, expr, current_type):
+        # TODO: implement
+        pass
