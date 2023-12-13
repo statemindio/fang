@@ -58,3 +58,22 @@ class TypedConverter:
     def visit_func(self, function):
         # TODO: implement
         pass
+
+    def visit_address_expression(self, expr, current_type):
+        if expr.HasField("cmp"):
+            return self.visit_create_min_proxy(expr.cmp)
+        if expr.HasField("cfb"):
+            return self.visit_create_from_blueprint(expr.cfb)
+        return self.create_literal(expr.lit, current_type)
+
+    def visit_create_min_proxy(self, cmp):
+        # TODO: implement
+        pass
+
+    def visit_create_from_blueprint(self, cfb):
+        # TODO: implement
+        pass
+
+    def create_literal(self, lit, current_type):
+        # TODO: implement
+        pass
