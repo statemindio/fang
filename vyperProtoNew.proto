@@ -345,7 +345,7 @@ message CreateMinimalProxy {
 message CreateFromBlueprint {
   AddressExpression target = 1;
   //  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
-  repeated BoolExpression rawArgs = 3;
+  optional BoolExpression rawArgs = 3;
   optional IntExpression value = 4;
   optional IntExpression code_offset = 5;
   optional BytesMExpression salt = 6;

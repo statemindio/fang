@@ -73,15 +73,33 @@ class TypedConverter:
             value = self._visit_int_expression(cmp.value, Int(256))
             result = f"{result}, value = {value}"
         if cmp.HasField("salt"):
-            salt = self._visit_bytes_expression(cmp.salt, BytesM(32))
+            salt = self._visit_bytes_m_expression(cmp.salt, BytesM(32))
             result = f"{result}, salt = {salt}"
         result = f"{result})"
 
         return result
 
-    def visit_create_from_blueprint(self, cfb):
-        # TODO: implement
-        pass
+    def visit_create_from_blueprint(self, cfb, current_type):
+        target = self.visit_address_expression(cfb.target, current_type)
+        result = f"create_from_blueprint({target}"
+
+        # TODO: args parameter is not handled yet
+
+        if cfb.HasField("rawArgs"):
+            raw_args = self._visit_bool_expression(cfb.rawArgs)
+            result = f"{result}, raw_args = {raw_args}"
+        if cfb.HasField("value"):
+            value = self._visit_int_expression(cfb.value, Int(256))
+            result = f"{result}, value = {value}"
+        if cfb.HasField("code_offset"):
+            offset = self._visit_int_expression(cfb.code_offset, Int(256))
+            result = f"{result}, code_offset = {offset}"
+        if cfb.HasField("salt"):
+            salt = self._visit_bytes_m_expression(cfb.salt, BytesM(32))
+            result = f"{result}, salt = {salt}"
+        result = f"{result})"
+
+        return result
 
     def create_literal(self, lit, current_type):
         # TODO: implement
