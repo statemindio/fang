@@ -63,7 +63,7 @@ class TypedConverter:
         if expr.HasField("cmp"):
             return self.visit_create_min_proxy(expr.cmp, current_type)
         if expr.HasField("cfb"):
-            return self.visit_create_from_blueprint(expr.cfb)
+            return self.visit_create_from_blueprint(expr.cfb, current_type)
         return self.create_literal(expr.lit, current_type)
 
     def visit_create_min_proxy(self, cmp, current_type):
