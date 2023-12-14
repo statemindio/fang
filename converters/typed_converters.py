@@ -1,12 +1,22 @@
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 
+BIN_OP_MAP = {
+
+}
+
+
+def get_bin_op(op, op_set):
+    return op_set[op]
+
 
 class TypedConverter:
     def __init__(self, msg):
         self.contract = msg
         self.type_stack = []
-        self._expression_handlers = {}  # TODO: define expression handlers
+        self._expression_handlers = {
+            "INT": self._visit_int_expression
+        }  # TODO: define expression handlers
         self._available_vars = {}
         self.result = ""
 
@@ -110,8 +120,13 @@ class TypedConverter:
         pass
 
     def _visit_int_expression(self, expr, current_type):
-        # TODO: implement
-        pass
+        if expr.HasField("binOp"):
+            left = self._visit_int_expression(expr.binOp.left, current_type)
+            right = self._visit_int_expression(expr.binOp.right, current_type)
+            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            result = f"{left} {bin_op} {right}"
+            return result
+        return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_m_expression(self, expr, current_type):
         # TODO: implement
