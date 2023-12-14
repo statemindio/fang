@@ -5,6 +5,14 @@ BIN_OP_MAP = {
 
 }
 
+BIN_OP_BOOL_MAP = {
+
+}
+
+INT_BIN_OP_BOOL_MAP = {
+
+}
+
 
 def get_bin_op(op, op_set):
     return op_set[op]
@@ -17,6 +25,7 @@ class TypedConverter:
         self._expression_handlers = {
             "INT": self._visit_int_expression,
             "BYTESM": self._visit_bytes_m_expression,
+            "BOOL": self._visit_bool_expression,
         }  # TODO: define expression handlers
         self._available_vars = {}
         self.result = ""
@@ -116,9 +125,31 @@ class TypedConverter:
         # TODO: implement
         pass
 
-    def _visit_bool_expression(self, expr):
-        # TODO: implement
-        pass
+    def _visit_bool_expression(self, expr, current_type):
+        if expr.HasField("boolBinOp"):
+            left = self._visit_bool_expression(expr.boolBinOp.left, current_type)
+            right = self._visit_bool_expression(expr.boolBinOp.right, current_type)
+            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
+            result = f"{left} {bin_op} {right}"
+            return result
+        if expr.HasField("boolUnOp"):
+            operand = self._visit_bool_expression(expr.boolUnOp.expr, current_type)
+            result = f"not {operand}"
+            return result
+        if expr.HasField("intBoolBinOp"):
+            # TODO: here probably must be different kinds of Int
+            left = self._visit_int_expression(expr.intBoolBinOp.left, Int())
+            right = self._visit_int_expression(expr.intBoolBinOp.right, Int())
+            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            result = f"{left} {bin_op} {right}"
+            return result
+        if expr.HasField("decBoolBinOp"):
+            left = self._visit_decimal_expression(expr.decBoolBinOp.left, Decimal())
+            right = self._visit_decimal_expression(expr.decBoolBinOp.right, Decimal())
+            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            result = f"{left} {bin_op} {right}"
+            return result
+        return self.create_literal(expr.lit, current_type)
 
     def _visit_int_expression(self, expr, current_type):
         if expr.HasField("binOp"):
@@ -136,5 +167,9 @@ class TypedConverter:
         return self.create_literal(expr.lit, current_type)
 
     def _visit_sha256(self, expr, current_type):
+        # TODO: implement
+        pass
+
+    def _visit_decimal_expression(self, expr, current_type):
         # TODO: implement
         pass
