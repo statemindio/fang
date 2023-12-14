@@ -97,6 +97,7 @@ message BoolExpression {
     IntBoolBinOp intBoolBinOp = 3;
     DecimalBoolBinOp decBoolBinOp = 4;
   }
+  Literal lit = 5;
 }
 
 message AddressExpression {
@@ -290,6 +291,7 @@ message Statement {
   }
   AssignmentStatement assignment = 2;
 }
+
 //
 message Block {
   repeated Statement statements = 1;
