@@ -15,7 +15,8 @@ class TypedConverter:
         self.contract = msg
         self.type_stack = []
         self._expression_handlers = {
-            "INT": self._visit_int_expression
+            "INT": self._visit_int_expression,
+            "BYTESM": self._visit_bytes_m_expression,
         }  # TODO: define expression handlers
         self._available_vars = {}
         self.result = ""
@@ -129,5 +130,11 @@ class TypedConverter:
         return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_m_expression(self, expr, current_type):
+        if expr.HasField("sha"):
+            # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
+            return self._visit_sha256(expr.sha, current_type)
+        return self.create_literal(expr.lit, current_type)
+
+    def _visit_sha256(self, expr, current_type):
         # TODO: implement
         pass
