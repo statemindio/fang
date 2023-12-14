@@ -125,13 +125,14 @@ message IntBinOp {
 
   BOp op = 1;
   IntExpression left = 2;
+  IntExpression right = 3;
 }
 
 message IntExpression {
   // TODO: add var references
   Literal lit = 1;
   oneof expr {
-    IntBoolBinOp binOp = 2;
+    IntBinOp binOp = 2;
   }
 }
 
