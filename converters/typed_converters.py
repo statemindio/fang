@@ -167,9 +167,20 @@ class TypedConverter:
         return self.create_literal(expr.lit, current_type)
 
     def _visit_sha256(self, expr, current_type):
+        result = "sha256("
+        if expr.HasField("strVal"):
+            value = self._visit_string_expression(expr.strVal, String(100))
+            return f"{result}{value})"
+        if expr.HasField("bVal"):
+            value = self._visit_bytes_expression(expr.bVal, Bytes(100))
+            return f"{result}{value})"
+        value = self._visit_bytes_m_expression(expr.bmVal, BytesM(32))
+        return f"{result}{value})"
+
+    def _visit_decimal_expression(self, expr, current_type):
         # TODO: implement
         pass
 
-    def _visit_decimal_expression(self, expr, current_type):
+    def _visit_bytes_expression(self, expr, current_type):
         # TODO: implement
         pass
