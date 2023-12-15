@@ -163,7 +163,7 @@ message TypedExpression {
   BytesMExpression bmExp = 3;
   BytesExpression bExp = 4;
   StringExpression strExp = 5;
-  Decimal decExpression = 6;
+  DecimalExpression decExpression = 6;
 }
 
 message Literal {
