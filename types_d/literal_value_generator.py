@@ -28,3 +28,14 @@ class BytesMLiteralGen:
             hex_val = "00"
         result = "0x" + hex_val
         return result
+
+
+class IntLiteralGen:
+    def generate(self, n, signed, value):
+        # FIXME: the current implementation doesn't consider a concrete kind of int
+        return str(value)
+
+
+class BoolLiteralGen:
+    def generate(self, value):
+        return str(value)

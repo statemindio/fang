@@ -1,7 +1,8 @@
 from types_d.base import BaseType
 from types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
     AddressRandomGen, DecimalRandomGen
-from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen, BytesMLiteralGen
+from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen, BytesMLiteralGen, IntLiteralGen, \
+    BoolLiteralGen
 
 
 class TypeRangeError(Exception):
@@ -57,6 +58,7 @@ class Int(BaseType):
         self._n = n
         self._signed = signed
         self._value_generator = IntRandomGen()
+        self._literal_generator = IntLiteralGen()
 
     def __eq__(self, other):
         return isinstance(other, Int) and self._n == other.n and self._signed == other.signed
@@ -80,10 +82,14 @@ class Int(BaseType):
     def generate(self):
         return self._value_generator.generate(self._n, self._signed)
 
+    def generate_literal(self, value):
+        return self._literal_generator.generate(self._n, self._signed, value)
+
 
 class Bool(BaseType):
     def __init__(self):
         self._value_generator = BoolRandomGen()
+        self._literal_generator = BoolLiteralGen()
 
     @property
     def vyper_type(self):
@@ -91,6 +97,9 @@ class Bool(BaseType):
 
     def generate(self):
         return self._value_generator.generate()
+
+    def generate_literal(self, value):
+        return self._literal_generator.generate(value)
 
 
 class Decimal(BaseType):
