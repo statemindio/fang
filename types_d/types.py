@@ -1,7 +1,7 @@
 from types_d.base import BaseType
 from types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
     AddressRandomGen, DecimalRandomGen
-from types_d.literal_value_generator import BytesLiteralGen
+from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen
 
 
 class TypeRangeError(Exception):
@@ -117,6 +117,7 @@ class String(Bytes):
 class Address(BaseType):
     def __init__(self):
         self._value_generator = AddressRandomGen()
+        self._literal_generator = AddressLiteralGen()
 
     @property
     def vyper_type(self):
