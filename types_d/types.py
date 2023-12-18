@@ -140,3 +140,6 @@ class Address(BaseType):
 
     def generate(self):
         return self._value_generator.generate()
+
+    def generate_literal(self, value):
+        return self._literal_generator.generate(value)
