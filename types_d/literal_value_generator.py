@@ -39,3 +39,9 @@ class IntLiteralGen:
 class BoolLiteralGen:
     def generate(self, value):
         return str(value)
+
+
+class DecimalLiteralGen:
+    def generate(self, value):
+        result = str(value)
+        return result
