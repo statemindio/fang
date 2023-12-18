@@ -1,6 +1,7 @@
 from types_d.base import BaseType
 from types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
     AddressRandomGen, DecimalRandomGen
+from types_d.literal_value_generator import BytesLiteralGen
 
 
 class TypeRangeError(Exception):
@@ -13,6 +14,7 @@ class Bytes(BaseType):
             raise TypeRangeError(m)
         self._m = m
         self._value_generator = BytesRandomGen()
+        self._literal_generator = BytesLiteralGen()
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self._m == other.m
@@ -30,6 +32,9 @@ class Bytes(BaseType):
 
     def generate(self):
         return self._value_generator.generate(self._m)
+
+    def generate_literal(self, value):
+        return self._literal_generator.generate(self._m, value)
 
 
 class BytesM(Bytes):
