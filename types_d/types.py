@@ -1,7 +1,7 @@
 from types_d.base import BaseType
 from types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
     AddressRandomGen, DecimalRandomGen
-from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen
+from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen, BytesMLiteralGen
 
 
 class TypeRangeError(Exception):
@@ -43,6 +43,7 @@ class BytesM(Bytes):
         if not 0 < m <= 32:
             raise TypeRangeError(m)
         self._value_generator = BytesMRandomGen()
+        self._literal_generator = BytesMLiteralGen()
 
     @property
     def vyper_type(self):

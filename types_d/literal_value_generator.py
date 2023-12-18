@@ -16,3 +16,15 @@ class AddressLiteralGen:
         adr = str(hex(value))[:42]
         result = checksum_encode(fill_address(adr))
         return result
+
+
+class BytesMLiteralGen:
+    def generate(self, m, value):
+        hex_val = value.hex()
+        if len(hex_val) >= m * 2:
+            hex_val = hex_val.hex()[:m * 2]
+        hex_val = f"{'' if len(hex_val) % 2 == 0 else '0'}{hex_val}"
+        if len(hex_val) == 0:
+            hex_val = "00"
+        result = "0x" + hex_val
+        return result
