@@ -129,6 +129,24 @@ message IntBinOp {
   IntExpression right = 3;
 }
 
+message DecimalBinOp {
+  enum BOp {
+    ADD = 0;
+    SUB = 1;
+    MUL = 2;
+    DIV = 3;
+    MOD = 4;
+  }
+
+  BOp op = 1;
+  DecimalExpression left = 2;
+  DecimalExpression right = 3;
+}
+
+message DecimalUnOp {
+  DecimalExpression expr = 1;
+}
+
 message IntExpression {
   // TODO: add var references
   Literal lit = 1;
@@ -154,6 +172,10 @@ message StringExpression {
 }
 
 message DecimalExpression {
+  oneof expr {
+    DecimalBinOp binOp = 1;
+    DecimalUnOp unOp = 2;
+  }
   Literal lit = 3;
 }
 
