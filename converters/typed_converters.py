@@ -164,6 +164,11 @@ class TypedConverter:
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             result = f"{left} {bin_op} {right}"
             return result
+        if expr.HasField("unOp"):
+            result = self._visit_int_expression(expr.unOp.expr, current_type)
+            # TODO: implement a stack for arithmetic operations to avoin redundant brackets
+            result = f"(-({result}))"
+            return result
         return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_m_expression(self, expr, current_type):
@@ -192,7 +197,8 @@ class TypedConverter:
             return result
         if expr.HasField("unOp"):
             result = self._visit_decimal_expression(expr.unOp.expr, current_type)
-            result = f"-({result})"
+            # TODO: implement a stack for arithmetic operations to avoin redundant brackets
+            result = f"(-({result}))"
             return result
         return self.create_literal(expr.lit, current_type)
 

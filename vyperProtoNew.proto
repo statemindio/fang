@@ -129,6 +129,10 @@ message IntBinOp {
   IntExpression right = 3;
 }
 
+message IntUnOp {
+  IntExpression expr = 1;
+}
+
 message DecimalBinOp {
   enum BOp {
     ADD = 0;
@@ -152,6 +156,7 @@ message IntExpression {
   Literal lit = 1;
   oneof expr {
     IntBinOp binOp = 2;
+    IntUnOp unOp = 3;
   }
 }
 
