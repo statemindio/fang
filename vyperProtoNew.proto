@@ -146,15 +146,15 @@ message BytesMExpression {
 }
 
 message BytesExpression {
-  // TODO: define
+  Literal lit = 3;
 }
 
 message StringExpression {
-  // TODO: define
+  Literal lit = 3;
 }
 
 message DecimalExpression {
-  // TODO: define
+  Literal lit = 3;
 }
 
 message TypedExpression {

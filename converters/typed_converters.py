@@ -13,6 +13,10 @@ INT_BIN_OP_BOOL_MAP = {
 
 }
 
+LITERAL_ATTR_MAP = {
+
+}
+
 
 def get_bin_op(op, op_set):
     return op_set[op]
@@ -122,8 +126,7 @@ class TypedConverter:
         return result
 
     def create_literal(self, lit, current_type):
-        # TODO: implement
-        pass
+        return current_type.generate_literal(getattr(lit, LITERAL_ATTR_MAP[current_type.name]))
 
     def _visit_bool_expression(self, expr, current_type):
         if expr.HasField("boolBinOp"):
@@ -182,5 +185,4 @@ class TypedConverter:
         pass
 
     def _visit_bytes_expression(self, expr, current_type):
-        # TODO: implement
-        pass
+        return self.create_literal(expr.lit, current_type)
