@@ -30,7 +30,8 @@ class TypedConverter:
             "INT": self._visit_int_expression,
             "BYTESM": self._visit_bytes_m_expression,
             "BOOL": self._visit_bool_expression,
-            "Bytes": self._visit_bytes_expression,
+            "BYTES": self._visit_bytes_expression,
+            "DECIMAL": self._visit_decimal_expression
         }  # TODO: define expression handlers
         self._available_vars = {}
         self.result = ""
@@ -182,8 +183,17 @@ class TypedConverter:
         return f"{result}{value})"
 
     def _visit_decimal_expression(self, expr, current_type):
-        # TODO: implement
-        pass
+        if expr.HasField("binOp"):
+            left = self._visit_decimal_expression(expr.binOp.left, current_type)
+            right = self._visit_decimal_expression(expr.binOp.right, current_type)
+            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            result = f"{left} {bin_op} {right}"
+            return result
+        if expr.HasField("unOp"):
+            result = self._visit_decimal_expression(expr.unOp.expr, current_type)
+            result = f"-({result})"
+            return result
+        return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_expression(self, expr, current_type):
         return self.create_literal(expr.lit, current_type)
