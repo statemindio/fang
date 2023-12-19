@@ -1,6 +1,7 @@
 import atheris
 import atheris_libprotobuf_mutator
 import sys
+from google.protobuf.json_format import MessageToJson
 
 with atheris.instrument_imports():
     import sys
@@ -17,7 +18,7 @@ def TestOneProtoInput(msg):
     proto.visit()
     print(proto.result)
     print('proto:')
-    print(msg)
+    print(MessageToJson(msg))
     print("-------------")
 
 
