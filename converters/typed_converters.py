@@ -30,6 +30,7 @@ class TypedConverter:
             "INT": self._visit_int_expression,
             "BYTESM": self._visit_bytes_m_expression,
             "BOOL": self._visit_bool_expression,
+            "Bytes": self._visit_bytes_expression,
         }  # TODO: define expression handlers
         self._available_vars = {}
         self.result = ""
