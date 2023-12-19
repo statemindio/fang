@@ -31,7 +31,8 @@ class TypedConverter:
             "BYTESM": self._visit_bytes_m_expression,
             "BOOL": self._visit_bool_expression,
             "BYTES": self._visit_bytes_expression,
-            "DECIMAL": self._visit_decimal_expression
+            "DECIMAL": self._visit_decimal_expression,
+            "STRING": self._visit_string_expression
         }  # TODO: define expression handlers
         self._available_vars = {}
         self.result = ""
@@ -196,4 +197,7 @@ class TypedConverter:
         return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_expression(self, expr, current_type):
+        return self.create_literal(expr.lit, current_type)
+
+    def _visit_string_expression(self, expr, current_type):
         return self.create_literal(expr.lit, current_type)
