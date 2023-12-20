@@ -176,6 +176,11 @@ class TypedConverter:
             bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
             result = f"{left} {bin_op} {right}"
             return result
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)
 
     def _visit_int_expression(self, expr, current_type):

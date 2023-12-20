@@ -90,12 +90,12 @@ message BoolUnOp {
 }
 
 message BoolExpression {
-  // TODO: add var references
   oneof expr {
     BoolBinOp boolBinOp = 1;
     BoolUnOp boolUnOp = 2;
     IntBoolBinOp intBoolBinOp = 3;
     DecimalBoolBinOp decBoolBinOp = 4;
+    VarRef varRef = 6;
   }
   Literal lit = 5;
 }
