@@ -200,12 +200,22 @@ class TypedConverter:
             # TODO: implement a stack for arithmetic operations to avoin redundant brackets
             result = f"(-({result}))"
             return result
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_m_expression(self, expr, current_type):
         if expr.HasField("sha"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             return self._visit_sha256(expr.sha, current_type)
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)
 
     def _visit_sha256(self, expr, current_type):
@@ -231,10 +241,25 @@ class TypedConverter:
             # TODO: implement a stack for arithmetic operations to avoin redundant brackets
             result = f"(-({result}))"
             return result
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)
 
     def _visit_bytes_expression(self, expr, current_type):
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)
 
     def _visit_string_expression(self, expr, current_type):
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)

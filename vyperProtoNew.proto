@@ -152,27 +152,33 @@ message DecimalUnOp {
 }
 
 message IntExpression {
-  // TODO: add var references
   Literal lit = 1;
   oneof expr {
     IntBinOp binOp = 2;
     IntUnOp unOp = 3;
+    VarRef varRef = 4;
   }
 }
 
 message BytesMExpression {
-  // TODO: add var references
   Literal lit = 3;
   oneof expr {
     Sha256 sha = 1;
+    VarRef varRef = 4;
   }
 }
 
 message BytesExpression {
+  oneof expr {
+    VarRef varRef = 1;
+  }
   Literal lit = 3;
 }
 
 message StringExpression {
+  oneof expr {
+    VarRef varRef = 1;
+  }
   Literal lit = 3;
 }
 
@@ -180,6 +186,7 @@ message DecimalExpression {
   oneof expr {
     DecimalBinOp binOp = 1;
     DecimalUnOp unOp = 2;
+    VarRef varRef = 4;
   }
   Literal lit = 3;
 }
