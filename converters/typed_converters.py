@@ -38,8 +38,9 @@ class TypedConverter:
             "BOOL": self._visit_bool_expression,
             "BYTES": self._visit_bytes_expression,
             "DECIMAL": self._visit_decimal_expression,
-            "STRING": self._visit_string_expression
-        }  # TODO: define expression handlers
+            "STRING": self._visit_string_expression,
+            "ADDRESS": self.visit_address_expression
+        }
         self._available_vars = {}
         self.result = ""
 
