@@ -14,7 +14,13 @@ INT_BIN_OP_BOOL_MAP = {
 }
 
 LITERAL_ATTR_MAP = {
-
+    "BOOL": "boolval",
+    "DECIMAL": "decimalval",
+    "BYTESM": "bMval",
+    "STRING": "strval",
+    "ADDRESS": "addval",
+    "BYTES": "barrval",
+    "INT": "intval"
 }
 
 
