@@ -6,7 +6,7 @@ class VarTracker:
     FUNCTION_KEY = "__function__"
 
     def __init__(self):
-        self._var_id = 0
+        self._var_id = -1
         self._vars = {
             self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {}

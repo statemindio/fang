@@ -1,5 +1,8 @@
+import random
+
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
+from var_tracker import VarTracker
 
 BIN_OP_MAP = {
 
@@ -41,8 +44,9 @@ class TypedConverter:
             "STRING": self._visit_string_expression,
             "ADDRESS": self.visit_address_expression
         }
-        self._available_vars = {}
         self.result = ""
+        self._var_tracker = VarTracker()
+        self._block_level_count = 0
 
     def visit(self):
         for i, var in enumerate(self.contract.decl):
@@ -73,6 +77,13 @@ class TypedConverter:
 
         return current_type
 
+    def _visit_var_ref(self, expr, current_type, level=None):
+        allowed_vars = self._var_tracker.get_global_vars(
+            current_type
+        ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
+
+        return None if len(allowed_vars) == 0 else random.choice(allowed_vars)
+
     def visit_typed_expression(self, expr, current_type):
         return self._expression_handlers[current_type.name](expr, current_type)
 
@@ -80,11 +91,14 @@ class TypedConverter:
         current_type = self.visit_type(variable)
         self.type_stack.append(current_type)
 
-        idx = self._available_vars.get(current_type.name, 0)
-        self._available_vars[current_type.name] = idx + 1
+        idx = self._var_tracker.next_id
 
-        result = f"x_{current_type.name}_" + str(idx) + " : " + current_type.vyper_type
+        var_name = f"x_{current_type.name}_{str(idx)}"
+        result = var_name + " : " + current_type.vyper_type
         if is_global:
+            self._var_tracker.register_global_variable(var_name, current_type)
+        else:
+            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
             value = self.visit_typed_expression(variable.expr, current_type)
             result += f"{result} = {value}"
         return result
