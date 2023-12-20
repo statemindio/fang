@@ -45,3 +45,9 @@ class VarTracker:
                 continue
             self._var_id -= len(self._vars[self.GLOBAL_KEY][level])
             self._vars[self.GLOBAL_KEY][level] = []
+
+    def get_all_allowed_vars(self, level: int, var_type: BaseType):
+        allowed_vars = [f"self.{v}" for v in self._vars[self.GLOBAL_KEY].get(var_type.vyper_type, [])]
+        for i in range(level):
+            allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
+        return allowed_vars
