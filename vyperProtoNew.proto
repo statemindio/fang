@@ -101,10 +101,10 @@ message BoolExpression {
 }
 
 message AddressExpression {
-  // TODO: add var references
   oneof expr {
     CreateMinimalProxy cmp = 1;
     CreateFromBlueprint cfb = 2;
+    VarRef varRef = 4;
   }
   Literal lit = 3;
 }

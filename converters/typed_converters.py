@@ -112,6 +112,11 @@ class TypedConverter:
             return self.visit_create_min_proxy(expr.cmp, current_type)
         if expr.HasField("cfb"):
             return self.visit_create_from_blueprint(expr.cfb, current_type)
+        if expr.HasField("varRef"):
+            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
+            result = self._visit_var_ref(expr.varRef, current_type, self._block_level_count)
+            if result is not None:
+                return result
         return self.create_literal(expr.lit, current_type)
 
     def visit_create_min_proxy(self, cmp, current_type):
