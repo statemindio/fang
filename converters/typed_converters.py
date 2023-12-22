@@ -118,7 +118,7 @@ class TypedConverter:
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
             self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
-            value = self.visit_typed_expression(variable.expr)
+            value = self.visit_typed_expression(variable.expr, current_type)
             result += f"{result} = {value}"
         self.type_stack.pop()
         return result
