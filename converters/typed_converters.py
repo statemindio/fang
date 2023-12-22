@@ -5,15 +5,33 @@ from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from var_tracker import VarTracker
 
 BIN_OP_MAP = {
-
+    0: "+",
+    1: "-",
+    2: "*",
+    3: "/",
+    4: "%",
+    5: "**",
+    6: "&",
+    7: "|",
+    8: "^",
+    9: "<<",
+    10: ">>"
 }
 
 BIN_OP_BOOL_MAP = {
-
+    0: "and",
+    1: "or",
+    2: "==",
+    3: "!="
 }
 
 INT_BIN_OP_BOOL_MAP = {
-
+    0: "==",
+    1: "!=",
+    2: "<",
+    3: "<=",
+    4: ">",
+    5: ">="
 }
 
 LITERAL_ATTR_MAP = {
