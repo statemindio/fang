@@ -53,6 +53,7 @@ class TypedConverter:
     def __init__(self, msg):
         self.contract = msg
         self.type_stack = []
+        self.op_stack = []
         self._expression_handlers = {
             "INT": self._visit_int_expression,
             "BYTESM": self._visit_bytes_m_expression,
@@ -227,15 +228,22 @@ class TypedConverter:
 
     def _visit_int_expression(self, expr):
         if expr.HasField("binOp"):
+            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.binOp.left)
             right = self._visit_int_expression(expr.binOp.right)
-            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("unOp"):
+            self.op_stack.append("unMinus")
             result = self._visit_int_expression(expr.unOp.expr)
-            # TODO: implement a stack for arithmetic operations to avoin redundant brackets
-            result = f"(-({result}))"
+            result = f"-{result}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
@@ -274,15 +282,22 @@ class TypedConverter:
 
     def _visit_decimal_expression(self, expr):
         if expr.HasField("binOp"):
+            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.binOp.left)
             right = self._visit_decimal_expression(expr.binOp.right)
-            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("unOp"):
+            self.op_stack.append("unMinus")
             result = self._visit_decimal_expression(expr.unOp.expr)
-            # TODO: implement a stack for arithmetic operations to avoin redundant brackets
-            result = f"(-({result}))"
+            result = f"-{result}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
