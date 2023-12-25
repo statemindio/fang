@@ -93,7 +93,8 @@ class TypedConverter:
         elif instance.HasField("adr"):
             current_type = Address()
         elif instance.HasField("barr"):
-            current_type = Bytes(instance.barr.max_len)
+            max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
+            current_type = Bytes(max_len)
         else:
             n = instance.i.n % 256 + 1
             n = get_nearest_multiple(n, 8)
