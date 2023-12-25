@@ -30,7 +30,7 @@ class VarTracker:
             self._vars[self.FUNCTION_KEY][var_type.vyper_type][level] = []
 
         # TODO: check if a variable already exist
-        self._vars[var_type.vyper_type][self.FUNCTION_KEY][level].append(name)
+        self._vars[self.FUNCTION_KEY][var_type.vyper_type][level].append(name)
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
 
@@ -51,7 +51,7 @@ class VarTracker:
 
     def get_all_allowed_vars(self, level: int, var_type: BaseType):
         allowed_vars = self.get_global_vars(var_type)
-        for i in range(level):
+        for i in range(level + 1):
             allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
         return allowed_vars
 
