@@ -105,6 +105,42 @@ def test_var_decl_bytes_m_32():
     conv.visit()
     assert conv.result == expected
 
+
+def test_var_decl_string_empty():
+    json_message = """
+{
+  "decls": [
+    {
+        "s": {}
+    }
+  ]
+}
+    """
+    expected = """x_STRING_0 : String[1]"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
+
+def test_var_decl_string_382():
+    json_message = """
+{
+  "decls": [
+    {
+        "s": {
+            "max_len": 382
+        }
+    }
+  ]
+}
+    """
+    expected = """x_STRING_0 : String[382]"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
 # def test_proto_converter():
 #     json_message = """
 # {

@@ -88,7 +88,8 @@ class TypedConverter:
             m = instance.bM.m % 32 + 1
             current_type = BytesM(m)
         elif instance.HasField("s"):
-            current_type = String(instance.s)
+            max_len = 1 if instance.s.max_len == 0 else instance.s.max_len
+            current_type = String(max_len)
         elif instance.HasField("adr"):
             current_type = Address()
         elif instance.HasField("barr"):
