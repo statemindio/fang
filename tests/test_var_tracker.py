@@ -101,3 +101,35 @@ def test_var_tracker_remove_level(var_tracker):
                                                                     "foo_int128_1"]
     assert var_tracker.get_all_allowed_vars(3, var_type_int128) == ["self.g_bar_int128", "foo_int128_0",
                                                                     "foo_int128_1"]
+
+
+def test_var_tracker_index(var_tracker):
+    var_type_uint256 = Int()
+    var_type_int128 = Int(128, True)
+    var_type_decimal = Decimal()
+
+    assert var_tracker.current_id(var_type_uint256) == -1
+    assert var_tracker.next_id(var_type_uint256) == 0
+
+    var_tracker.register_global_variable("g_bar_uint256", var_type_uint256)
+    var_tracker.register_function_variable("foo_uint256_0", 0, var_type_uint256)
+    var_tracker.register_function_variable("foo_uint256_1", 0, var_type_uint256)
+    var_tracker.register_function_variable("foo_uint256_2", 3, var_type_uint256)
+
+    var_tracker.register_global_variable("g_bar_int128", var_type_int128)
+    var_tracker.register_function_variable("foo_int128_0", 0, var_type_int128)
+    var_tracker.register_function_variable("foo_int128_1", 0, var_type_int128)
+    var_tracker.register_function_variable("foo_int128_2", 3, var_type_int128)
+
+    var_tracker.register_global_variable("g_bar_decimal", var_type_decimal)
+    var_tracker.register_function_variable("foo_decimal_0", 0, var_type_decimal)
+    var_tracker.register_function_variable("foo_decimal_1", 0, var_type_decimal)
+    var_tracker.register_function_variable("foo_decimal_2", 3, var_type_decimal)
+    var_tracker.register_function_variable("foo_decimal_3", 3, var_type_decimal)
+
+    assert var_tracker.current_id(var_type_uint256) == 7
+    assert var_tracker.next_id(var_type_uint256) == 8
+    assert var_tracker.current_id(var_type_int128) == 7
+    assert var_tracker.next_id(var_type_int128) == 8
+    assert var_tracker.current_id(var_type_decimal) == 4
+    assert var_tracker.next_id(var_type_decimal) == 5
