@@ -258,6 +258,44 @@ x_BYTES_2 : Bytes[382]
     conv = convert_message(json_message)
     assert conv.result == expected
 
+
+def test_var_decl_multiple_bytes_382_and_ints():
+    json_message = """
+{
+  "decls": [
+    {
+        "barr": {
+            "max_len": 382
+        }
+    },
+    {
+        "i": {
+            "n": 511,
+            "sign": false
+        }
+    },
+    {
+        "barr": {
+            "max_len": 382
+        }
+    },
+    {
+        "i": {
+            "n": 127,
+            "sign": true
+        }
+    }
+  ]
+}
+    """
+    expected = """x_BYTES_0 : Bytes[382]
+x_INT_0 : uint256
+x_BYTES_1 : Bytes[382]
+x_INT_1 : int128
+"""
+    conv = convert_message(json_message)
+    assert conv.result == expected
+
 # def test_proto_converter():
 #     json_message = """
 # {

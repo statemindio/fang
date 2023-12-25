@@ -7,18 +7,19 @@ class VarTracker:
 
     def __init__(self):
         self._var_id = -1
+        self._var_id_map = {}
         self._vars = {
             self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {}
         }
 
-    @property
-    def next_id(self) -> int:
-        return self._var_id + 1
+    def next_id(self, var_type) -> int:
+        return self.current_id(var_type) + 1
 
-    @property
-    def current_id(self) -> int:
-        return self._var_id
+    def current_id(self, var_type) -> int:
+        if var_type.name not in self._var_id_map:
+            self._var_id_map[var_type.name] = -1
+        return self._var_id_map[var_type.name]
 
     def register_function_variable(self, name, level, var_type: BaseType):
         if var_type.vyper_type not in self._vars[self.FUNCTION_KEY]:
@@ -31,6 +32,7 @@ class VarTracker:
         # TODO: check if a variable already exist
         self._vars[var_type.vyper_type][self.FUNCTION_KEY][level].append(name)
         self._var_id += 1
+        self._var_id_map[var_type.name] = self.next_id(var_type)
 
     def register_global_variable(self, name, var_type: BaseType):
         if var_type.vyper_type not in self._vars[self.GLOBAL_KEY]:
@@ -38,6 +40,7 @@ class VarTracker:
         # TODO: check if a variable already exist
         self._vars[self.GLOBAL_KEY][var_type.vyper_type].append(name)
         self._var_id += 1
+        self._var_id_map[var_type.name] = self.next_id(var_type)
 
     def remove_function_level(self, level: int):
         for vyper_type in self._vars[self.FUNCTION_KEY]:

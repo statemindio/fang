@@ -118,7 +118,7 @@ class TypedConverter:
         current_type = self.visit_type(variable)
         self.type_stack.append(current_type)
 
-        idx = self._var_tracker.next_id
+        idx = self._var_tracker.next_id(current_type)
 
         var_name = f"x_{current_type.name}_{str(idx)}"
         result = var_name + " : " + current_type.vyper_type
