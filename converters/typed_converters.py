@@ -85,7 +85,8 @@ class TypedConverter:
         elif instance.HasField("d"):
             current_type = Decimal()
         elif instance.HasField("bM"):
-            current_type = BytesM(instance.bM)
+            m = instance.bM.m % 32 + 1
+            current_type = BytesM(m)
         elif instance.HasField("s"):
             current_type = String(instance.s)
         elif instance.HasField("adr"):

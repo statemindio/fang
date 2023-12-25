@@ -69,6 +69,42 @@ def test_var_decl_decimal():
     conv.visit()
     assert conv.result == expected
 
+
+def test_var_decl_bytes_m_empty():
+    json_message = """
+{
+  "decls": [
+    {
+        "bM": {}
+    }
+  ]
+}
+    """
+    expected = """x_BYTESM_0 : bytes1"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
+
+def test_var_decl_bytes_m_32():
+    json_message = """
+{
+  "decls": [
+    {
+        "bM": {
+            "m": 63
+        }
+    }
+  ]
+}
+    """
+    expected = """x_BYTESM_0 : bytes32"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
 # def test_proto_converter():
 #     json_message = """
 # {
