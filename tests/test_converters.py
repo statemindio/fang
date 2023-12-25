@@ -24,6 +24,57 @@ def test_var_decl_empty():
     assert conv.result == expected
 
 
+def test_var_decl_int_empty():
+    json_message = """
+{
+  "decls": [
+    {
+        "i": {}
+    }
+  ]
+}
+    """
+    expected = """x_INT_0 : uint8"""
+    conv = convert_message(json_message)
+    assert conv.result == expected
+
+
+def test_var_decl_uint_256():
+    json_message = """
+{
+  "decls": [
+    {
+        "i": {
+            "n": 511,
+            "sign": false
+        }
+    }
+  ]
+}
+    """
+    expected = """x_INT_0 : uint256"""
+    conv = convert_message(json_message)
+    assert conv.result == expected
+
+
+def test_var_decl_int_256():
+    json_message = """
+{
+  "decls": [
+    {
+        "i": {
+            "n": 511,
+            "sign": true
+        }
+    }
+  ]
+}
+    """
+    expected = """x_INT_0 : int256"""
+    conv = convert_message(json_message)
+    assert conv.result == expected
+
+
 def test_var_decl_address():
     json_message = """
 {
