@@ -73,3 +73,31 @@ def test_var_tracker_add_different_types(var_tracker):
                                                                      "foo_decimal_1"]
     assert var_tracker.get_all_allowed_vars(3, var_type_decimal) == ["self.g_bar_decimal", "foo_decimal_0",
                                                                      "foo_decimal_1", "foo_decimal_2"]
+
+
+def test_var_tracker_remove_level(var_tracker):
+    var_type_uint256 = Int()
+    var_type_int128 = Int(128, True)
+
+    var_tracker.register_global_variable("g_bar_uint256", var_type_uint256)
+    var_tracker.register_function_variable("foo_uint256_0", 0, var_type_uint256)
+    var_tracker.register_function_variable("foo_uint256_1", 0, var_type_uint256)
+    var_tracker.register_function_variable("foo_uint256_2", 3, var_type_uint256)
+
+    var_tracker.register_global_variable("g_bar_int128", var_type_int128)
+    var_tracker.register_function_variable("foo_int128_0", 0, var_type_int128)
+    var_tracker.register_function_variable("foo_int128_1", 0, var_type_int128)
+    var_tracker.register_function_variable("foo_int128_2", 3, var_type_int128)
+
+    var_tracker.remove_function_level(3)
+    assert var_tracker.get_global_vars(var_type_uint256) == ["self.g_bar_uint256"]
+    assert var_tracker.get_all_allowed_vars(2, var_type_uint256) == ["self.g_bar_uint256", "foo_uint256_0",
+                                                                     "foo_uint256_1"]
+    assert var_tracker.get_all_allowed_vars(3, var_type_uint256) == ["self.g_bar_uint256", "foo_uint256_0",
+                                                                     "foo_uint256_1"]
+
+    assert var_tracker.get_global_vars(var_type_int128) == ["self.g_bar_int128"]
+    assert var_tracker.get_all_allowed_vars(2, var_type_int128) == ["self.g_bar_int128", "foo_int128_0",
+                                                                    "foo_int128_1"]
+    assert var_tracker.get_all_allowed_vars(3, var_type_int128) == ["self.g_bar_int128", "foo_int128_0",
+                                                                    "foo_int128_1"]

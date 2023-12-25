@@ -44,10 +44,10 @@ class VarTracker:
 
     def remove_function_level(self, level: int):
         for vyper_type in self._vars[self.FUNCTION_KEY]:
-            if level not in self._vars[self.GLOBAL_KEY][vyper_type]:
+            if level not in self._vars[self.FUNCTION_KEY][vyper_type]:
                 continue
-            self._var_id -= len(self._vars[self.GLOBAL_KEY][level])
-            self._vars[self.GLOBAL_KEY][level] = []
+            self._var_id -= len(self._vars[self.FUNCTION_KEY][vyper_type][level])
+            self._vars[self.FUNCTION_KEY][vyper_type][level] = []
 
     def get_all_allowed_vars(self, level: int, var_type: BaseType):
         allowed_vars = self.get_global_vars(var_type)
