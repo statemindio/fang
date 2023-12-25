@@ -3,6 +3,7 @@ import random
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from var_tracker import VarTracker
+from utils import get_nearest_multiple
 
 BIN_OP_MAP = {
     0: "+",
@@ -68,7 +69,7 @@ class TypedConverter:
         self._block_level_count = 0
 
     def visit(self):
-        for i, var in enumerate(self.contract.decl):
+        for i, var in enumerate(self.contract.decls):
             if i >= MAX_STORAGE_VARIABLES:
                 break
             self.result += self.visit_var_decl(var, True)
@@ -92,7 +93,9 @@ class TypedConverter:
         elif instance.HasField("barr"):
             current_type = Bytes(instance.barr.max_len)
         else:
-            current_type = Int(instance.i)
+            n = instance.i.n % 256 + 1
+            n = get_nearest_multiple(n, 8)
+            current_type = Int(n, instance.i.sign)
 
         return current_type
 
