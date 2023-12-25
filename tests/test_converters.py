@@ -4,6 +4,13 @@ from converters import ProtoConverter, TypedConverter
 from vyperProto_pb2 import Contract
 
 
+def convert_message(message: str) -> TypedConverter:
+    mes = Parse(message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    return conv
+
+
 def test_var_decl_empty():
     json_message = """
 {
@@ -13,9 +20,7 @@ def test_var_decl_empty():
 }
     """
     expected = """x_INT_0 : uint8"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -30,9 +35,7 @@ def test_var_decl_address():
 }
     """
     expected = """x_ADDRESS_0 : address"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -47,9 +50,7 @@ def test_var_decl_bool():
 }
     """
     expected = """x_BOOL_0 : bool"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -64,9 +65,7 @@ def test_var_decl_decimal():
 }
     """
     expected = """x_DECIMAL_0 : decimal"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -81,9 +80,7 @@ def test_var_decl_bytes_m_empty():
 }
     """
     expected = """x_BYTESM_0 : bytes1"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -100,9 +97,7 @@ def test_var_decl_bytes_m_32():
 }
     """
     expected = """x_BYTESM_0 : bytes32"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -117,9 +112,7 @@ def test_var_decl_string_empty():
 }
     """
     expected = """x_STRING_0 : String[1]"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -136,9 +129,7 @@ def test_var_decl_string_382():
 }
     """
     expected = """x_STRING_0 : String[382]"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -153,9 +144,7 @@ def test_var_decl_bytes_empty():
 }
     """
     expected = """x_BYTES_0 : Bytes[1]"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 
@@ -172,9 +161,7 @@ def test_var_decl_bytes_382():
 }
     """
     expected = """x_BYTES_0 : Bytes[382]"""
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
+    conv = convert_message(json_message)
     assert conv.result == expected
 
 # def test_proto_converter():
