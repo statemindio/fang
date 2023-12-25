@@ -1,3 +1,4 @@
-__all__ = ['ProtoConverter']
+__all__ = ['ProtoConverter', 'TypedConverter']
 
 from .converters import ProtoConverter
+from .typed_converters import TypedConverter
