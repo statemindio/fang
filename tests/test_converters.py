@@ -19,7 +19,8 @@ def test_var_decl_empty():
   ]
 }
     """
-    expected = """x_INT_0 : uint8"""
+    expected = """x_INT_0 : uint8
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -34,7 +35,8 @@ def test_var_decl_int_empty():
   ]
 }
     """
-    expected = """x_INT_0 : uint8"""
+    expected = """x_INT_0 : uint8
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -52,7 +54,8 @@ def test_var_decl_uint_256():
   ]
 }
     """
-    expected = """x_INT_0 : uint256"""
+    expected = """x_INT_0 : uint256
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -70,7 +73,8 @@ def test_var_decl_int_256():
   ]
 }
     """
-    expected = """x_INT_0 : int256"""
+    expected = """x_INT_0 : int256
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -85,7 +89,8 @@ def test_var_decl_address():
   ]
 }
     """
-    expected = """x_ADDRESS_0 : address"""
+    expected = """x_ADDRESS_0 : address
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -100,7 +105,8 @@ def test_var_decl_bool():
   ]
 }
     """
-    expected = """x_BOOL_0 : bool"""
+    expected = """x_BOOL_0 : bool
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -115,7 +121,8 @@ def test_var_decl_decimal():
   ]
 }
     """
-    expected = """x_DECIMAL_0 : decimal"""
+    expected = """x_DECIMAL_0 : decimal
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -130,7 +137,8 @@ def test_var_decl_bytes_m_empty():
   ]
 }
     """
-    expected = """x_BYTESM_0 : bytes1"""
+    expected = """x_BYTESM_0 : bytes1
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -147,7 +155,8 @@ def test_var_decl_bytes_m_32():
   ]
 }
     """
-    expected = """x_BYTESM_0 : bytes32"""
+    expected = """x_BYTESM_0 : bytes32
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -162,7 +171,8 @@ def test_var_decl_string_empty():
   ]
 }
     """
-    expected = """x_STRING_0 : String[1]"""
+    expected = """x_STRING_0 : String[1]
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -179,7 +189,8 @@ def test_var_decl_string_382():
   ]
 }
     """
-    expected = """x_STRING_0 : String[382]"""
+    expected = """x_STRING_0 : String[382]
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -194,7 +205,8 @@ def test_var_decl_bytes_empty():
   ]
 }
     """
-    expected = """x_BYTES_0 : Bytes[1]"""
+    expected = """x_BYTES_0 : Bytes[1]
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -211,7 +223,38 @@ def test_var_decl_bytes_382():
   ]
 }
     """
-    expected = """x_BYTES_0 : Bytes[382]"""
+    expected = """x_BYTES_0 : Bytes[382]
+"""
+    conv = convert_message(json_message)
+    assert conv.result == expected
+
+
+def test_var_decl_multiple_bytes_382():
+    json_message = """
+{
+  "decls": [
+    {
+        "barr": {
+            "max_len": 382
+        }
+    },
+    {
+        "barr": {
+            "max_len": 382
+        }
+    },
+    {
+        "barr": {
+            "max_len": 382
+        }
+    }
+  ]
+}
+    """
+    expected = """x_BYTES_0 : Bytes[382]
+x_BYTES_1 : Bytes[382]
+x_BYTES_2 : Bytes[382]
+"""
     conv = convert_message(json_message)
     assert conv.result == expected
 

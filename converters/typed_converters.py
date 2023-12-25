@@ -73,6 +73,7 @@ class TypedConverter:
             if i >= MAX_STORAGE_VARIABLES:
                 break
             self.result += self.visit_var_decl(var, True)
+            self.result += "\n"
 
         for i, func in enumerate(self.contract.functions):
             if i >= MAX_FUNCTIONS:
