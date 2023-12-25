@@ -4,7 +4,7 @@ from converters import ProtoConverter, TypedConverter
 from vyperProto_pb2 import Contract
 
 
-def test_typed_converter_var_decl_empty():
+def test_var_decl_empty():
     json_message = """
 {
   "decls": [
@@ -13,6 +13,57 @@ def test_typed_converter_var_decl_empty():
 }
     """
     expected = """x_INT_0 : uint8"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
+
+def test_var_decl_address():
+    json_message = """
+{
+  "decls": [
+    {
+        "adr": {}
+    }
+  ]
+}
+    """
+    expected = """x_ADDRESS_0 : address"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
+
+def test_var_decl_bool():
+    json_message = """
+{
+  "decls": [
+    {
+        "b": {}
+    }
+  ]
+}
+    """
+    expected = """x_BOOL_0 : bool"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    assert conv.result == expected
+
+
+def test_var_decl_decimal():
+    json_message = """
+{
+  "decls": [
+    {
+        "d": {}
+    }
+  ]
+}
+    """
+    expected = """x_DECIMAL_0 : decimal"""
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()

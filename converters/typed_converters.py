@@ -83,7 +83,7 @@ class TypedConverter:
         if instance.HasField("b"):
             current_type = Bool()
         elif instance.HasField("d"):
-            current_type = Decimal
+            current_type = Decimal()
         elif instance.HasField("bM"):
             current_type = BytesM(instance.bM)
         elif instance.HasField("s"):
