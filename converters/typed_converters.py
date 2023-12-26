@@ -1,6 +1,7 @@
 import random
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
+from types_d.base import BaseType
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from var_tracker import VarTracker
 from utils import get_nearest_multiple
@@ -131,9 +132,43 @@ class TypedConverter:
         self.type_stack.pop()
         return result
 
-    def visit_func(self, function):
+    def _visit_input_parameters(self, input_params):
         # TODO: implement
-        pass
+        return ""
+
+    def _visit_output_parameters(self, output_params) -> [BaseType]:
+        # TODO: implement
+        # returns list of output types
+        return []
+
+    def _generate_function_name(self):
+        # TODO: implement
+        return ""
+
+    def visit_func(self, function):
+        # TODO: implement Visibility handler
+        # TODO: implement Mutability handler
+        # TODO: implement Reentrancy handler
+        input_params = self._visit_input_parameters(function.input_params)
+        output_params = self._visit_output_parameters(function.output_params)
+        function_name = self._generate_function_name()
+
+        output_str = ", ".join(o_type.vyper_type for o_type in output_params)
+        if len(output_params) > 1:
+            output_str = f"({output_str})"
+        if len(input_params) > 0:
+            output_str = f" -> {output_str}"
+
+        result = f"{function_name}({input_params}){output_str}:\n"
+
+        block = self._visit_block(function.block)
+        result += block
+
+        return result
+
+    def _visit_block(self, block):
+        # TODO: implement
+        return ""
 
     def visit_address_expression(self, expr):
         if expr.HasField("cmp"):
