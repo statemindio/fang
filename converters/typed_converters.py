@@ -52,6 +52,17 @@ def get_bin_op(op, op_set):
 
 
 class TypedConverter:
+    """
+    The Converter class to convert Protobuf messages `Contract` into Vyper source code
+    :param msg: `Contract` message
+    :type msg: Contract
+    :ivar contract: Stores the original Contract message
+    :ivar type_stack: Stores types used to pass ones between sub-messages of the Contract
+    :vartype type_stack: list of `BaseType`
+    :ivar result: Contains the result of the conversion of the original message
+    :vartype result: str
+    """
+
     def __init__(self, msg):
         self.contract = msg
         self.type_stack = []
@@ -70,6 +81,9 @@ class TypedConverter:
         self._block_level_count = 0
 
     def visit(self):
+        """
+        Runs the conversion of the message and stores the result in the result variable
+        """
         for i, var in enumerate(self.contract.decls):
             if i >= MAX_STORAGE_VARIABLES:
                 break
