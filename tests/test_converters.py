@@ -1,7 +1,8 @@
 from google.protobuf.json_format import Parse
 
-from converters import ProtoConverter, TypedConverter
-from vyperProto_pb2 import Contract
+from converters.typed_converters import TypedConverter
+from types_d import Address
+from vyperProtoNew_pb2 import Contract, CreateMinimalProxy
 
 
 def convert_message(message: str) -> TypedConverter:
@@ -295,6 +296,24 @@ x_INT_1 : int128
 """
     conv = convert_message(json_message)
     assert conv.result == expected
+
+
+def test_visit_create_min_proxy():
+    mes = ""
+    conv = TypedConverter(mes)
+    json_message = """
+{
+    "target": {
+        "varRef": {}
+    }
+}"""
+    mes = Parse(json_message, CreateMinimalProxy())
+    address_type = Address()
+    conv.type_stack.append(address_type)
+    conv._var_tracker.register_global_variable("var0", address_type)
+    expected = "create_minimal_proxy_to(self.var0)"
+    res = conv.visit_create_min_proxy(mes)
+    assert res == expected
 
 # def test_proto_converter():
 #     json_message = """
