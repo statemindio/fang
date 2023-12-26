@@ -133,8 +133,17 @@ class TypedConverter:
         return result
 
     def _visit_input_parameters(self, input_params):
-        # TODO: implement
-        return ""
+        result = ""
+        for i, input_param in enumerate(input_params):
+            param_type = self.visit_type(input_param)
+            idx = self._var_tracker.next_id(param_type)
+            name = f"x_{param_type.name}_{idx}"
+            self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
+
+            if i > 0:
+                result = f"{result}, "
+            result = f"{result}{name}: {param_type.vyper_type}"
+        return result
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
         # TODO: implement
