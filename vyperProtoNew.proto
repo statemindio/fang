@@ -317,7 +317,6 @@ message Statement {
   AssignmentStatement assignment = 2;
 }
 
-//
 message Block {
   repeated Statement statements = 1;
 }
