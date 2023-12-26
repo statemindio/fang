@@ -9,7 +9,7 @@ with atheris.instrument_imports():
     from vyper.exceptions import CompilerPanic
 
 import vyperProto_pb2
-from converters import ProtoConverter
+from converters.converters import ProtoConverter
 
 
 @atheris.instrument_func
