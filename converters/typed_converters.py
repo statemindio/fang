@@ -1,10 +1,11 @@
 import random
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
-from types_d.base import BaseType
+from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
-from var_tracker import VarTracker
+from types_d.base import BaseType
 from utils import get_nearest_multiple
+from var_tracker import VarTracker
 
 BIN_OP_MAP = {
     0: "+",
@@ -78,6 +79,7 @@ class TypedConverter:
         }
         self.result = ""
         self._var_tracker = VarTracker()
+        self._func_tracker = FuncTracker()
         self._block_level_count = 0
 
     def visit(self):
@@ -165,8 +167,8 @@ class TypedConverter:
         return []
 
     def _generate_function_name(self):
-        # TODO: implement
-        return ""
+        _id = self._func_tracker.next_id
+        return f"func_{_id}"
 
     def visit_func(self, function):
         # TODO: implement Visibility handler
