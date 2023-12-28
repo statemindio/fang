@@ -191,9 +191,39 @@ class TypedConverter:
 
         return result
 
-    def _visit_block(self, block):
+    def _visit_for_stmt(self, for_stmt):
         # TODO: implement
         return ""
+
+    def _visit_if_stmt(self, if_stmt):
+        # TODO: implement
+        return ""
+
+    def _visit_selfd(self, selfd):
+        # TODO: implement
+        return ""
+
+    def _visit_assignment(self, assignment):
+        # TODO: implement
+        return ""
+
+    def _visit_statement(self, statement):
+        if statement.HasField("decl"):
+            return self.visit_var_decl(statement.decl)
+        if statement.HasField("for_stmt"):
+            return self._visit_for_stmt(statement.for_stmt)
+        if statement.HasField("if_stmt"):
+            return self._visit_if_stmt(statement.if_stmt)
+        if statement.HasField("selfd"):
+            return self._visit_selfd(statement.selfd)
+        return self._visit_assignment(statement.assignment)
+
+    def _visit_block(self, block):
+        result = ""
+        for statement in block.statements:
+            statement_result = self._visit_statement(statement)
+            result = f"{result}\n{statement_result}"
+        return result
 
     def visit_address_expression(self, expr):
         if expr.HasField("cmp"):
