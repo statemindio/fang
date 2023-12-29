@@ -204,8 +204,8 @@ class TypedConverter:
         return ""
 
     def _visit_selfd(self, selfd):
-        # TODO: implement
-        return ""
+        to_parameter = self.visit_address_expression(selfd.to)
+        return f"selfdestruct({to_parameter})"
 
     def _visit_assignment(self, assignment):
         # TODO: implement
