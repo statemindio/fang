@@ -199,9 +199,32 @@ class TypedConverter:
         # TODO: implement
         return ""
 
+    def _visit_if_cases(self, expr):
+        result = "if"
+        shift = 0
+        if len(expr) == 0:
+            result = f"{result} False:\n{' ' * shift}pass"
+            return result
+        for i, case in enumerate(expr):
+            prefix = "" if i == 0 else "elif"
+            condition = self._visit_bool_expression(case.cond)
+            body = self._visit_block(case.if_body)
+            result += f"{result}{prefix} {condition}:\n{body}\n"
+
+        return result
+
+    def _visit_else_case(self, expr):
+        result = "else:"
+        else_block = self._visit_block(expr)
+        result = f"{result}\n{else_block}"
+        return result
+
     def _visit_if_stmt(self, if_stmt):
-        # TODO: implement
-        return ""
+        result = self._visit_if_cases(if_stmt.cases)
+        if if_stmt.HasField('else_case'):
+            else_case = self._visit_else_case(if_stmt.else_case)
+            result = f"{result}\n{else_case}"
+        return result
 
     def _visit_selfd(self, selfd):
         to_parameter = self.visit_address_expression(selfd.to)
