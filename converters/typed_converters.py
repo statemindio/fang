@@ -208,8 +208,18 @@ class TypedConverter:
         return f"selfdestruct({to_parameter})"
 
     def _visit_assignment(self, assignment):
-        # TODO: implement
-        return ""
+        current_type = self.visit_type(assignment.ref_id)
+        self.type_stack.append(current_type)
+        result = self._visit_var_ref(assignment.ref_id, self._block_level_count)
+        if result is None:
+            # FIXME: here should be handled a case when there is no variable of desired type.
+            # the main idea is to obtain currently saved global vars and its types.
+            # the problem is the VarTracker uses only vyper_type as a key to store the variables.
+            pass
+        expression_result = self.visit_typed_expression(assignment.expr, current_type)
+        result = f"{result} = {expression_result}"
+        self.type_stack.pop()
+        return result
 
     def _visit_statement(self, statement):
         if statement.HasField("decl"):
