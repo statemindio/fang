@@ -6,6 +6,7 @@ from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from types_d.base import BaseType
 from utils import get_nearest_multiple
 from var_tracker import VarTracker
+from vyperProtoNew_pb2 import Func
 
 BIN_OP_MAP = {
     0: "+",
@@ -171,7 +172,10 @@ class TypedConverter:
         return f"func_{_id}"
 
     def visit_func(self, function):
-        # TODO: implement Visibility handler
+        if function.vis == Func.Visibility.EXTERNAL:
+            visibility = "@external"
+        else:
+            visibility = "@internal"
         # TODO: implement Mutability handler
         # TODO: implement Reentrancy handler
         input_params = self._visit_input_parameters(function.input_params)
@@ -184,7 +188,7 @@ class TypedConverter:
         if len(input_params) > 0:
             output_str = f" -> {output_str}"
 
-        result = f"{function_name}({input_params}){output_str}:\n"
+        result = f"{visibility}\n{function_name}({input_params}){output_str}:\n"
 
         block = self._visit_block(function.block)
         result += block
