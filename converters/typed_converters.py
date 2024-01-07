@@ -196,9 +196,44 @@ class TypedConverter:
 
         return result
 
+    def _visit_for_stmt_ranged(self, for_stmt_ranged):
+        start, stop = (
+            for_stmt_ranged.start, for_stmt_ranged.stop) if for_stmt_ranged.start < for_stmt_ranged.stop else (
+            for_stmt_ranged.stop, for_stmt_ranged.start
+        )
+        ivar_type = Int()
+        idx = self._var_tracker.next_id(ivar_type)
+        var_name = f"i_{idx}"
+        self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type)
+        result = f"for {var_name} in range({start}, {stop}):"
+        return result
+
+    def _visit_for_stmt_variable(self, for_stmt_variable):
+        variable = None
+        ivar_type = Int()
+        if for_stmt_variable.HasField("ref_id"):
+            self.type_stack.append(ivar_type)
+            variable = self._visit_var_ref(for_stmt_variable.ref_id, self._block_level_count)
+            self.type_stack.pop()
+        length = for_stmt_variable.length
+        idx = self._var_tracker.next_id(ivar_type)
+        var_name = f"i_{idx}"
+        self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type)
+        if variable is None:
+            result = f"for {var_name} range({length}):"
+            return result
+        result = f"for {var_name} in range({variable}, {variable}+{length}):"
+        return result
+
     def _visit_for_stmt(self, for_stmt):
-        # TODO: implement
-        return ""
+        body = self._visit_block(for_stmt.body)
+        if for_stmt.HasField("variable"):
+            for_statement = self._visit_for_stmt_variable(for_stmt.variable)
+            result = f"{for_statement}\n{body}"
+            return result
+        for_statement = self._visit_for_stmt_ranged(for_stmt.ranged)
+        result = f"{for_statement}\n{body}"
+        return result
 
     def _visit_if_cases(self, expr):
         result = "if"
