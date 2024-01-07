@@ -190,6 +190,7 @@ class TypedConverter:
 
         result = f"{visibility}\n{function_name}({input_params}){output_str}:\n"
 
+        self._block_level_count = 0
         block = self._visit_block(function.block)
         result += block
 
@@ -208,14 +209,18 @@ class TypedConverter:
         for i, case in enumerate(expr):
             prefix = "" if i == 0 else "elif"
             condition = self._visit_bool_expression(case.cond)
+            self._block_level_count += 1
             body = self._visit_block(case.if_body)
+            self._block_level_count -= 1
             result += f"{result}{prefix} {condition}:\n{body}\n"
 
         return result
 
     def _visit_else_case(self, expr):
         result = "else:"
+        self._block_level_count += 1
         else_block = self._visit_block(expr)
+        self._block_level_count -= 1
         result = f"{result}\n{else_block}"
         return result
 
