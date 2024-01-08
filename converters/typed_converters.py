@@ -308,6 +308,9 @@ class TypedConverter:
         return result
 
     def visit_address_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("cmp"):
             return self.visit_create_min_proxy(expr.cmp)
         if expr.HasField("cfb"):
@@ -370,7 +373,23 @@ class TypedConverter:
         current_type = self.type_stack[len(self.type_stack) - 1]
         return current_type.generate_literal(getattr(lit, LITERAL_ATTR_MAP[current_type.name]))
 
+    @classmethod
+    def _get_from_type(cls, conv_expr):
+        # TODO: implement
+        pass
+
+    def _visit_convert(self, conv_expr):
+        # TODO: the conversion path is supposed to go through more difficult way
+        current_type = self.type_stack[len(self.type_stack) - 1]
+        source_type = self._get_from_type(conv_expr)
+        value = self.visit_typed_expression(conv_expr.value, source_type)
+        result = f"convert({value}, {current_type.vyper_type})"
+        return result
+
     def _visit_bool_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("boolBinOp"):
             left = self._visit_bool_expression(expr.boolBinOp.left)
             right = self._visit_bool_expression(expr.boolBinOp.right)
@@ -406,6 +425,9 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_int_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
@@ -432,6 +454,9 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_bytes_m_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("sha"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             return self._visit_sha256(expr.sha)
@@ -460,6 +485,9 @@ class TypedConverter:
         return f"{result}{value})"
 
     def _visit_decimal_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
@@ -486,6 +514,9 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_bytes_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
@@ -494,6 +525,9 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
+        if expr.HasField("convert"):
+            result = self._visit_convert(expr.convert)
+            return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
