@@ -171,13 +171,18 @@ class TypedConverter:
         _id = self._func_tracker.next_id
         return f"func_{_id}"
 
+    def _visit_reentrancy(self, ret):
+        return f"@reentrancy(\"{ret.key}\")"
+
     def visit_func(self, function):
         if function.vis == Func.Visibility.EXTERNAL:
             visibility = "@external"
         else:
             visibility = "@internal"
         # TODO: implement Mutability handler
-        # TODO: implement Reentrancy handler
+        reentrancy = ""
+        if function.HasField("ret"):
+            reentrancy = self._visit_reentrancy(function.ret) + "\n"
         input_params = self._visit_input_parameters(function.input_params)
         output_params = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()
@@ -188,7 +193,7 @@ class TypedConverter:
         if len(input_params) > 0:
             output_str = f" -> {output_str}"
 
-        result = f"{visibility}\n{function_name}({input_params}){output_str}:\n"
+        result = f"{visibility}\n{reentrancy}{function_name}({input_params}){output_str}:\n"
 
         self._block_level_count = 0
         block = self._visit_block(function.block)
