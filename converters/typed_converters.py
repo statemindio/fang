@@ -220,7 +220,7 @@ class TypedConverter:
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type)
         if variable is None:
-            result = f"for {var_name} range({length}):"
+            result = f"for {var_name} in range({length}):"
             return result
         result = f"for {var_name} in range({variable}, {variable}+{length}):"
         return result
