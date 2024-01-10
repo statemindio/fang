@@ -277,7 +277,9 @@ class TypedConverter:
         return result
 
     def _visit_selfd(self, selfd):
+        self.type_stack.append(Address())
         to_parameter = self.visit_address_expression(selfd.to)
+        self.type_stack.pop()
         return f"{self.TAB * self._block_level_count}selfdestruct({to_parameter})"
 
     def _visit_assignment(self, assignment):
