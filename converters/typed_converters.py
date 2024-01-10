@@ -65,6 +65,8 @@ class TypedConverter:
     :vartype result: str
     """
 
+    TAB = "    "
+
     def __init__(self, msg):
         self.contract = msg
         self.type_stack = []
@@ -147,6 +149,7 @@ class TypedConverter:
             value = self.visit_typed_expression(variable.expr, current_type)
             result += f"{result} = {value}"
         self.type_stack.pop()
+        result = f"{self.TAB * self._block_level_count}{result}"
         return result
 
     def _visit_input_parameters(self, input_params):
@@ -193,9 +196,9 @@ class TypedConverter:
         if len(input_params) > 0:
             output_str = f" -> {output_str}"
 
-        result = f"{visibility}\n{reentrancy}{function_name}({input_params}){output_str}:\n"
+        result = f"{visibility}\n{reentrancy}def {function_name}({input_params}){output_str}:\n"
 
-        self._block_level_count = 0
+        self._block_level_count = 1
         block = self._visit_block(function.block)
         result += block
 
@@ -231,23 +234,25 @@ class TypedConverter:
         return result
 
     def _visit_for_stmt(self, for_stmt):
+        self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
+        self._block_level_count -= 1
+
         if for_stmt.HasField("variable"):
-            for_statement = self._visit_for_stmt_variable(for_stmt.variable)
+            for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_variable(for_stmt.variable)
             result = f"{for_statement}\n{body}"
             return result
-        for_statement = self._visit_for_stmt_ranged(for_stmt.ranged)
+        for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_ranged(for_stmt.ranged)
         result = f"{for_statement}\n{body}"
         return result
 
     def _visit_if_cases(self, expr):
-        result = "if"
-        shift = 0
+        result = f"{self.TAB * self._block_level_count}if"
         if len(expr) == 0:
-            result = f"{result} False:\n{' ' * shift}pass"
+            result = f"{result} False:\n{self.TAB * (self._block_level_count + 1)}pass"
             return result
         for i, case in enumerate(expr):
-            prefix = "" if i == 0 else "elif"
+            prefix = "" if i == 0 else f"{self.TAB * self._block_level_count}elif"
             condition = self._visit_bool_expression(case.cond)
             self._block_level_count += 1
             body = self._visit_block(case.if_body)
@@ -257,7 +262,7 @@ class TypedConverter:
         return result
 
     def _visit_else_case(self, expr):
-        result = "else:"
+        result = f"{self.TAB * self._block_level_count}else:"
         self._block_level_count += 1
         else_block = self._visit_block(expr)
         self._block_level_count -= 1
@@ -273,7 +278,7 @@ class TypedConverter:
 
     def _visit_selfd(self, selfd):
         to_parameter = self.visit_address_expression(selfd.to)
-        return f"selfdestruct({to_parameter})"
+        return f"{self.TAB * self._block_level_count}selfdestruct({to_parameter})"
 
     def _visit_assignment(self, assignment):
         current_type = self.visit_type(assignment.ref_id)
@@ -285,7 +290,7 @@ class TypedConverter:
             # the problem is the VarTracker uses only vyper_type as a key to store the variables.
             pass
         expression_result = self.visit_typed_expression(assignment.expr, current_type)
-        result = f"{result} = {expression_result}"
+        result = f"{self.TAB * self._block_level_count}{result} = {expression_result}"
         self.type_stack.pop()
         return result
 
@@ -304,7 +309,7 @@ class TypedConverter:
         result = ""
         for statement in block.statements:
             statement_result = self._visit_statement(statement)
-            result = f"{result}\n{statement_result}"
+            result = f"{result}{statement_result}\n"
         return result
 
     def visit_address_expression(self, expr):

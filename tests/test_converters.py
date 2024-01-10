@@ -1,8 +1,8 @@
 from google.protobuf.json_format import Parse
 
 from converters.typed_converters import TypedConverter
-from types_d import Address
-from vyperProtoNew_pb2 import Contract, CreateMinimalProxy
+from types_d import Address, BytesM
+from vyperProtoNew_pb2 import Contract, CreateMinimalProxy, Sha256, Func
 
 
 def convert_message(message: str) -> TypedConverter:
@@ -313,6 +313,60 @@ def test_visit_create_min_proxy():
     conv._var_tracker.register_global_variable("var0", address_type)
     expected = "create_minimal_proxy_to(self.var0)"
     res = conv.visit_create_min_proxy(mes)
+    assert res == expected
+
+
+def test_visit_sha256():
+    mes = ""
+    conv = TypedConverter(mes)
+    json_message = """
+    {
+        "bmVal": {
+            "varRef": {}
+        }
+    }"""
+    mes = Parse(json_message, Sha256())
+    bytes_m_type = BytesM(32)
+    conv.type_stack.append(bytes_m_type)
+    conv._var_tracker.register_global_variable("var0", bytes_m_type)
+    expected = "sha256(self.var0)"
+    res = conv._visit_sha256(mes)
+    assert res == expected
+
+
+def test_function():
+    mes = ""
+    conv = TypedConverter(mes)
+    json_message = """
+    {
+        "vis": "INTERNAL",
+        "mut": "VIEW",
+        "input_params": [
+            
+        ],
+        "output_params": [],
+        "block": {
+            "statements": [
+                {
+                    "selfd": {
+                        "to": {
+                            "varRef": {}
+                        }
+                    }
+                }
+            ]
+        }
+    }
+    """
+    mes = Parse(json_message, Func())
+    address_type = Address()
+    conv.type_stack.append(address_type)
+    conv._var_tracker.register_global_variable("var0", address_type)
+    expected = """@internal
+def func_0():
+    selfdestruct(self.var0)
+"""
+    res = conv.visit_func(mes)
     assert res == expected
 
 # def test_proto_converter():
