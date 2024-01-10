@@ -95,10 +95,14 @@ class TypedConverter:
             self.result += self.visit_var_decl(var, True)
             self.result += "\n"
 
+        if self.result != "":
+            self.result += "\n"
+
         for i, func in enumerate(self.contract.functions):
             if i >= MAX_FUNCTIONS:
                 break
-            # TODO: handle a function
+            self.result += self.visit_func(func)
+            self.result += "\n"
 
     def visit_type(self, instance):
         if instance.HasField("b"):
