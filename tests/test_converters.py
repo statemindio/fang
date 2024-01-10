@@ -353,6 +353,11 @@ def test_function():
                             "varRef": {}
                         }
                     }
+                },
+                {
+                    "if_stmt": {
+                        "cases": []
+                    }
                 }
             ]
         }
@@ -365,6 +370,8 @@ def test_function():
     expected = """@internal
 def func_0():
     selfdestruct(self.var0)
+    if False:
+        pass
 """
     res = conv.visit_func(mes)
     assert res == expected
