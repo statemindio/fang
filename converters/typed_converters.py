@@ -261,7 +261,7 @@ class TypedConverter:
             self._block_level_count += 1
             body = self._visit_block(case.if_body)
             self._block_level_count -= 1
-            result += f"{result}{prefix} {condition}:\n{body}\n"
+            result = f"{result}{prefix} {condition}:\n{body}\n"
 
         return result
 

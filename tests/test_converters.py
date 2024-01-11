@@ -393,6 +393,80 @@ def func_0():
     assert res == expected
 
 
+def test_elif_cases():
+    json_message = """
+        {
+          "decls": [
+            {}
+          ],
+          "functions": [
+            {
+              "outputParams": [
+                {
+                  "d": {}
+                }
+              ],
+              "block": {
+                "statements": [
+                  {
+                    "selfd": {}
+                  },
+                  {
+                    "if_stmt": {
+                      "cases": [
+                        {
+                            "cond": {
+                                "intBoolBinOp": {
+                                    "op": "EQ",
+                                    "left": {
+                                        "lit": {
+                                            "intval": 2
+                                        }
+                                    },
+                                    "right": {
+                                        "lit": {
+                                            "intval": 5
+                                        }
+                                    }
+                                }
+                            },
+                            "if_body": {
+                                "statements": [
+                                    {
+                                        "selfd": {}
+                                    }
+                                ]
+                            }
+                        }
+                      ]
+                    }
+                  } 
+                ]
+              }
+            }
+          ]
+        }
+    """
+
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+
+    expected = """x_INT_0 : uint8
+
+@external
+def func_0():
+    selfdestruct(0x0000000000000000000000000000000000000000)
+    if 2 == 5:
+        selfdestruct(0x0000000000000000000000000000000000000000)
+
+
+
+"""
+    print(conv.result)
+    assert conv.result == expected
+
+
 @pytest.mark.skip("not implemented")
 def test_proto_converter():
     json_message = """
