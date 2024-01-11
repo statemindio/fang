@@ -437,6 +437,30 @@ def test_elif_cases():
                                     }
                                 ]
                             }
+                        },
+                        {
+                            "cond": {
+                                "intBoolBinOp": {
+                                    "op": "LESSEQ",
+                                    "left": {
+                                        "lit": {
+                                            "intval": 2
+                                        }
+                                    },
+                                    "right": {
+                                        "lit": {
+                                            "intval": 5
+                                        }
+                                    }
+                                }
+                            },
+                            "if_body": {
+                                "statements": [
+                                    {
+                                        "selfd": {}
+                                    }
+                                ]
+                            }
                         }
                       ]
                     }
@@ -458,6 +482,9 @@ def test_elif_cases():
 def func_0():
     selfdestruct(0x0000000000000000000000000000000000000000)
     if 2 == 5:
+        selfdestruct(0x0000000000000000000000000000000000000000)
+
+    elif 2 <= 5:
         selfdestruct(0x0000000000000000000000000000000000000000)
 
 
