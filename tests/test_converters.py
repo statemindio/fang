@@ -384,6 +384,7 @@ def test_function():
     conv.type_stack.append(address_type)
     conv._var_tracker.register_global_variable("var0", address_type)
     expected = """@internal
+@nonpayable
 def func_0():
     selfdestruct(self.var0)
     if False:
@@ -479,6 +480,7 @@ def test_elif_cases():
     expected = """x_INT_0 : uint8
 
 @external
+@nonpayable
 def func_0():
     selfdestruct(0x0000000000000000000000000000000000000000)
     if 2 == 5:
@@ -494,7 +496,6 @@ def func_0():
     assert conv.result == expected
 
 
-@pytest.mark.skip("not implemented")
 def test_proto_converter():
     json_message = """
     {
@@ -522,9 +523,10 @@ def test_proto_converter():
     expected = """x_INT_0 : uint8
 
 @external
-@pure
-def func_0() -> (decimal):
+@nonpayable
+def func_0():
     selfdestruct(0x0000000000000000000000000000000000000000)
+
 """
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)

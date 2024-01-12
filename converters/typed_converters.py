@@ -8,6 +8,11 @@ from utils import get_nearest_multiple
 from var_tracker import VarTracker
 from vyperProtoNew_pb2 import Func
 
+PURE = 0
+VIEW = 1
+NON_PAYABLE = 2
+PAYABLE = 3
+
 BIN_OP_MAP = {
     0: "+",
     1: "-",
@@ -66,6 +71,12 @@ class TypedConverter:
     """
 
     TAB = "    "
+    MUTABILITY_MAPPING = (
+        "@pure",
+        "@view",
+        "@nonpayable",
+        "@payable"
+    )
 
     def __init__(self, msg):
         self.contract = msg
@@ -84,6 +95,7 @@ class TypedConverter:
         self._var_tracker = VarTracker()
         self._func_tracker = FuncTracker()
         self._block_level_count = 0
+        self._mutability_level = 0
 
     def visit(self):
         """
@@ -132,8 +144,15 @@ class TypedConverter:
         allowed_vars = self._var_tracker.get_global_vars(
             current_type
         ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
+        if len(allowed_vars) == 0:
+            return None
 
-        return None if len(allowed_vars) == 0 else random.choice(allowed_vars)
+        variable = random.choice(allowed_vars)
+        global_vars = self._var_tracker.get_global_vars(current_type)
+        if variable in global_vars and self._mutability_level < VIEW:
+            self._mutability_level = VIEW
+
+        return random.choice(allowed_vars)
 
     def visit_typed_expression(self, expr, current_type):
         return self._expression_handlers[current_type.name](expr)
@@ -181,12 +200,15 @@ class TypedConverter:
     def _visit_reentrancy(self, ret):
         return f"@reentrancy(\"{ret.key}\")"
 
+    def __get_mutability(self, mut):
+        return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
+
     def visit_func(self, function):
+        self._mutability_level = 0
         if function.vis == Func.Visibility.EXTERNAL:
             visibility = "@external"
         else:
             visibility = "@internal"
-        # TODO: implement Mutability handler
         reentrancy = ""
         if function.HasField("ret"):
             reentrancy = self._visit_reentrancy(function.ret) + "\n"
@@ -200,11 +222,10 @@ class TypedConverter:
         if len(input_params) > 0:
             output_str = f" -> {output_str}"
 
-        result = f"{visibility}\n{reentrancy}def {function_name}({input_params}){output_str}:\n"
-
         self._block_level_count = 1
         block = self._visit_block(function.block)
-        result += block
+        mutability = self.__get_mutability(function.mut)
+        result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
 
         return result
 
@@ -281,6 +302,9 @@ class TypedConverter:
         return result
 
     def _visit_selfd(self, selfd):
+        if self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
         self.type_stack.append(Address())
         to_parameter = self.visit_address_expression(selfd.to)
         self.type_stack.pop()
@@ -334,6 +358,9 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def visit_create_min_proxy(self, cmp):
+        if self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
         target = self.visit_address_expression(cmp.target)
         result = f"create_minimal_proxy_to({target}"
         if cmp.HasField("value"):
@@ -351,6 +378,9 @@ class TypedConverter:
         return result
 
     def visit_create_from_blueprint(self, cfb):
+        if self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
         target = self.visit_address_expression(cfb.target)
         result = f"create_from_blueprint({target}"
 
