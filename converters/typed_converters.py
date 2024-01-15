@@ -316,6 +316,12 @@ class TypedConverter:
         self.type_stack.pop()
         return f"{self.TAB * self._block_level_count}selfdestruct({to_parameter})"
 
+    def _visit_raise_statement(self, expr):
+        self.type_stack.append(String(100))
+        error_value = self._visit_string_expression(expr.errval)
+        self.type_stack.pop()
+        return f"{self.TAB * self._block_level_count}raise {error_value}"
+
     def _visit_assignment(self, assignment):
         current_type = self.visit_type(assignment.ref_id)
         self.type_stack.append(current_type)
@@ -343,8 +349,8 @@ class TypedConverter:
             return self._visit_for_stmt(statement.for_stmt)
         if statement.HasField("if_stmt"):
             return self._visit_if_stmt(statement.if_stmt)
-        if statement.HasField("selfd"):
-            return self._visit_selfd(statement.selfd)
+        #if statement.HasField("selfd"):
+        #    return self._visit_selfd(statement.selfd)
         return self._visit_assignment(statement.assignment)
 
     def _visit_block(self, block):
@@ -353,11 +359,16 @@ class TypedConverter:
             statement_result = self._visit_statement(statement)
             result = f"{result}{statement_result}\n"
             
-        if (self._block_level_count == 1 or block.return_d.flag):
+        if (self._block_level_count == 1 or block.exit_d.flag):
             # can omit return statement if no outputs
+            if block.exit_d.HasField("selfd"):
+                exit_result = self._visit_selfd(block.exit_d.selfd)
+            if block.exit_d.HasField("raise_st"):
+                exit_result = self._visit_raise_statement(block.exit_d.raise_st)
             if len(self._function_output) > 0 or  block.return_d.flag:
-                return_result = self._visit_return_payload(block.return_d.payload)
-                result = f"{result}{return_result}\n"
+                exit_result = self._visit_return_payload(block.return_d.payload)
+            
+            result = f"{result}{exit_result}\n"
         
         return result
     
