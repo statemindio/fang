@@ -367,7 +367,7 @@ class TypedConverter:
         # must be len(ReturnPayload) >= len(output_params)
         for i in range(len(self._function_output)):
             expression_result = self.visit_typed_expression(iter_map[i], self._function_output[i])
-            result += "{expression_result}, "
+            result += f"{expression_result}, "
                  
         result = result[:-2]
 
