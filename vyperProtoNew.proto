@@ -326,6 +326,7 @@ message Statement {
 
 message Block {
   repeated Statement statements = 1;
+  ReturnData return_d = 2;
 }
 
 message Reentrancy {
@@ -403,4 +404,17 @@ message Sha256 {
     BytesExpression bVal = 2;
   }
   BytesMExpression bmVal = 3;
+}
+
+message ReturnData {
+  bool flag = 2;
+  ReturnPayload payload = 3;
+}
+
+message ReturnPayload {
+  TypedExpression one = 1;
+  TypedExpression two = 2;
+  TypedExpression three = 3;
+  TypedExpression four = 4;
+  TypedExpression five = 5;
 }

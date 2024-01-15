@@ -96,6 +96,7 @@ class TypedConverter:
         self._func_tracker = FuncTracker()
         self._block_level_count = 0
         self._mutability_level = 0
+        self._function_output = []
 
     def visit(self):
         """
@@ -189,9 +190,11 @@ class TypedConverter:
         return result
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
-        # TODO: implement
-        # returns list of output types
-        return []
+        output_types = []
+        for i, output_param in enumerate(output_params):
+            param_type = self.visit_type(output_param)
+            output_types.append(param_type)
+        return output_types
 
     def _generate_function_name(self):
         _id = self._func_tracker.next_id
@@ -213,13 +216,13 @@ class TypedConverter:
         if function.HasField("ret"):
             reentrancy = self._visit_reentrancy(function.ret) + "\n"
         input_params = self._visit_input_parameters(function.input_params)
-        output_params = self._visit_output_parameters(function.output_params)
+        self._function_output = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()
 
-        output_str = ", ".join(o_type.vyper_type for o_type in output_params)
-        if len(output_params) > 1:
+        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
+        if len(self._function_output) > 1:
             output_str = f"({output_str})"
-        if len(input_params) > 0:
+        if len(self._function_output) > 0:
             output_str = f" -> {output_str}"
 
         self._block_level_count = 1
@@ -340,7 +343,33 @@ class TypedConverter:
         for statement in block.statements:
             statement_result = self._visit_statement(statement)
             result = f"{result}{statement_result}\n"
+            
+        if (self._block_level_count == 1 or block.return_d.flag) and len(self._function_output) > 0:
+             return_result = self._visit_return_payload(block.return_d.payload)
+             result = f"{result}{return_result}\n"
+        
         return result
+    
+    def _visit_return_payload(self, return_p):
+        if len(self._function_output) == 0:
+            return ""
+        
+        # TODO: dunno how to enumerate non repeated message
+        iter_map = {
+            0: return_p.one,
+            1: return_p.two,
+            2: return_p.three,
+            3: return_p.four,
+            4: return_p.five
+        }
+        
+        result ="return "
+        # must be len(ReturnPayload) >= len(output_params)
+        for i in range(len(self._function_output)):
+            expression_result = self.visit_typed_expression(iter_map[i], self._function_output[i])
+            result += "{expression_result}, "
+                 
+        result = result[:-2]
 
     def visit_address_expression(self, expr):
         if expr.HasField("convert"):
