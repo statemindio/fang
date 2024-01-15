@@ -97,6 +97,7 @@ class TypedConverter:
         self._block_level_count = 0
         self._mutability_level = 0
         self._function_output = []
+        self._is_for_block = False
 
     def visit(self):
         """
@@ -262,6 +263,7 @@ class TypedConverter:
         return result
 
     def _visit_for_stmt(self, for_stmt):
+        self._is_for_block = True
         self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
         self._block_level_count -= 1
@@ -328,6 +330,12 @@ class TypedConverter:
         return result
 
     def _visit_statement(self, statement):
+        # if not in `for` theres always assignment; probs need another default value
+        if self._is_for_block:
+            if statement.HasField("cont_stmt"):
+                return self._visit_continue_statement()
+            if statement.HasField("break_stmt"):
+                return self._visit_break_statement()
         if statement.HasField("decl"):
             return self.visit_var_decl(statement.decl)
         if statement.HasField("for_stmt"):
@@ -606,3 +614,9 @@ class TypedConverter:
             if result is not None:
                 return result
         return self.create_literal(expr.lit)
+    
+    def _visit_continue_statement(self):
+        return f"{self.TAB * self._block_level_count}continue"
+    
+    def _visit_break_statement(self):
+        return f"{self.TAB * self._block_level_count}break"

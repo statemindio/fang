@@ -320,6 +320,8 @@ message Statement {
     ForStmt for_stmt = 3;
     IfStmt if_stmt = 4;
     Selfdestruct selfd = 7;
+    ContinueStatement cont_stmt = 8;
+    BreakStatement break_stmt = 9;
   }
   AssignmentStatement assignment = 2;
 }
@@ -418,3 +420,6 @@ message ReturnPayload {
   TypedExpression four = 4;
   TypedExpression five = 5;
 }
+
+message BreakStatement{}
+message ContinueStatement{}
