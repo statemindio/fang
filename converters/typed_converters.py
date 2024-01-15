@@ -83,13 +83,13 @@ class TypedConverter:
         self.type_stack = []
         self.op_stack = []
         self._expression_handlers = {
-            "INT": self._visit_int_expression,
-            "BYTESM": self._visit_bytes_m_expression,
-            "BOOL": self._visit_bool_expression,
-            "BYTES": self._visit_bytes_expression,
-            "DECIMAL": self._visit_decimal_expression,
-            "STRING": self._visit_string_expression,
-            "ADDRESS": self.visit_address_expression
+            "INT": (self._visit_int_expression, "intExp"),
+            "BYTESM": (self._visit_bytes_m_expression, "bmExp"),
+            "BOOL": (self._visit_bool_expression, "boolExp"),
+            "BYTES": (self._visit_bytes_expression, "bExp"),
+            "DECIMAL": (self._visit_decimal_expression, "decExpression"),
+            "STRING": (self._visit_string_expression, "strExp"),
+            "ADDRESS": (self.visit_address_expression, "addrExp")
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -155,7 +155,8 @@ class TypedConverter:
         return random.choice(allowed_vars)
 
     def visit_typed_expression(self, expr, current_type):
-        return self._expression_handlers[current_type.name](expr)
+        handler, attr = self._expression_handlers[current_type.name]
+        return handler(getattr(expr, attr))
 
     def visit_var_decl(self, variable, is_global=False):
         current_type = self.visit_type(variable)
