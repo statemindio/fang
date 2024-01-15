@@ -2,6 +2,12 @@
 ### General architecture
 ![dependencies.drawio.png](dependencies.drawio.png)
 
+### `_block_level_count`
+`_block_level_count` stores a current level of block. There are at least two purposes this value to serve:
+1. to perform code blocks shifting
+2. to be passed to `VarTracker` to register a variable to(or to retrieve variables of) an appropriate level
+
+
 ### Protobuf structure
 The main structure is the `Contract` message
 ```protobuf
