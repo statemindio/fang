@@ -344,9 +344,11 @@ class TypedConverter:
             statement_result = self._visit_statement(statement)
             result = f"{result}{statement_result}\n"
             
-        if (self._block_level_count == 1 or block.return_d.flag) and len(self._function_output) > 0:
-             return_result = self._visit_return_payload(block.return_d.payload)
-             result = f"{result}{return_result}\n"
+        if (self._block_level_count == 1 or block.return_d.flag):
+            # can omit return statement if no outputs
+            if len(self._function_output) > 0 or  block.return_d.flag:
+                return_result = self._visit_return_payload(block.return_d.payload)
+                result = f"{result}{return_result}\n"
         
         return result
     
@@ -367,9 +369,9 @@ class TypedConverter:
         # must be len(ReturnPayload) >= len(output_params)
         for i in range(len(self._function_output)):
             expression_result = self.visit_typed_expression(iter_map[i], self._function_output[i])
-            result += f"{expression_result}, "
+            result += f"{expression_result},"
                  
-        result = result[:-2]
+        result = result[:-1]
 
     def visit_address_expression(self, expr):
         if expr.HasField("convert"):
