@@ -51,4 +51,4 @@ class StringLiteralGen:
     def generate(self, m, value):
         result = value
         result = result if len(result) <= m * 2 else result[:m * 2]
-        return result
+        return f"\"{result}\""

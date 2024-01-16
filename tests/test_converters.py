@@ -677,7 +677,7 @@ def test_assert_statement_if():
 def func_0():
     assert self.x_INT_0 <= 5
     if 2 == 5:
-        assert True, err
+        assert True, "err"
 
 
 
