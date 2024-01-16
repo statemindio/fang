@@ -349,6 +349,8 @@ class TypedConverter:
             return self._visit_for_stmt(statement.for_stmt)
         if statement.HasField("if_stmt"):
             return self._visit_if_stmt(statement.if_stmt)
+        if statement.HasField("assert_stmt"):
+            return self._visit_assert_stmt(statement.assert_stmt)
         #if statement.HasField("selfd"):
         #    return self._visit_selfd(statement.selfd)
         return self._visit_assignment(statement.assignment)
@@ -360,6 +362,7 @@ class TypedConverter:
             result = f"{result}{statement_result}\n"
             
         if (self._block_level_count == 1 or block.exit_d.flag):
+            exit_result = ""
             # can omit return statement if no outputs
             if block.exit_d.HasField("selfd"):
                 exit_result = self._visit_selfd(block.exit_d.selfd)
@@ -634,3 +637,21 @@ class TypedConverter:
     
     def _visit_break_statement(self):
         return f"{self.TAB * self._block_level_count}break"
+    
+    def _visit_assert_stmt(self, assert_stmt):
+        result = f"{self.TAB * self._block_level_count}assert"
+        
+        self.type_stack.append(Bool()) #not sure
+        condition = self._visit_bool_expression(assert_stmt.cond)
+        result = f"{result} {condition}"
+        self.type_stack.pop()
+        
+        self.type_stack.append(String(100))
+        value = self._visit_string_expression(assert_stmt.reason)
+        self.type_stack.pop()
+        
+        if len(value) > 0:
+            result = f"{result}, {value}"
+        
+        return result
+
