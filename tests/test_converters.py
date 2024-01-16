@@ -503,10 +503,10 @@ def test_proto_converter():
           ],
           "block": {
             "statements": [
-              {
+            ],
+            "exit_d": {
                 "selfd": {}
-              }
-            ]
+            }
           }
         }
       ]
@@ -516,7 +516,7 @@ def test_proto_converter():
 
 @external
 @nonpayable
-def func_0():
+def func_0() -> decimal:
     selfdestruct(0x0000000000000000000000000000000000000000)
 
 """
