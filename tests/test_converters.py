@@ -591,8 +591,9 @@ def test_assignment():
 
 @external
 @view
-def func_0():
+def func_0() -> decimal:
     self.x_BOOL_0 = 2 <= 5
+    return 0.0
 
 """
     mes = Parse(json_message, Contract())
@@ -687,9 +688,10 @@ def test_assignment_to_nonexistent_variable():
 
 @external
 @pure
-def func_0():
+def func_0() -> decimal:
     x_BOOL_0 : bool = 2 <= 5
     x_BOOL_0 = 2 > 5
+    return 0.0
 
 """
     mes = Parse(json_message, Contract())

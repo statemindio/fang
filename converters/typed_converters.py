@@ -357,7 +357,7 @@ class TypedConverter:
             return self._visit_if_stmt(statement.if_stmt)
         if statement.HasField("assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
-        #if statement.HasField("selfd"):
+        # if statement.HasField("selfd"):
         #    return self._visit_selfd(statement.selfd)
         return self._visit_assignment(statement.assignment)
 
@@ -366,7 +366,7 @@ class TypedConverter:
         for statement in block.statements:
             statement_result = self._visit_statement(statement)
             result = f"{result}{statement_result}\n"
-            
+
         if (self._block_level_count == 1 or block.exit_d.flag):
             exit_result = ""
             # can omit return statement if no outputs
@@ -374,17 +374,17 @@ class TypedConverter:
                 exit_result = self._visit_selfd(block.exit_d.selfd)
             if block.exit_d.HasField("raise_st"):
                 exit_result = self._visit_raise_statement(block.exit_d.raise_st)
-            if len(self._function_output) > 0 or  block.exit_d.flag:
+            if len(self._function_output) > 0 or block.exit_d.flag:
                 exit_result = self._visit_return_payload(block.exit_d.payload)
-            
+
             result = f"{result}{exit_result}\n"
-        
+
         return result
-    
+
     def _visit_return_payload(self, return_p):
         if len(self._function_output) == 0:
             return ""
-        
+
         # TODO: dunno how to enumerate non repeated message
         iter_map = {
             0: return_p.one,
@@ -393,15 +393,18 @@ class TypedConverter:
             3: return_p.four,
             4: return_p.five
         }
-        
-        result ="return "
+
+        result = "return "
         # must be len(ReturnPayload) >= len(output_params)
         for i in range(len(self._function_output)):
+            # TODO: probably this should be done somewhere else
+            self.type_stack.append(self._function_output[i])
             expression_result = self.visit_typed_expression(iter_map[i], self._function_output[i])
+            self.type_stack.pop()
             result += f"{expression_result},"
-                 
-        result = result[:-1]
-        
+
+        result = f"{self.TAB * self._block_level_count}{result[:-1]}"
+
         return result
 
     def visit_address_expression(self, expr):
@@ -637,27 +640,26 @@ class TypedConverter:
             if result is not None:
                 return result
         return self.create_literal(expr.lit)
-    
+
     def _visit_continue_statement(self):
         return f"{self.TAB * self._block_level_count}continue"
-    
+
     def _visit_break_statement(self):
         return f"{self.TAB * self._block_level_count}break"
-    
+
     def _visit_assert_stmt(self, assert_stmt):
         result = f"{self.TAB * self._block_level_count}assert"
-        
-        self.type_stack.append(Bool()) #not sure
+
+        self.type_stack.append(Bool())  # not sure
         condition = self._visit_bool_expression(assert_stmt.cond)
         result = f"{result} {condition}"
         self.type_stack.pop()
-        
+
         self.type_stack.append(String(100))
         value = self._visit_string_expression(assert_stmt.reason)
         self.type_stack.pop()
-        
+
         if len(value) > 0:
             result = f"{result}, \"{value}\""
-        
-        return result
 
+        return result
