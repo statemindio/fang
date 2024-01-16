@@ -600,3 +600,100 @@ def func_0():
     conv.visit()
     print(conv.result)
     assert conv.result == expected
+
+
+def test_assignment_to_nonexistent_variable():
+    json_message = """
+    {
+      "decls": [
+        {
+            "i": {}
+        }
+      ],
+      "functions": [
+        {
+          "outputParams": [
+            {
+              "d": {}
+            }
+          ],
+          "block": {
+            "statements": [
+              {
+                "assignment": {
+                    "ref_id": {
+                        "b": {},
+                        "i": {
+                            "n": 256,
+                            "sign": true
+                        },
+                        "varnum": 0
+                    },
+                    "expr": {
+                        "boolExp": {
+                            "intBoolBinOp": {
+                                "op": "LESSEQ",
+                                "left": {
+                                    "lit": {
+                                        "intval": 2
+                                    }
+                                },
+                                "right": {
+                                    "lit": {
+                                        "intval": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+              },
+              {
+                "assignment": {
+                    "ref_id": {
+                        "b": {},
+                        "i": {
+                            "n": 256,
+                            "sign": true
+                        },
+                        "varnum": 0
+                    },
+                    "expr": {
+                        "boolExp": {
+                            "intBoolBinOp": {
+                                "op": "GREATER",
+                                "left": {
+                                    "lit": {
+                                        "intval": 2
+                                    }
+                                },
+                                "right": {
+                                    "lit": {
+                                        "intval": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+    """
+    expected = """x_INT_0 : uint8
+
+@external
+@pure
+def func_0():
+    x_BOOL_0 : bool = 2 <= 5
+    x_BOOL_0 = 2 > 5
+
+"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    print(conv.result)
+    assert conv.result == expected
