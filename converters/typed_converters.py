@@ -365,8 +365,8 @@ class TypedConverter:
                 exit_result = self._visit_selfd(block.exit_d.selfd)
             if block.exit_d.HasField("raise_st"):
                 exit_result = self._visit_raise_statement(block.exit_d.raise_st)
-            if len(self._function_output) > 0 or  block.return_d.flag:
-                exit_result = self._visit_return_payload(block.return_d.payload)
+            if len(self._function_output) > 0 or  block.exit_d.flag:
+                exit_result = self._visit_return_payload(block.exit_d.payload)
             
             result = f"{result}{exit_result}\n"
         
@@ -392,6 +392,8 @@ class TypedConverter:
             result += f"{expression_result},"
                  
         result = result[:-1]
+        
+        return result
 
     def visit_address_expression(self, expr):
         if expr.HasField("convert"):
