@@ -364,13 +364,6 @@ def test_function():
         "block": {
             "statements": [
                 {
-                    "selfd": {
-                        "to": {
-                            "varRef": {}
-                        }
-                    }
-                },
-                {
                     "if_stmt": {
                         "cases": []
                     }
@@ -384,11 +377,11 @@ def test_function():
     conv.type_stack.append(address_type)
     conv._var_tracker.register_global_variable("var0", address_type)
     expected = """@internal
-@nonpayable
+@view
 def func_0():
-    selfdestruct(self.var0)
     if False:
         pass
+
 """
     res = conv.visit_func(mes)
     assert res == expected
@@ -410,9 +403,6 @@ def test_elif_cases():
               "block": {
                 "statements": [
                   {
-                    "selfd": {}
-                  },
-                  {
                     "if_stmt": {
                       "cases": [
                         {
@@ -433,10 +423,11 @@ def test_elif_cases():
                             },
                             "if_body": {
                                 "statements": [
-                                    {
-                                        "selfd": {}
-                                    }
-                                ]
+                                ],
+                                "exit_d": {
+                                    "flag": true,
+                                    "selfd": {}
+                                }
                             }
                         },
                         {
@@ -457,10 +448,11 @@ def test_elif_cases():
                             },
                             "if_body": {
                                 "statements": [
-                                    {
-                                        "selfd": {}
-                                    }
-                                ]
+                                ],
+                                "exit_d": {
+                                    "flag": true,
+                                    "selfd": {}
+                                }
                             }
                         }
                       ]
@@ -481,8 +473,7 @@ def test_elif_cases():
 
 @external
 @nonpayable
-def func_0():
-    selfdestruct(0x0000000000000000000000000000000000000000)
+def func_0() -> decimal:
     if 2 == 5:
         selfdestruct(0x0000000000000000000000000000000000000000)
 
@@ -490,6 +481,7 @@ def func_0():
         selfdestruct(0x0000000000000000000000000000000000000000)
 
 
+    return 0.0
 
 """
     print(conv.result)
