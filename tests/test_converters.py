@@ -533,3 +533,158 @@ def func_0():
     conv.visit()
     print(conv.result)
     assert conv.result == expected
+
+# TODO: trailing spaces may force error
+def test_assert_statement():
+    json_message = """
+    {
+        "decls": [
+            {
+                "i": {
+                    "n" : 255,
+                    "sign" : false
+                }
+            }
+        ],
+        "functions": [
+            {
+            "block": {
+                "statements": [
+                {
+                    "assert_stmt": {
+                        "cond": {
+                            "intBoolBinOp": {
+                                "op": "LESSEQ",
+                                "left": {
+                                    "varRef": {}
+                                },
+                                "right": {
+                                    "lit": {
+                                        "intval": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+              ]
+            }
+        }
+      ]
+    }
+    """
+    expected = """x_INT_0 : uint256
+
+@external
+@view
+def func_0():
+    assert self.x_INT_0 <= 5
+
+
+"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    print(conv.result)
+    assert conv.result == expected
+    
+    
+def test_assert_statement_if():
+    json_message = """
+    {
+        "decls": [
+            {
+                "i": {
+                    "n" : 255,
+                    "sign" : false
+                }
+            }
+        ],
+        "functions": [
+            {
+            "block": {
+                "statements": [
+                {
+                    "assert_stmt": {
+                        "cond": {
+                            "intBoolBinOp": {
+                                "op": "LESSEQ",
+                                "left": {
+                                    "varRef": {}
+                                },
+                                "right": {
+                                    "lit": {
+                                        "intval": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+				{
+					"if_stmt": {
+                      "cases": [
+                        {
+                            "cond": {
+                                "intBoolBinOp": {
+                                    "op": "EQ",
+                                    "left": {
+                                        "lit": {
+                                            "intval": 2
+                                        }
+                                    },
+                                    "right": {
+                                        "lit": {
+                                            "intval": 5
+                                        }
+                                    }
+                                }
+                            },
+                            "if_body": {
+                                "statements": [
+								{
+									"assert_stmt": {
+										"cond": {
+											"lit": {
+												"boolval" : true
+											}
+										},
+										"reason": {
+											"lit": {
+												"strval": "err"
+											}
+										}
+									}
+								}
+							  ]
+                            }
+                        }
+                        
+                      ]
+                    }
+                            
+				}
+              ]
+            }
+        }
+      ]
+    }
+    """
+    expected = """x_INT_0 : uint256
+
+@external
+@view
+def func_0():
+    assert self.x_INT_0 <= 5
+    if 2 == 5:
+        assert True, err
+
+
+
+
+"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    print(conv.result)
+    assert conv.result == expected
