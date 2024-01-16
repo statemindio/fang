@@ -1,3 +1,4 @@
+import dataclasses
 import random
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
@@ -83,13 +84,13 @@ class TypedConverter:
         self.type_stack = []
         self.op_stack = []
         self._expression_handlers = {
-            "INT": self._visit_int_expression,
-            "BYTESM": self._visit_bytes_m_expression,
-            "BOOL": self._visit_bool_expression,
-            "BYTES": self._visit_bytes_expression,
-            "DECIMAL": self._visit_decimal_expression,
-            "STRING": self._visit_string_expression,
-            "ADDRESS": self.visit_address_expression
+            "INT": (self._visit_int_expression, "intExp"),
+            "BYTESM": (self._visit_bytes_m_expression, "bmExp"),
+            "BOOL": (self._visit_bool_expression, "boolExp"),
+            "BYTES": (self._visit_bytes_expression, "bExp"),
+            "DECIMAL": (self._visit_decimal_expression, "decExpression"),
+            "STRING": (self._visit_string_expression, "strExp"),
+            "ADDRESS": (self.visit_address_expression, "addrExp")
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -157,10 +158,10 @@ class TypedConverter:
         return random.choice(allowed_vars)
 
     def visit_typed_expression(self, expr, current_type):
-        return self._expression_handlers[current_type.name](expr)
+        handler, attr = self._expression_handlers[current_type.name]
+        return handler(getattr(expr, attr))
 
-    def visit_var_decl(self, variable, is_global=False):
-        current_type = self.visit_type(variable)
+    def __var_decl(self, expr, current_type, is_global=False):
         self.type_stack.append(current_type)
 
         idx = self._var_tracker.next_id(current_type)
@@ -171,11 +172,15 @@ class TypedConverter:
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
             self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
-            value = self.visit_typed_expression(variable.expr, current_type)
-            result += f"{result} = {value}"
+            value = self.visit_typed_expression(expr, current_type)
+            result = f"{result} = {value}"
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
         return result
+
+    def visit_var_decl(self, variable, is_global=False):
+        current_type = self.visit_type(variable)
+        return self.__var_decl(variable.expr, current_type, is_global)
 
     def _visit_input_parameters(self, input_params):
         result = ""
@@ -330,7 +335,8 @@ class TypedConverter:
             # FIXME: here should be handled a case when there is no variable of desired type.
             # the main idea is to obtain currently saved global vars and its types.
             # the problem is the VarTracker uses only vyper_type as a key to store the variables.
-            pass
+            result = self.__var_decl(assignment.expr, current_type)
+            return result
         expression_result = self.visit_typed_expression(assignment.expr, current_type)
         result = f"{self.TAB * self._block_level_count}{result} = {expression_result}"
         self.type_stack.pop()

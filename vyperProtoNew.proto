@@ -196,6 +196,7 @@ message TypedExpression {
   BytesExpression bExp = 4;
   StringExpression strExp = 5;
   DecimalExpression decExpression = 6;
+  IntExpression intExp = 7;
 }
 
 message Literal {
