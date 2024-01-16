@@ -650,8 +650,8 @@ class TypedConverter:
         value = self._visit_string_expression(assert_stmt.reason)
         self.type_stack.pop()
         
-        if len(value) > 2:
-            result = f"{result}, {value}"
+        if len(value) > 0:
+            result = f"{result}, \"{value}\""
         
         return result
 
