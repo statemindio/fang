@@ -43,7 +43,7 @@ class BoolLiteralGen:
 
 class DecimalLiteralGen:
     def generate(self, value):
-        result = str(value)
+        result = f"{str(value)}.0"  # now `value` can be an integer value only
         return result
 
 

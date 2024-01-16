@@ -97,6 +97,8 @@ class TypedConverter:
         self._func_tracker = FuncTracker()
         self._block_level_count = 0
         self._mutability_level = 0
+        self._function_output = []
+        self._for_block_count = 0
 
     def visit(self):
         """
@@ -194,9 +196,11 @@ class TypedConverter:
         return result
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
-        # TODO: implement
-        # returns list of output types
-        return []
+        output_types = []
+        for i, output_param in enumerate(output_params):
+            param_type = self.visit_type(output_param)
+            output_types.append(param_type)
+        return output_types
 
     def _generate_function_name(self):
         _id = self._func_tracker.next_id
@@ -218,13 +222,13 @@ class TypedConverter:
         if function.HasField("ret"):
             reentrancy = self._visit_reentrancy(function.ret) + "\n"
         input_params = self._visit_input_parameters(function.input_params)
-        output_params = self._visit_output_parameters(function.output_params)
+        self._function_output = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()
 
-        output_str = ", ".join(o_type.vyper_type for o_type in output_params)
-        if len(output_params) > 1:
+        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
+        if len(self._function_output) > 1:
             output_str = f"({output_str})"
-        if len(input_params) > 0:
+        if len(self._function_output) > 0:
             output_str = f" -> {output_str}"
 
         self._block_level_count = 1
@@ -264,9 +268,11 @@ class TypedConverter:
         return result
 
     def _visit_for_stmt(self, for_stmt):
+        self._for_block_count += 1
         self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
         self._block_level_count -= 1
+        self._for_block_count -= 1
 
         if for_stmt.HasField("variable"):
             for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_variable(for_stmt.variable)
@@ -315,6 +321,12 @@ class TypedConverter:
         self.type_stack.pop()
         return f"{self.TAB * self._block_level_count}selfdestruct({to_parameter})"
 
+    def _visit_raise_statement(self, expr):
+        self.type_stack.append(String(100))
+        error_value = self._visit_string_expression(expr.errval)
+        self.type_stack.pop()
+        return f"{self.TAB * self._block_level_count}raise {error_value}"
+
     def _visit_assignment(self, assignment):
         current_type = self.visit_type(assignment.ref_id)
         self.type_stack.append(current_type)
@@ -331,14 +343,22 @@ class TypedConverter:
         return result
 
     def _visit_statement(self, statement):
+        # if not in `for` theres always assignment; probs need another default value
+        if self._for_block_count > 0:
+            if statement.HasField("cont_stmt"):
+                return self._visit_continue_statement()
+            if statement.HasField("break_stmt"):
+                return self._visit_break_statement()
         if statement.HasField("decl"):
             return self.visit_var_decl(statement.decl)
         if statement.HasField("for_stmt"):
             return self._visit_for_stmt(statement.for_stmt)
         if statement.HasField("if_stmt"):
             return self._visit_if_stmt(statement.if_stmt)
-        if statement.HasField("selfd"):
-            return self._visit_selfd(statement.selfd)
+        if statement.HasField("assert_stmt"):
+            return self._visit_assert_stmt(statement.assert_stmt)
+        # if statement.HasField("selfd"):
+        #    return self._visit_selfd(statement.selfd)
         return self._visit_assignment(statement.assignment)
 
     def _visit_block(self, block):
@@ -346,6 +366,45 @@ class TypedConverter:
         for statement in block.statements:
             statement_result = self._visit_statement(statement)
             result = f"{result}{statement_result}\n"
+
+        if (self._block_level_count == 1 or block.exit_d.flag):
+            exit_result = ""
+            # can omit return statement if no outputs
+            if block.exit_d.HasField("selfd"):
+                exit_result = self._visit_selfd(block.exit_d.selfd)
+            elif block.exit_d.HasField("raise_st"):
+                exit_result = self._visit_raise_statement(block.exit_d.raise_st)
+            elif len(self._function_output) > 0 or block.exit_d.flag:
+                exit_result = self._visit_return_payload(block.exit_d.payload)
+
+            result = f"{result}{exit_result}\n"
+
+        return result
+
+    def _visit_return_payload(self, return_p):
+        if len(self._function_output) == 0:
+            return ""
+
+        # TODO: dunno how to enumerate non repeated message
+        iter_map = {
+            0: return_p.one,
+            1: return_p.two,
+            2: return_p.three,
+            3: return_p.four,
+            4: return_p.five
+        }
+
+        result = "return "
+        # must be len(ReturnPayload) >= len(output_params)
+        for i in range(len(self._function_output)):
+            # TODO: probably this should be done somewhere else
+            self.type_stack.append(self._function_output[i])
+            expression_result = self.visit_typed_expression(iter_map[i], self._function_output[i])
+            self.type_stack.pop()
+            result += f"{expression_result},"
+
+        result = f"{self.TAB * self._block_level_count}{result[:-1]}"
+
         return result
 
     def visit_address_expression(self, expr):
@@ -581,3 +640,26 @@ class TypedConverter:
             if result is not None:
                 return result
         return self.create_literal(expr.lit)
+
+    def _visit_continue_statement(self):
+        return f"{self.TAB * self._block_level_count}continue"
+
+    def _visit_break_statement(self):
+        return f"{self.TAB * self._block_level_count}break"
+
+    def _visit_assert_stmt(self, assert_stmt):
+        result = f"{self.TAB * self._block_level_count}assert"
+
+        self.type_stack.append(Bool())  # not sure
+        condition = self._visit_bool_expression(assert_stmt.cond)
+        result = f"{result} {condition}"
+        self.type_stack.pop()
+
+        self.type_stack.append(String(100))
+        value = self._visit_string_expression(assert_stmt.reason)
+        self.type_stack.pop()
+
+        if len(value) > 0:
+            result = f"{result}, \"{value}\""
+
+        return result

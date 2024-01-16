@@ -364,13 +364,6 @@ def test_function():
         "block": {
             "statements": [
                 {
-                    "selfd": {
-                        "to": {
-                            "varRef": {}
-                        }
-                    }
-                },
-                {
                     "if_stmt": {
                         "cases": []
                     }
@@ -384,11 +377,11 @@ def test_function():
     conv.type_stack.append(address_type)
     conv._var_tracker.register_global_variable("var0", address_type)
     expected = """@internal
-@nonpayable
+@view
 def func_0():
-    selfdestruct(self.var0)
     if False:
         pass
+
 """
     res = conv.visit_func(mes)
     assert res == expected
@@ -410,9 +403,6 @@ def test_elif_cases():
               "block": {
                 "statements": [
                   {
-                    "selfd": {}
-                  },
-                  {
                     "if_stmt": {
                       "cases": [
                         {
@@ -433,10 +423,11 @@ def test_elif_cases():
                             },
                             "if_body": {
                                 "statements": [
-                                    {
-                                        "selfd": {}
-                                    }
-                                ]
+                                ],
+                                "exit_d": {
+                                    "flag": true,
+                                    "selfd": {}
+                                }
                             }
                         },
                         {
@@ -457,10 +448,11 @@ def test_elif_cases():
                             },
                             "if_body": {
                                 "statements": [
-                                    {
-                                        "selfd": {}
-                                    }
-                                ]
+                                ],
+                                "exit_d": {
+                                    "flag": true,
+                                    "selfd": {}
+                                }
                             }
                         }
                       ]
@@ -481,8 +473,7 @@ def test_elif_cases():
 
 @external
 @nonpayable
-def func_0():
-    selfdestruct(0x0000000000000000000000000000000000000000)
+def func_0() -> decimal:
     if 2 == 5:
         selfdestruct(0x0000000000000000000000000000000000000000)
 
@@ -490,6 +481,7 @@ def func_0():
         selfdestruct(0x0000000000000000000000000000000000000000)
 
 
+    return 0.0
 
 """
     print(conv.result)
@@ -511,10 +503,10 @@ def test_proto_converter():
           ],
           "block": {
             "statements": [
-              {
+            ],
+            "exit_d": {
                 "selfd": {}
-              }
-            ]
+            }
           }
         }
       ]
@@ -524,7 +516,7 @@ def test_proto_converter():
 
 @external
 @nonpayable
-def func_0():
+def func_0() -> decimal:
     selfdestruct(0x0000000000000000000000000000000000000000)
 
 """
@@ -591,8 +583,9 @@ def test_assignment():
 
 @external
 @view
-def func_0():
+def func_0() -> decimal:
     self.x_BOOL_0 = 2 <= 5
+    return 0.0
 
 """
     mes = Parse(json_message, Contract())
@@ -687,9 +680,166 @@ def test_assignment_to_nonexistent_variable():
 
 @external
 @pure
-def func_0():
+def func_0() -> decimal:
     x_BOOL_0 : bool = 2 <= 5
     x_BOOL_0 = 2 > 5
+    return 0.0
+
+"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    print(conv.result)
+    assert conv.result == expected
+
+
+# TODO: trailing spaces may force error
+def test_assert_statement():
+    json_message = """
+    {
+        "decls": [
+            {
+                "i": {
+                    "n" : 255,
+                    "sign" : false
+                }
+            }
+        ],
+        "functions": [
+            {
+            "block": {
+                "statements": [
+                {
+                    "assert_stmt": {
+                        "cond": {
+                            "intBoolBinOp": {
+                                "op": "LESSEQ",
+                                "left": {
+                                    "varRef": {}
+                                },
+                                "right": {
+                                    "lit": {
+                                        "intval": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+              ]
+            }
+        }
+      ]
+    }
+    """
+    expected = """x_INT_0 : uint256
+
+@external
+@view
+def func_0():
+    assert self.x_INT_0 <= 5
+
+
+"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    print(conv.result)
+    assert conv.result == expected
+
+
+def test_assert_statement_if():
+    json_message = """
+    {
+        "decls": [
+            {
+                "i": {
+                    "n" : 255,
+                    "sign" : false
+                }
+            }
+        ],
+        "functions": [
+            {
+            "block": {
+                "statements": [
+                {
+                    "assert_stmt": {
+                        "cond": {
+                            "intBoolBinOp": {
+                                "op": "LESSEQ",
+                                "left": {
+                                    "varRef": {}
+                                },
+                                "right": {
+                                    "lit": {
+                                        "intval": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+				{
+					"if_stmt": {
+                      "cases": [
+                        {
+                            "cond": {
+                                "intBoolBinOp": {
+                                    "op": "EQ",
+                                    "left": {
+                                        "lit": {
+                                            "intval": 2
+                                        }
+                                    },
+                                    "right": {
+                                        "lit": {
+                                            "intval": 5
+                                        }
+                                    }
+                                }
+                            },
+                            "if_body": {
+                                "statements": [
+								{
+									"assert_stmt": {
+										"cond": {
+											"lit": {
+												"boolval" : true
+											}
+										},
+										"reason": {
+											"lit": {
+												"strval": "err"
+											}
+										}
+									}
+								}
+							  ]
+                            }
+                        }
+                        
+                      ]
+                    }
+                            
+				}
+              ]
+            }
+        }
+      ]
+    }
+    """
+    expected = """x_INT_0 : uint256
+
+@external
+@view
+def func_0():
+    assert self.x_INT_0 <= 5
+    if 2 == 5:
+        assert True, "err"
+
+
+
 
 """
     mes = Parse(json_message, Contract())

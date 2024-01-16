@@ -320,13 +320,17 @@ message Statement {
     VarDecl decl = 1;
     ForStmt for_stmt = 3;
     IfStmt if_stmt = 4;
-    Selfdestruct selfd = 7;
+   // Selfdestruct selfd = 7;
+    ContinueStatement cont_stmt = 8;
+    BreakStatement break_stmt = 9;
+    AssertStatement assert_stmt = 10;
   }
   AssignmentStatement assignment = 2;
 }
 
 message Block {
   repeated Statement statements = 1;
+  ExitStatement exit_d = 2;
 }
 
 message Reentrancy {
@@ -404,4 +408,34 @@ message Sha256 {
     BytesExpression bVal = 2;
   }
   BytesMExpression bmVal = 3;
+}
+
+message ExitStatement {
+  bool flag = 1;
+  ReturnPayload payload = 2;
+  oneof exit_st {
+    Selfdestruct selfd = 3;
+    RaiseStatement raise_st = 4;
+  }
+}
+
+message RaiseStatement {
+  StringExpression errval = 1;
+}
+
+message ReturnPayload {
+  TypedExpression one = 1;
+  TypedExpression two = 2;
+  TypedExpression three = 3;
+  TypedExpression four = 4;
+  TypedExpression five = 5;
+}
+
+message BreakStatement{}
+
+message ContinueStatement{}
+
+message AssertStatement{
+  BoolExpression cond = 1;
+  StringExpression reason = 2; 
 }
