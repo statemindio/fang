@@ -308,7 +308,8 @@ full_cases = [
     "elif_cases",
     "proto_converter",
     "var_decl_multiple_bytes_382",
-    "var_decl_multiple_bytes_382_and_ints"
+    "var_decl_multiple_bytes_382_and_ints",
+    "else_case"
 ]
 
 
