@@ -1,0 +1,16 @@
+{
+  "vis": "INTERNAL",
+  "mut": "VIEW",
+  "input_params": [
+  ],
+  "output_params": [],
+  "block": {
+    "statements": [
+      {
+        "if_stmt": {
+          "cases": []
+        }
+      }
+    ]
+  }
+}

@@ -1,4 +1,5 @@
-import pytest
+import os
+
 from google.protobuf.json_format import Parse
 
 from converters.typed_converters import TypedConverter
@@ -245,71 +246,21 @@ def test_var_decl_bytes_382():
 
 
 def test_var_decl_multiple_bytes_382():
-    json_message = """
-{
-  "decls": [
-    {
-        "barr": {
-            "max_len": 382
-        }
-    },
-    {
-        "barr": {
-            "max_len": 382
-        }
-    },
-    {
-        "barr": {
-            "max_len": 382
-        }
-    }
-  ]
-}
-    """
-    expected = """x_BYTES_0 : Bytes[382]
-x_BYTES_1 : Bytes[382]
-x_BYTES_2 : Bytes[382]
-
-"""
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382/out.vy", "r") as out_contract:
+        expected = out_contract.read()
     conv = convert_message(json_message)
     assert conv.result == expected
 
 
 def test_var_decl_multiple_bytes_382_and_ints():
-    json_message = """
-{
-  "decls": [
-    {
-        "barr": {
-            "max_len": 382
-        }
-    },
-    {
-        "i": {
-            "n": 511,
-            "sign": false
-        }
-    },
-    {
-        "barr": {
-            "max_len": 382
-        }
-    },
-    {
-        "i": {
-            "n": 127,
-            "sign": true
-        }
-    }
-  ]
-}
-    """
-    expected = """x_BYTES_0 : Bytes[382]
-x_INT_0 : uint256
-x_BYTES_1 : Bytes[382]
-x_INT_1 : int128
-
-"""
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382_and_ints/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382_and_ints/out.vy", "r") as out_contract:
+        expected = out_contract.read()
     conv = convert_message(json_message)
     assert conv.result == expected
 
@@ -351,175 +302,44 @@ def test_visit_sha256():
 
 
 def test_function():
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/function/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/function/out.vy", "r") as out_contract:
+        expected = out_contract.read()
     mes = ""
     conv = TypedConverter(mes)
-    json_message = """
-    {
-        "vis": "INTERNAL",
-        "mut": "VIEW",
-        "input_params": [
-            
-        ],
-        "output_params": [],
-        "block": {
-            "statements": [
-                {
-                    "if_stmt": {
-                        "cases": []
-                    }
-                }
-            ]
-        }
-    }
-    """
     mes = Parse(json_message, Func())
     address_type = Address()
     conv.type_stack.append(address_type)
     conv._var_tracker.register_global_variable("var0", address_type)
-    expected = """@internal
-@view
-def func_0():
-    if False:
-        pass
 
-"""
     res = conv.visit_func(mes)
     assert res == expected
 
 
 def test_elif_cases():
-    json_message = """
-        {
-          "decls": [
-            {}
-          ],
-          "functions": [
-            {
-              "outputParams": [
-                {
-                  "d": {}
-                }
-              ],
-              "block": {
-                "statements": [
-                  {
-                    "if_stmt": {
-                      "cases": [
-                        {
-                            "cond": {
-                                "intBoolBinOp": {
-                                    "op": "EQ",
-                                    "left": {
-                                        "lit": {
-                                            "intval": 2
-                                        }
-                                    },
-                                    "right": {
-                                        "lit": {
-                                            "intval": 5
-                                        }
-                                    }
-                                }
-                            },
-                            "if_body": {
-                                "statements": [
-                                ],
-                                "exit_d": {
-                                    "flag": true,
-                                    "selfd": {}
-                                }
-                            }
-                        },
-                        {
-                            "cond": {
-                                "intBoolBinOp": {
-                                    "op": "LESSEQ",
-                                    "left": {
-                                        "lit": {
-                                            "intval": 2
-                                        }
-                                    },
-                                    "right": {
-                                        "lit": {
-                                            "intval": 5
-                                        }
-                                    }
-                                }
-                            },
-                            "if_body": {
-                                "statements": [
-                                ],
-                                "exit_d": {
-                                    "flag": true,
-                                    "selfd": {}
-                                }
-                            }
-                        }
-                      ]
-                    }
-                  } 
-                ]
-              }
-            }
-          ]
-        }
-    """
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/elif_cases/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/elif_cases/out.vy", "r") as out_contract:
+        expected = out_contract.read()
 
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()
 
-    expected = """x_INT_0 : uint8
-
-@external
-@nonpayable
-def func_0() -> decimal:
-    if 2 == 5:
-        selfdestruct(0x0000000000000000000000000000000000000000)
-
-    elif 2 <= 5:
-        selfdestruct(0x0000000000000000000000000000000000000000)
-
-
-    return 0.0
-
-"""
     print(conv.result)
     assert conv.result == expected
 
 
 def test_proto_converter():
-    json_message = """
-    {
-      "decls": [
-        {}
-      ],
-      "functions": [
-        {
-          "outputParams": [
-            {
-              "d": {}
-            }
-          ],
-          "block": {
-            "statements": [
-            ],
-            "exit_d": {
-                "selfd": {}
-            }
-          }
-        }
-      ]
-    }
-    """
-    expected = """x_INT_0 : uint8
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/proto_converter/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/proto_converter/out.vy", "r") as out_contract:
+        expected = out_contract.read()
 
-@external
-@nonpayable
-def func_0() -> decimal:
-    selfdestruct(0x0000000000000000000000000000000000000000)
-
-"""
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()
@@ -528,66 +348,12 @@ def func_0() -> decimal:
 
 
 def test_assignment():
-    json_message = """
-    {
-      "decls": [
-        {
-            "b": {}
-        }
-      ],
-      "functions": [
-        {
-          "outputParams": [
-            {
-              "d": {}
-            }
-          ],
-          "block": {
-            "statements": [
-              {
-                "assignment": {
-                    "ref_id": {
-                        "b": {},
-                        "i": {
-                            "n": 256,
-                            "sign": true
-                        },
-                        "varnum": 0
-                    },
-                    "expr": {
-                        "boolExp": {
-                            "intBoolBinOp": {
-                                "op": "LESSEQ",
-                                "left": {
-                                    "lit": {
-                                        "intval": 2
-                                    }
-                                },
-                                "right": {
-                                    "lit": {
-                                        "intval": 5
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-              }
-            ]
-          }
-        }
-      ]
-    }
-    """
-    expected = """x_BOOL_0 : bool
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/assignment/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/assignment/out.vy", "r") as out_contract:
+        expected = out_contract.read()
 
-@external
-@view
-def func_0() -> decimal:
-    self.x_BOOL_0 = 2 <= 5
-    return 0.0
-
-"""
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()
@@ -596,96 +362,11 @@ def func_0() -> decimal:
 
 
 def test_assignment_to_nonexistent_variable():
-    json_message = """
-    {
-      "decls": [
-        {
-            "i": {}
-        }
-      ],
-      "functions": [
-        {
-          "outputParams": [
-            {
-              "d": {}
-            }
-          ],
-          "block": {
-            "statements": [
-              {
-                "assignment": {
-                    "ref_id": {
-                        "b": {},
-                        "i": {
-                            "n": 256,
-                            "sign": true
-                        },
-                        "varnum": 0
-                    },
-                    "expr": {
-                        "boolExp": {
-                            "intBoolBinOp": {
-                                "op": "LESSEQ",
-                                "left": {
-                                    "lit": {
-                                        "intval": 2
-                                    }
-                                },
-                                "right": {
-                                    "lit": {
-                                        "intval": 5
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-              },
-              {
-                "assignment": {
-                    "ref_id": {
-                        "b": {},
-                        "i": {
-                            "n": 256,
-                            "sign": true
-                        },
-                        "varnum": 0
-                    },
-                    "expr": {
-                        "boolExp": {
-                            "intBoolBinOp": {
-                                "op": "GREATER",
-                                "left": {
-                                    "lit": {
-                                        "intval": 2
-                                    }
-                                },
-                                "right": {
-                                    "lit": {
-                                        "intval": 5
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-              }
-            ]
-          }
-        }
-      ]
-    }
-    """
-    expected = """x_INT_0 : uint8
-
-@external
-@pure
-def func_0() -> decimal:
-    x_BOOL_0 : bool = 2 <= 5
-    x_BOOL_0 = 2 > 5
-    return 0.0
-
-"""
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/assignment_to_nonexistent_variable/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/assignment_to_nonexistent_variable/out.vy", "r") as out_contract:
+        expected = out_contract.read()
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()
@@ -695,52 +376,12 @@ def func_0() -> decimal:
 
 # TODO: trailing spaces may force error
 def test_assert_statement():
-    json_message = """
-    {
-        "decls": [
-            {
-                "i": {
-                    "n" : 255,
-                    "sign" : false
-                }
-            }
-        ],
-        "functions": [
-            {
-            "block": {
-                "statements": [
-                {
-                    "assert_stmt": {
-                        "cond": {
-                            "intBoolBinOp": {
-                                "op": "LESSEQ",
-                                "left": {
-                                    "varRef": {}
-                                },
-                                "right": {
-                                    "lit": {
-                                        "intval": 5
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-              ]
-            }
-        }
-      ]
-    }
-    """
-    expected = """x_INT_0 : uint256
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/assert_statement/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/assert_statement/out.vy", "r") as out_contract:
+        expected = out_contract.read()
 
-@external
-@view
-def func_0():
-    assert self.x_INT_0 <= 5
-
-
-"""
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()
@@ -749,97 +390,11 @@ def func_0():
 
 
 def test_assert_statement_if():
-    json_message = """
-    {
-        "decls": [
-            {
-                "i": {
-                    "n" : 255,
-                    "sign" : false
-                }
-            }
-        ],
-        "functions": [
-            {
-            "block": {
-                "statements": [
-                {
-                    "assert_stmt": {
-                        "cond": {
-                            "intBoolBinOp": {
-                                "op": "LESSEQ",
-                                "left": {
-                                    "varRef": {}
-                                },
-                                "right": {
-                                    "lit": {
-                                        "intval": 5
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                {
-                    "if_stmt": {
-                      "cases": [
-                        {
-                            "cond": {
-                                "intBoolBinOp": {
-                                    "op": "EQ",
-                                    "left": {
-                                        "lit": {
-                                            "intval": 2
-                                        }
-                                    },
-                                    "right": {
-                                        "lit": {
-                                            "intval": 5
-                                        }
-                                    }
-                                }
-                            },
-                            "if_body": {
-                                "statements": [
-                                  {
-                                       "assert_stmt": {
-                                           "cond": {
-                                                "lit": {
-                                                     "boolval" : true
-                                                }
-                                           },
-                                           "reason": {
-                                                "lit": {
-                                                     "strval": "err"
-                                                }
-                                           }
-                                       }
-                                  }
-                                ]
-                            }
-                        }
-                      ]
-                    }
-                }
-              ]
-            }
-        }
-      ]
-    }
-    """
-    expected = """x_INT_0 : uint256
-
-@external
-@view
-def func_0():
-    assert self.x_INT_0 <= 5
-    if 2 == 5:
-        assert True, "err"
-
-
-
-
-"""
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/assert_statement_if/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/assert_statement_if/out.vy", "r") as out_contract:
+        expected = out_contract.read()
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()
@@ -848,51 +403,12 @@ def func_0():
 
 
 def test_contract_input_params():
-    json_message = """
-    {
-      "decls": [
-        {}
-      ],
-      "functions": [
-        {
-          "input_params": [
-            {
-              "d": {}
-            },
-            {
-              "b": {}
-            }
-          ],
-          "output_params": [
-            {
-              "d": {}
-            },
-            {
-              "i": {
-                "n": 511,
-                "sign": false
-              }
-            }
-          ],
-          "block": {
-            "statements": [
-            ],
-            "exit_d": {
-                "selfd": {}
-            }
-          }
-        }
-      ]
-    }
-    """
-    expected = """x_INT_0 : uint8
+    current_dir = os.path.dirname(__file__)
+    with open(f"{current_dir}/cases/contract_input_params/in.json", "r") as inp_json:
+        json_message = inp_json.read()
+    with open(f"{current_dir}/cases/contract_input_params/out.vy", "r") as out_contract:
+        expected = out_contract.read()
 
-@external
-@nonpayable
-def func_0(x_DECIMAL_0: decimal, x_BOOL_0: bool) -> (decimal, uint256):
-    selfdestruct(0x0000000000000000000000000000000000000000)
-
-"""
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
     conv.visit()

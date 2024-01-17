@@ -1,0 +1,78 @@
+{
+  "decls": [
+    {
+      "i": {}
+    }
+  ],
+  "functions": [
+    {
+      "outputParams": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "ref_id": {
+                "b": {},
+                "i": {
+                  "n": 256,
+                  "sign": true
+                },
+                "varnum": 0
+              },
+              "expr": {
+                "boolExp": {
+                  "intBoolBinOp": {
+                    "op": "LESSEQ",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "assignment": {
+              "ref_id": {
+                "b": {},
+                "i": {
+                  "n": 256,
+                  "sign": true
+                },
+                "varnum": 0
+              },
+              "expr": {
+                "boolExp": {
+                  "intBoolBinOp": {
+                    "op": "GREATER",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "decls": [
+    {
+      "i": {
+        "n": 255,
+        "sign": false
+      }
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "assert_stmt": {
+              "cond": {
+                "intBoolBinOp": {
+                  "op": "LESSEQ",
+                  "left": {
+                    "varRef": {}
+                  },
+                  "right": {
+                    "lit": {
+                      "intval": 5
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
