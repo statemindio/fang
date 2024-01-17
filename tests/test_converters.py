@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from google.protobuf.json_format import Parse
 
 from converters.typed_converters import TypedConverter
@@ -245,26 +246,6 @@ def test_var_decl_bytes_382():
     assert conv.result == expected
 
 
-def test_var_decl_multiple_bytes_382():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-    conv = convert_message(json_message)
-    assert conv.result == expected
-
-
-def test_var_decl_multiple_bytes_382_and_ints():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382_and_ints/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/var_decl_multiple_bytes_382_and_ints/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-    conv = convert_message(json_message)
-    assert conv.result == expected
-
-
 def test_visit_create_min_proxy():
     mes = ""
     conv = TypedConverter(mes)
@@ -318,95 +299,25 @@ def test_function():
     assert res == expected
 
 
-def test_elif_cases():
+full_cases = [
+    "assert_statement",
+    "assert_statement_if",
+    "assignment",
+    "assignment_to_nonexistent_variable",
+    "contract_input_params",
+    "elif_cases",
+    "proto_converter",
+    "var_decl_multiple_bytes_382",
+    "var_decl_multiple_bytes_382_and_ints"
+]
+
+
+@pytest.mark.parametrize("case_name", full_cases)
+def test_proto_converter(case_name):
     current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/elif_cases/in.json", "r") as inp_json:
+    with open(f"{current_dir}/cases/{case_name}/in.json", "r") as inp_json:
         json_message = inp_json.read()
-    with open(f"{current_dir}/cases/elif_cases/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
-
-    print(conv.result)
-    assert conv.result == expected
-
-
-def test_proto_converter():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/proto_converter/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/proto_converter/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
-    print(conv.result)
-    assert conv.result == expected
-
-
-def test_assignment():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/assignment/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/assignment/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
-    print(conv.result)
-    assert conv.result == expected
-
-
-def test_assignment_to_nonexistent_variable():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/assignment_to_nonexistent_variable/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/assignment_to_nonexistent_variable/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
-    print(conv.result)
-    assert conv.result == expected
-
-
-# TODO: trailing spaces may force error
-def test_assert_statement():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/assert_statement/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/assert_statement/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
-    print(conv.result)
-    assert conv.result == expected
-
-
-def test_assert_statement_if():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/assert_statement_if/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/assert_statement_if/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-    mes = Parse(json_message, Contract())
-    conv = TypedConverter(mes)
-    conv.visit()
-    print(conv.result)
-    assert conv.result == expected
-
-
-def test_contract_input_params():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/contract_input_params/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/contract_input_params/out.vy", "r") as out_contract:
+    with open(f"{current_dir}/cases/{case_name}/out.vy", "r") as out_contract:
         expected = out_contract.read()
 
     mes = Parse(json_message, Contract())
