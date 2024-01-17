@@ -780,8 +780,8 @@ def test_assert_statement_if():
                         }
                     }
                 },
-				{
-					"if_stmt": {
+                {
+                    "if_stmt": {
                       "cases": [
                         {
                             "cond": {
@@ -801,28 +801,26 @@ def test_assert_statement_if():
                             },
                             "if_body": {
                                 "statements": [
-								{
-									"assert_stmt": {
-										"cond": {
-											"lit": {
-												"boolval" : true
-											}
-										},
-										"reason": {
-											"lit": {
-												"strval": "err"
-											}
-										}
-									}
-								}
-							  ]
+                                  {
+                                       "assert_stmt": {
+                                           "cond": {
+                                                "lit": {
+                                                     "boolval" : true
+                                                }
+                                           },
+                                           "reason": {
+                                                "lit": {
+                                                     "strval": "err"
+                                                }
+                                           }
+                                       }
+                                  }
+                                ]
                             }
                         }
-                        
                       ]
                     }
-                            
-				}
+                }
               ]
             }
         }
@@ -840,6 +838,59 @@ def func_0():
 
 
 
+
+"""
+    mes = Parse(json_message, Contract())
+    conv = TypedConverter(mes)
+    conv.visit()
+    print(conv.result)
+    assert conv.result == expected
+
+
+def test_contract_input_params():
+    json_message = """
+    {
+      "decls": [
+        {}
+      ],
+      "functions": [
+        {
+          "input_params": [
+            {
+              "d": {}
+            },
+            {
+              "b": {}
+            }
+          ],
+          "output_params": [
+            {
+              "d": {}
+            },
+            {
+              "i": {
+                "n": 511,
+                "sign": false
+              }
+            }
+          ],
+          "block": {
+            "statements": [
+            ],
+            "exit_d": {
+                "selfd": {}
+            }
+          }
+        }
+      ]
+    }
+    """
+    expected = """x_INT_0 : uint8
+
+@external
+@nonpayable
+def func_0(x_DECIMAL_0: decimal, x_BOOL_0: bool) -> (decimal, uint256):
+    selfdestruct(0x0000000000000000000000000000000000000000)
 
 """
     mes = Parse(json_message, Contract())
