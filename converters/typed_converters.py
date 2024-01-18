@@ -380,8 +380,8 @@ class TypedConverter:
         return result
 
     def _visit_return_payload(self, return_p):
-        if len(self._function_output) == 0:
-            return ""
+        #if len(self._function_output) == 0:
+         #   return ""
 
         # TODO: dunno how to enumerate non repeated message
         iter_map = {
@@ -517,7 +517,7 @@ class TypedConverter:
             self.type_stack.append(Decimal())
             left = self._visit_decimal_expression(expr.decBoolBinOp.left)
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
-            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
             result = f"{left} {bin_op} {right}"
             self.type_stack.pop()
             return result
@@ -577,7 +577,7 @@ class TypedConverter:
             self.type_stack.append(String(100))
             value = self._visit_string_expression(expr.strVal)
             self.type_stack.pop()
-            return f"{result}{value})"
+            return f"{result}\"{value}\")"
         if expr.HasField("bVal"):
             self.type_stack.append(Bytes(100))
             value = self._visit_bytes_expression(expr.bVal)

@@ -282,6 +282,40 @@ def test_visit_sha256():
     assert res == expected
 
 
+def test_visit_sha256_string():
+    mes = ""
+    conv = TypedConverter(mes)
+    json_message = """
+    {
+        "strVal": {
+            "lit": {
+                "strval" : "hohohaha"
+            }
+        }
+    }"""
+    mes = Parse(json_message, Sha256())
+    expected = "sha256(\"hohohaha\")"
+    res = conv._visit_sha256(mes)
+    assert res == expected
+
+
+def test_visit_sha256_bytes():
+    mes = ""
+    conv = TypedConverter(mes)
+    json_message = """
+    {
+        "bVal": {
+            "lit": {
+                "barrval" : 2
+            }
+        }
+    }"""
+    mes = Parse(json_message, Sha256())
+    expected = "sha256(b\"02\")"
+    res = conv._visit_sha256(mes)
+    assert res == expected
+
+
 def test_function():
     current_dir = os.path.dirname(__file__)
     with open(f"{current_dir}/cases/function/in.json", "r") as inp_json:
@@ -311,7 +345,8 @@ full_cases = [
     "var_decl_multiple_bytes_382_and_ints",
     "else_case",
     "for_statement",
-    "max_functions_restriction"
+    "max_functions_restriction",
+    "decimal_expression"
 ]
 
 
