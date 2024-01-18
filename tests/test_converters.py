@@ -310,7 +310,8 @@ full_cases = [
     "var_decl_multiple_bytes_382",
     "var_decl_multiple_bytes_382_and_ints",
     "else_case",
-    "for_statement"
+    "for_statement",
+    "max_functions_restriction"
 ]
 
 

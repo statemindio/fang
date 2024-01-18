@@ -224,6 +224,7 @@ class TypedConverter:
         input_params = self._visit_input_parameters(function.input_params)
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()
+        self._func_tracker.register_function(function_name)
 
         output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
         if len(self._function_output) > 1:
