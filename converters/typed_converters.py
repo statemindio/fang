@@ -333,9 +333,6 @@ class TypedConverter:
         self.type_stack.append(current_type)
         result = self._visit_var_ref(assignment.ref_id, self._block_level_count)
         if result is None:
-            # FIXME: here should be handled a case when there is no variable of desired type.
-            # the main idea is to obtain currently saved global vars and its types.
-            # the problem is the VarTracker uses only vyper_type as a key to store the variables.
             result = self.__var_decl(assignment.expr, current_type)
             return result
         expression_result = self.visit_typed_expression(assignment.expr, current_type)
