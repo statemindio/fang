@@ -4,7 +4,7 @@ import pytest
 from google.protobuf.json_format import Parse
 
 from converters.typed_converters import TypedConverter
-from types_d import Address, BytesM
+from types_d import Address, BytesM, String
 from vyperProtoNew_pb2 import Contract, CreateMinimalProxy, Sha256, Func
 
 
@@ -297,6 +297,26 @@ def test_visit_sha256_string():
     expected = "sha256(\"hohohaha\")"
     res = conv._visit_sha256(mes)
     assert res == expected
+    
+    
+def test_visit_sha256_string_varref():
+    mes = ""
+    conv = TypedConverter(mes)
+    json_message = """
+    {
+        "strVal": {
+            "varRef": {
+                "s" : {}
+            }
+        }
+    }"""
+    mes = Parse(json_message, Sha256())
+    string_type = String(100)
+    conv.type_stack.append(string_type)
+    conv._var_tracker.register_global_variable("var0", string_type)
+    expected = "sha256(self.var0)"
+    res = conv._visit_sha256(mes)
+    assert res == expected
 
 
 def test_visit_sha256_bytes():
@@ -346,7 +366,8 @@ full_cases = [
     "else_case",
     "for_statement",
     "max_functions_restriction",
-    "decimal_expression"
+    "decimal_expression",
+    "bytes_expression"
 ]
 
 

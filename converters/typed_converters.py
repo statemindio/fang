@@ -171,8 +171,8 @@ class TypedConverter:
         if is_global:
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
-            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
             value = self.visit_typed_expression(expr, current_type)
+            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
             result = f"{result} = {value}"
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
@@ -577,7 +577,7 @@ class TypedConverter:
             self.type_stack.append(String(100))
             value = self._visit_string_expression(expr.strVal)
             self.type_stack.pop()
-            return f"{result}\"{value}\")"
+            return f"{result}{value})"
         if expr.HasField("bVal"):
             self.type_stack.append(Bytes(100))
             value = self._visit_bytes_expression(expr.bVal)
@@ -637,7 +637,7 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        return self.create_literal(expr.lit)
+        return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
         return f"{self.TAB * self._block_level_count}continue"
@@ -657,7 +657,7 @@ class TypedConverter:
         value = self._visit_string_expression(assert_stmt.reason)
         self.type_stack.pop()
 
-        if len(value) > 0:
-            result = f"{result}, \"{value}\""
+        if len(value) > 2:
+            result = f"{result}, {value}"
 
         return result
