@@ -142,7 +142,7 @@ class TypedConverter:
 
         return current_type
 
-    def _visit_var_ref(self, expr, level=None, assignment = False):
+    def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
         allowed_vars = self._var_tracker.get_global_vars(
             current_type
@@ -152,14 +152,14 @@ class TypedConverter:
 
         variable = random.choice(allowed_vars)
         global_vars = self._var_tracker.get_global_vars(current_type)
-        
+
         if variable in global_vars and self._mutability_level < NON_PAYABLE and assignment:
             self._mutability_level = NON_PAYABLE
-            
+
         if variable in global_vars and self._mutability_level < VIEW:
             self._mutability_level = VIEW
-            
-        return random.choice(allowed_vars)
+
+        return variable
 
     def visit_typed_expression(self, expr, current_type):
         handler, attr = self._expression_handlers[current_type.name]
@@ -339,7 +339,7 @@ class TypedConverter:
         self.type_stack.append(String(100))
         error_value = self._visit_string_expression(expr.errval)
         self.type_stack.pop()
-        
+
         result = f"{self.TAB * self._block_level_count}raise"
         if len(error_value) > 2:
             result = f"{result} {error_value}"
@@ -397,8 +397,8 @@ class TypedConverter:
         return result
 
     def _visit_return_payload(self, return_p):
-        #if len(self._function_output) == 0:
-         #   return ""
+        # if len(self._function_output) == 0:
+        #   return ""
 
         # TODO: dunno how to enumerate non repeated message
         iter_map = {
