@@ -449,7 +449,7 @@ class TypedConverter:
             result = f"{result}, value = {value}"
             self.type_stack.pop()
         if cmp.HasField("salt"):
-            self.type_stack.append(Bytes(32))
+            self.type_stack.append(BytesM(32))
             salt = self._visit_bytes_m_expression(cmp.salt)
             result = f"{result}, salt = {salt}"
             self.type_stack.pop()

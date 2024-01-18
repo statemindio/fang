@@ -1,0 +1,59 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m" : 31
+          }
+        }
+      ],
+      "output_params": [
+        {
+          "adr": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "cmp": {
+                    "target": {
+                      "lit": {
+                        "addval": 4919
+                      }
+                    },
+                    "value": {
+                      "lit": {}
+                    },
+                    "salt": {
+                      "varRef": {
+                        "bM": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true,
+          "payload": {
+            "one": {
+              "addrExp": {
+                "varRef": {
+                  "adr" : {},
+                  "varnum" : 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

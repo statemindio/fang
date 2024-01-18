@@ -371,7 +371,8 @@ full_cases = [
     "bytes_m_expression",
     "int_expression",
     "bool_expression",
-    "create_from_blueprint"
+    "create_from_blueprint",
+    "create_min_proxy"
 ]
 
 
