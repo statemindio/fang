@@ -142,7 +142,7 @@ class TypedConverter:
 
         return current_type
 
-    def _visit_var_ref(self, expr, level=None):
+    def _visit_var_ref(self, expr, level=None, assignment = False):
         current_type = self.type_stack[len(self.type_stack) - 1]
         allowed_vars = self._var_tracker.get_global_vars(
             current_type
@@ -152,9 +152,13 @@ class TypedConverter:
 
         variable = random.choice(allowed_vars)
         global_vars = self._var_tracker.get_global_vars(current_type)
+        
+        if variable in global_vars and self._mutability_level < NON_PAYABLE and assignment:
+            self._mutability_level = NON_PAYABLE
+            
         if variable in global_vars and self._mutability_level < VIEW:
             self._mutability_level = VIEW
-
+            
         return random.choice(allowed_vars)
 
     def visit_typed_expression(self, expr, current_type):
@@ -234,7 +238,14 @@ class TypedConverter:
 
         self._block_level_count = 1
         block = self._visit_block(function.block)
+
         mutability = self.__get_mutability(function.mut)
+        """
+        if mutability == "@nonpayable":
+            mutability = ""
+        else:
+            mutability = f"{mutability}\n"
+        """
         result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
 
         return result
@@ -331,7 +342,7 @@ class TypedConverter:
     def _visit_assignment(self, assignment):
         current_type = self.visit_type(assignment.ref_id)
         self.type_stack.append(current_type)
-        result = self._visit_var_ref(assignment.ref_id, self._block_level_count)
+        result = self._visit_var_ref(assignment.ref_id, self._block_level_count, True)
         if result is None:
             result = self.__var_decl(assignment.expr, current_type)
             return result

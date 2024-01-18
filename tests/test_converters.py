@@ -367,7 +367,9 @@ full_cases = [
     "for_statement",
     "max_functions_restriction",
     "decimal_expression",
-    "bytes_expression"
+    "bytes_expression",
+    "bytes_m_expression",
+    "int_expression"
 ]
 
 
