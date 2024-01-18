@@ -87,7 +87,7 @@ message BoolExpression {
     IntBoolBinOp intBoolBinOp = 3;
     DecimalBoolBinOp decBoolBinOp = 4;
     VarRef varRef = 6;
-    Convert convert = 7;
+    //    Convert convert = 7;
   }
   Literal lit = 5;
 }
@@ -97,7 +97,7 @@ message AddressExpression {
     CreateMinimalProxy cmp = 1;
     CreateFromBlueprint cfb = 2;
     VarRef varRef = 4;
-    Convert convert = 5;
+    //    Convert convert = 5;
   }
   Literal lit = 3;
 }
@@ -150,7 +150,7 @@ message IntExpression {
     IntBinOp binOp = 2;
     IntUnOp unOp = 3;
     VarRef varRef = 4;
-    Convert convert = 5;
+    //    Convert convert = 5;
   }
 }
 
@@ -159,14 +159,14 @@ message BytesMExpression {
   oneof expr {
     Sha256 sha = 1;
     VarRef varRef = 4;
-    Convert convert = 5;
+    //    Convert convert = 5;
   }
 }
 
 message BytesExpression {
   oneof expr {
     VarRef varRef = 1;
-    Convert convert = 2;
+    //    Convert convert = 2;
   }
   Literal lit = 3;
 }
@@ -174,7 +174,7 @@ message BytesExpression {
 message StringExpression {
   oneof expr {
     VarRef varRef = 1;
-    Convert convert = 2;
+    //    Convert convert = 2;
   }
   Literal lit = 3;
 }
@@ -184,7 +184,7 @@ message DecimalExpression {
     DecimalBinOp binOp = 1;
     DecimalUnOp unOp = 2;
     VarRef varRef = 4;
-    Convert convert = 5;
+    //    Convert convert = 5;
   }
   Literal lit = 3;
 }
@@ -320,7 +320,7 @@ message Statement {
     VarDecl decl = 1;
     ForStmt for_stmt = 3;
     IfStmt if_stmt = 4;
-   // Selfdestruct selfd = 7;
+    // Selfdestruct selfd = 7;
     ContinueStatement cont_stmt = 8;
     BreakStatement break_stmt = 9;
     AssertStatement assert_stmt = 10;
@@ -375,13 +375,13 @@ message Contract {
   repeated Func functions = 2;
 }
 
-message Convert {
-  enum InputType {
-    INT = 0;
-  }
-  InputType from_type = 1;
-  TypedExpression value = 2;
-}
+//message Convert {
+//  enum InputType {
+//    INT = 0;
+//  }
+//  InputType from_type = 1;
+//  TypedExpression value = 2;
+//}
 
 message CreateMinimalProxy {
   AddressExpression target = 1;
@@ -431,11 +431,11 @@ message ReturnPayload {
   TypedExpression five = 5;
 }
 
-message BreakStatement{}
+message BreakStatement {}
 
-message ContinueStatement{}
+message ContinueStatement {}
 
-message AssertStatement{
+message AssertStatement {
   BoolExpression cond = 1;
-  StringExpression reason = 2; 
+  StringExpression reason = 2;
 }
