@@ -142,7 +142,7 @@ class TypedConverter:
 
         return current_type
 
-    def _visit_var_ref(self, expr, level=None):
+    def _visit_var_ref(self, expr, level=None, assignment = False):
         current_type = self.type_stack[len(self.type_stack) - 1]
         allowed_vars = self._var_tracker.get_global_vars(
             current_type
@@ -152,9 +152,13 @@ class TypedConverter:
 
         variable = random.choice(allowed_vars)
         global_vars = self._var_tracker.get_global_vars(current_type)
+        
+        if variable in global_vars and self._mutability_level < NON_PAYABLE and assignment:
+            self._mutability_level = NON_PAYABLE
+            
         if variable in global_vars and self._mutability_level < VIEW:
             self._mutability_level = VIEW
-
+            
         return random.choice(allowed_vars)
 
     def visit_typed_expression(self, expr, current_type):
@@ -171,8 +175,8 @@ class TypedConverter:
         if is_global:
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
-            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
             value = self.visit_typed_expression(expr, current_type)
+            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
             result = f"{result} = {value}"
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
@@ -234,7 +238,14 @@ class TypedConverter:
 
         self._block_level_count = 1
         block = self._visit_block(function.block)
+
         mutability = self.__get_mutability(function.mut)
+        """
+        if mutability == "@nonpayable":
+            mutability = ""
+        else:
+            mutability = f"{mutability}\n"
+        """
         result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
 
         return result
@@ -290,7 +301,9 @@ class TypedConverter:
             return result
         for i, case in enumerate(expr):
             prefix = "" if i == 0 else f"{self.TAB * self._block_level_count}elif"
+            self.type_stack.append(Bool())
             condition = self._visit_bool_expression(case.cond)
+            self.type_stack.pop()
             self._block_level_count += 1
             body = self._visit_block(case.if_body)
             self._block_level_count -= 1
@@ -326,12 +339,16 @@ class TypedConverter:
         self.type_stack.append(String(100))
         error_value = self._visit_string_expression(expr.errval)
         self.type_stack.pop()
-        return f"{self.TAB * self._block_level_count}raise {error_value}"
+        
+        result = f"{self.TAB * self._block_level_count}raise"
+        if len(error_value) > 2:
+            result = f"{result} {error_value}"
+        return result
 
     def _visit_assignment(self, assignment):
         current_type = self.visit_type(assignment.ref_id)
         self.type_stack.append(current_type)
-        result = self._visit_var_ref(assignment.ref_id, self._block_level_count)
+        result = self._visit_var_ref(assignment.ref_id, self._block_level_count, True)
         if result is None:
             result = self.__var_decl(assignment.expr, current_type)
             return result
@@ -380,8 +397,8 @@ class TypedConverter:
         return result
 
     def _visit_return_payload(self, return_p):
-        if len(self._function_output) == 0:
-            return ""
+        #if len(self._function_output) == 0:
+         #   return ""
 
         # TODO: dunno how to enumerate non repeated message
         iter_map = {
@@ -432,7 +449,7 @@ class TypedConverter:
             result = f"{result}, value = {value}"
             self.type_stack.pop()
         if cmp.HasField("salt"):
-            self.type_stack.append(Bytes(32))
+            self.type_stack.append(BytesM(32))
             salt = self._visit_bytes_m_expression(cmp.salt)
             result = f"{result}, salt = {salt}"
             self.type_stack.pop()
@@ -465,7 +482,7 @@ class TypedConverter:
             result = f"{result}, code_offset = {offset}"
             self.type_stack.pop()
         if cfb.HasField("salt"):
-            self.type_stack.append(Int(256))
+            self.type_stack.append(BytesM(32))
             salt = self._visit_bytes_m_expression(cfb.salt)
             result = f"{result}, salt = {salt}"
             self.type_stack.pop()
@@ -517,7 +534,7 @@ class TypedConverter:
             self.type_stack.append(Decimal())
             left = self._visit_decimal_expression(expr.decBoolBinOp.left)
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
-            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
             result = f"{left} {bin_op} {right}"
             self.type_stack.pop()
             return result
@@ -637,7 +654,7 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        return self.create_literal(expr.lit)
+        return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
         return f"{self.TAB * self._block_level_count}continue"
@@ -657,7 +674,7 @@ class TypedConverter:
         value = self._visit_string_expression(assert_stmt.reason)
         self.type_stack.pop()
 
-        if len(value) > 0:
-            result = f"{result}, \"{value}\""
+        if len(value) > 2:
+            result = f"{result}, {value}"
 
         return result
