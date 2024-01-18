@@ -1,0 +1,125 @@
+{
+  "decls": [
+    {
+      "bM": {
+        "m": 1
+      }
+    },
+    {
+      "bM": {
+        "m": 4
+      }
+    },
+    {
+      "bM": {
+        "m": 3
+      }
+    },
+    {
+      "i": {
+        "n": 1,
+        "sign": true
+      }
+    },
+    {
+      "adr": {}
+    },
+    {
+      "adr": {}
+    }
+  ],
+  "functions": [
+    {
+      "outputParams": [
+      ],
+      "block": {
+        "statements": [
+          {
+            "for_stmt": {
+              "ranged": {
+                "start": 3,
+                "stop": 5
+              },
+              "body": {
+                "statements": [
+                  {
+                    "if_stmt": {
+                      "cases": [
+                        {
+                          "cond": {
+                            "intBoolBinOp": {
+                              "op": "EQ",
+                              "left": {
+                                "lit": {
+                                  "intval": 2
+                                }
+                              },
+                              "right": {
+                                "lit": {
+                                  "intval": 5
+                                }
+                              }
+                            }
+                          },
+                          "if_body": {
+                            "statements": [
+                              {
+                                "cont_stmt": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "cond": {
+                            "intBoolBinOp": {
+                              "op": "LESSEQ",
+                              "left": {
+                                "lit": {
+                                  "intval": 2
+                                }
+                              },
+                              "right": {
+                                "lit": {
+                                  "intval": 5
+                                }
+                              }
+                            }
+                          },
+                          "if_body": {
+                            "statements": [
+                              {
+                                "break_stmt": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "else_case": {
+                        "statements": [
+                          {
+                            "assert_stmt": {
+                              "cond": {
+                                "lit": {
+                                  "boolval": true
+                                }
+                              },
+                              "reason": {
+                                "lit": {
+                                  "strval": "test"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
