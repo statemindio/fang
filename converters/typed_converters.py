@@ -211,7 +211,7 @@ class TypedConverter:
         return f"func_{_id}"
 
     def _visit_reentrancy(self, ret):
-        return f"@reentrancy(\"{ret.key}\")"
+        return f'@nonreentrant("{ret.key}")\n' if ret.key else ""
 
     def __get_mutability(self, mut):
         return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
@@ -224,7 +224,7 @@ class TypedConverter:
             visibility = "@internal"
         reentrancy = ""
         if function.HasField("ret"):
-            reentrancy = self._visit_reentrancy(function.ret) + "\n"
+            reentrancy = self._visit_reentrancy(function.ret)
         input_params = self._visit_input_parameters(function.input_params)
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()

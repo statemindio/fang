@@ -297,8 +297,8 @@ def test_visit_sha256_string():
     expected = "sha256(\"hohohaha\")"
     res = conv._visit_sha256(mes)
     assert res == expected
-    
-    
+
+
 def test_visit_sha256_string_varref():
     mes = ""
     conv = TypedConverter(mes)
@@ -372,7 +372,9 @@ full_cases = [
     "int_expression",
     "bool_expression",
     "create_from_blueprint",
-    "create_min_proxy"
+    "create_min_proxy",
+    "reentrancy",
+    "empty_reentrancy_lock"
 ]
 
 
