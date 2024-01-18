@@ -33,13 +33,17 @@
                           "binOp": {
                             "op": "ADD",
                             "left": {
-                              "lit": {
-                              "decimalval": 5
+                              "unOp": {
+                                "expr": {
+                                  "lit": {
+                                    "decimalval": 5
+                                  }
+                                }
                               }
                             },
                             "right": {
                               "lit": {
-                              "decimalval": 3
+                                "decimalval": 3
                               }
                             }
                           }
