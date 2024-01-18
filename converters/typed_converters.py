@@ -301,7 +301,9 @@ class TypedConverter:
             return result
         for i, case in enumerate(expr):
             prefix = "" if i == 0 else f"{self.TAB * self._block_level_count}elif"
+            self.type_stack.append(Bool())
             condition = self._visit_bool_expression(case.cond)
+            self.type_stack.pop()
             self._block_level_count += 1
             body = self._visit_block(case.if_body)
             self._block_level_count -= 1
@@ -337,7 +339,11 @@ class TypedConverter:
         self.type_stack.append(String(100))
         error_value = self._visit_string_expression(expr.errval)
         self.type_stack.pop()
-        return f"{self.TAB * self._block_level_count}raise {error_value}"
+        
+        result = f"{self.TAB * self._block_level_count}raise"
+        if len(error_value) > 2:
+            result = f"{result} {error_value}"
+        return result
 
     def _visit_assignment(self, assignment):
         current_type = self.visit_type(assignment.ref_id)
