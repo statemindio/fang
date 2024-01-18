@@ -222,9 +222,6 @@ class TypedConverter:
             visibility = "@external"
         else:
             visibility = "@internal"
-        reentrancy = ""
-        if function.HasField("ret"):
-            reentrancy = self._visit_reentrancy(function.ret)
         input_params = self._visit_input_parameters(function.input_params)
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()
@@ -239,6 +236,9 @@ class TypedConverter:
         self._block_level_count = 1
         block = self._visit_block(function.block)
 
+        reentrancy = ""
+        if function.HasField("ret") and self._mutability_level > PURE:
+            reentrancy = self._visit_reentrancy(function.ret)
         mutability = self.__get_mutability(function.mut)
         """
         if mutability == "@nonpayable":

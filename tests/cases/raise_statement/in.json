@@ -1,0 +1,30 @@
+{
+  "decls": [
+    {}
+  ],
+  "functions": [
+    {
+      "ret": {
+        "key": "test"
+      },
+      "outputParams": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "raise_st": {
+            "errval": {
+              "lit": {
+                "strval": "test error"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

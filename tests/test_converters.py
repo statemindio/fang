@@ -374,7 +374,8 @@ full_cases = [
     "create_from_blueprint",
     "create_min_proxy",
     "reentrancy",
-    "empty_reentrancy_lock"
+    "empty_reentrancy_lock",
+    "raise_statement"
 ]
 
 
