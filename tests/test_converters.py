@@ -369,7 +369,9 @@ full_cases = [
     "decimal_expression",
     "bytes_expression",
     "bytes_m_expression",
-    "int_expression"
+    "int_expression",
+    "bool_expression",
+    "create_from_blueprint"
 ]
 
 

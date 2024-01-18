@@ -476,7 +476,7 @@ class TypedConverter:
             result = f"{result}, code_offset = {offset}"
             self.type_stack.pop()
         if cfb.HasField("salt"):
-            self.type_stack.append(Int(256))
+            self.type_stack.append(BytesM(32))
             salt = self._visit_bytes_m_expression(cfb.salt)
             result = f"{result}, salt = {salt}"
             self.type_stack.pop()
