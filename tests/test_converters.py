@@ -365,6 +365,8 @@ full_cases = [
     "var_decl_multiple_bytes_382_and_ints",
     "else_case",
     "for_statement",
+    "for_statement_variable",
+    "for_statement_nonexistent_variable",
     "max_functions_restriction",
     "decimal_expression",
     "bytes_expression",
