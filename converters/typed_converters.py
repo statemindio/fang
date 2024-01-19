@@ -149,7 +149,7 @@ class TypedConverter:
         ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
 
         if assignment:
-            readonly_vars = self._var_tracker.get_readonly_variables(current_type)
+            readonly_vars = self._var_tracker.get_readonly_variables(self._block_level_count, current_type)
             for var in readonly_vars:
                 if var in allowed_vars:
                     allowed_vars.remove(var)
@@ -200,7 +200,7 @@ class TypedConverter:
             idx = self._var_tracker.next_id(param_type)
             name = f"x_{param_type.name}_{idx}"
             #self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
-            self._var_tracker.register_readonly_variable(name, param_type)
+            self._var_tracker.register_readonly_variable(name, 1, param_type)
             
             if i > 0:
                 result = f"{result}, "
@@ -252,6 +252,7 @@ class TypedConverter:
         self._block_level_count = 1
         block = self._visit_block(function.block)
         self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_readonly_level(self._block_level_count)
         self._block_level_count = 0
         self._var_tracker.remove_function_level(self._block_level_count)
 
@@ -277,7 +278,7 @@ class TypedConverter:
         ivar_type = Int()
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
-        self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type)
+        self._var_tracker.register_readonly_variable(var_name, self._block_level_count + 1, ivar_type)
         result = f"for {var_name} in range({start}, {stop}):"
         return result
 
@@ -299,19 +300,21 @@ class TypedConverter:
         return result
 
     def _visit_for_stmt(self, for_stmt):
+        if for_stmt.HasField("variable"):
+            for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_variable(for_stmt.variable)
+        else:
+            for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_ranged(for_stmt.ranged)
+        
         self._for_block_count += 1
         self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
         self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_readonly_level(self._block_level_count)
         self._block_level_count -= 1
         self._for_block_count -= 1
-
-        if for_stmt.HasField("variable"):
-            for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_variable(for_stmt.variable)
-            result = f"{for_statement}\n{body}"
-            return result
-        for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_ranged(for_stmt.ranged)
+        
         result = f"{for_statement}\n{body}"
+        
         return result
 
     def _visit_if_cases(self, expr):

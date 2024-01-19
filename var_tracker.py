@@ -9,6 +9,7 @@ class VarTracker:
     GLOBAL_KEY = "__global__"
     FUNCTION_KEY = "__function__"
     READONLY_KEY = "__readonly__"
+    
     def __init__(self):
         self._var_id = -1
         self._var_id_map = {}
@@ -70,37 +71,46 @@ class VarTracker:
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
         
-    def register_readonly_variable(self, name, var_type: BaseType):
+    def register_readonly_variable(self, name, level, var_type: BaseType):
         """
         Sets a new read-only variable
         :param name: name of the new variable
+        :param level:
         :param var_type:
         """
         if var_type.vyper_type not in self._vars[self.READONLY_KEY]:
-            self._vars[self.READONLY_KEY][var_type.vyper_type] = []
+            self._vars[self.READONLY_KEY][var_type.vyper_type] = {
+                level: []
+            }
+        if level not in self._vars[self.READONLY_KEY][var_type.vyper_type]:
+            self._vars[self.READONLY_KEY][var_type.vyper_type][level] = []
+
         # TODO: check if a variable already exist
-        self._vars[self.READONLY_KEY][var_type.vyper_type].append(name)
+        self._vars[self.READONLY_KEY][var_type.vyper_type][level].append(name)
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
 
-    def remove_readonly_variables(self):
+    def remove_readonly_level(self, level: int):
         """
-        Removes the readonly variables
+        Removes the specified level's variables
         :param level:
         """
         for vyper_type in self._vars[self.READONLY_KEY]:
-            self._var_id -= len(self._vars[self.READONLY_KEY][vyper_type])
-            self._vars[self.READONLY_KEY][vyper_type] = []
+            if level not in self._vars[self.READONLY_KEY][vyper_type]:
+                continue
+            self._var_id -= len(self._vars[self.READONLY_KEY][vyper_type][level])
+            self._vars[self.READONLY_KEY][vyper_type][level] = []
 
-    def get_readonly_variables(self, var_type: BaseType):
+    def get_readonly_variables(self, level: int, var_type: BaseType):
         """
 
         :param level:
         :param var_type:
-        :return: list of allowed variables. It's a united of the global variables and function variables
-        allowed on the given level
+        :return: list of allowed readonly variables
         """
-        allowed_vars = [v for v in self._vars[self.READONLY_KEY].get(var_type.vyper_type, [])]
+        allowed_vars = []
+        for i in range(level + 1):
+            allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
         return allowed_vars
 
     def remove_function_level(self, level: int):
@@ -123,7 +133,8 @@ class VarTracker:
         allowed on the given level
         """
         allowed_vars = self.get_global_vars(var_type)
-        allowed_vars.extend(self.get_readonly_variables(var_type))
+        for i in range(level + 1):
+            allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
         for i in range(level + 1):
             allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
         return allowed_vars
