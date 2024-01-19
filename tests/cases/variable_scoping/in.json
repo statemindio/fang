@@ -1,0 +1,37 @@
+{
+  "functions": [
+    {
+      "vis": "INTERNAL",
+      "mut": "NONPAYABLE",
+      "inputParams": [
+        {
+          "i": {
+            "n": 65533
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {}
+        ]
+      }
+    },
+    {
+      "vis": "INTERNAL",
+      "mut": "NONPAYABLE",
+      "inputParams": [
+        {
+          "i": {
+            "n": 65533
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {}
+        ],
+        "exitD": {}
+      }
+    }
+  ]
+}

@@ -230,6 +230,7 @@ class TypedConverter:
         else:
             visibility = "@internal"
         input_params = self._visit_input_parameters(function.input_params)
+        
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = self._generate_function_name()
         self._func_tracker.register_function(function_name)
@@ -242,6 +243,9 @@ class TypedConverter:
 
         self._block_level_count = 1
         block = self._visit_block(function.block)
+        self._var_tracker.remove_function_level(self._block_level_count)
+        self._block_level_count = 0
+        self._var_tracker.remove_function_level(self._block_level_count)
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
@@ -290,6 +294,7 @@ class TypedConverter:
         self._for_block_count += 1
         self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
+        self._var_tracker.remove_function_level(self._block_level_count)
         self._block_level_count -= 1
         self._for_block_count -= 1
 
@@ -313,6 +318,7 @@ class TypedConverter:
             self.type_stack.pop()
             self._block_level_count += 1
             body = self._visit_block(case.if_body)
+            self._var_tracker.remove_function_level(self._block_level_count)
             self._block_level_count -= 1
             result = f"{result}{prefix} {condition}:\n{body}\n"
 
@@ -322,6 +328,7 @@ class TypedConverter:
         result = f"{self.TAB * self._block_level_count}else:"
         self._block_level_count += 1
         else_block = self._visit_block(expr)
+        self._var_tracker.remove_function_level(self._block_level_count)
         self._block_level_count -= 1
         result = f"{result}\n{else_block}"
         return result
