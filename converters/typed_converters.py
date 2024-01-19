@@ -389,14 +389,14 @@ class TypedConverter:
             statement_result = self._visit_statement(statement)
             result = f"{result}{statement_result}\n"
 
-        if (self._block_level_count == 1 or block.exit_d.flag):
+        if (self._block_level_count == 1 or block.exit_d.flag or len(block.statements) == 0):
             exit_result = ""
             # can omit return statement if no outputs
             if block.exit_d.HasField("selfd"):
                 exit_result = self._visit_selfd(block.exit_d.selfd)
             elif block.exit_d.HasField("raise_st"):
                 exit_result = self._visit_raise_statement(block.exit_d.raise_st)
-            elif len(self._function_output) > 0 or block.exit_d.flag:
+            elif len(self._function_output) > 0 or block.exit_d.flag or len(block.statements) == 0:
                 exit_result = self._visit_return_payload(block.exit_d.payload)
 
             result = f"{result}{exit_result}\n"

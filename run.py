@@ -6,7 +6,7 @@ from google.protobuf.json_format import MessageToJson
 with atheris.instrument_imports():
     import sys
     from vyper import compile_code
-    from vyper.exceptions import CompilerPanic
+    from vyper.exceptions import CompilerPanic, StaticAssertionException
 
 import vyperProtoNew_pb2
 from converters.typed_converters import TypedConverter
@@ -19,6 +19,11 @@ def TestOneProtoInput(msg):
     print(proto.result)
     print('proto:')
     print(MessageToJson(msg))
+    print('compiler:')
+    try:
+        print(compile_code(proto.result))
+    except StaticAssertionException:
+        print("StaticAssertionException")
     print("-------------")
 
 

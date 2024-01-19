@@ -5,8 +5,8 @@ from utils import fill_address
 class BytesLiteralGen:
     def generate(self, m, value):
         hex_val = hex(value)[2:]
-        hex_val = hex_val if len(hex_val) > m * 2 else hex_val[:m * 2]
-        hex_val = f"{'' if len(hex_val) % 2 == 0 else '0'}{hex_val}"
+        hex_val = hex_val if len(hex_val) > m  else hex_val[:m]
+        #hex_val = f"{'' if len(hex_val) % 2 == 0 else '0'}{hex_val}"
         result = f"b\"{hex_val}\""
         return result
 
@@ -24,8 +24,8 @@ class BytesMLiteralGen:
         if len(hex_val) >= m * 2:
             hex_val = hex_val[:m * 2]
         hex_val = f"{'' if len(hex_val) % 2 == 0 else '0'}{hex_val}"
-        if len(hex_val) == 0:
-            hex_val = "00"
+        if len(hex_val) < m * 2:
+            hex_val += "00" * (m - len(hex_val) // 2)
         result = "0x" + hex_val
         return result
 

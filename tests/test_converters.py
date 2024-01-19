@@ -331,7 +331,7 @@ def test_visit_sha256_bytes():
         }
     }"""
     mes = Parse(json_message, Sha256())
-    expected = "sha256(b\"02\")"
+    expected = "sha256(b\"2\")"
     res = conv._visit_sha256(mes)
     assert res == expected
 
@@ -377,7 +377,8 @@ full_cases = [
     "create_min_proxy",
     "reentrancy",
     "empty_reentrancy_lock",
-    "raise_statement"
+    "raise_statement",
+    "max_functions_arguments"
 ]
 
 
