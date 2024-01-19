@@ -148,11 +148,9 @@ class TypedConverter:
             current_type
         ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
 
-        if assignment:
-            readonly_vars = self._var_tracker.get_readonly_variables(self._block_level_count, current_type)
-            for var in readonly_vars:
-                if var in allowed_vars:
-                    allowed_vars.remove(var)
+        if not assignment and level is not None:
+            read_only_vars = self._var_tracker.get_readonly_variables(level, current_type)
+            allowed_vars.extend(read_only_vars)
  
         if len(allowed_vars) == 0:
             return None

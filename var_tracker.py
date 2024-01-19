@@ -133,8 +133,7 @@ class VarTracker:
         allowed on the given level
         """
         allowed_vars = self.get_global_vars(var_type)
-        for i in range(level + 1):
-            allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
+
         for i in range(level + 1):
             allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
         return allowed_vars
