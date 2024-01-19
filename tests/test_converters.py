@@ -379,7 +379,8 @@ full_cases = [
     "empty_reentrancy_lock",
     "raise_statement",
     "max_functions_arguments",
-    "variable_scoping"
+    "variable_scoping",
+    "function_variable_scoping"
 ]
 
 

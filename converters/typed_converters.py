@@ -147,6 +147,13 @@ class TypedConverter:
         allowed_vars = self._var_tracker.get_global_vars(
             current_type
         ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
+
+        if assignment:
+            readonly_vars = self._var_tracker.get_readonly_variables(current_type)
+            for var in readonly_vars:
+                if var in allowed_vars:
+                    allowed_vars.remove(var)
+ 
         if len(allowed_vars) == 0:
             return None
 
@@ -192,8 +199,9 @@ class TypedConverter:
             param_type = self.visit_type(input_param)
             idx = self._var_tracker.next_id(param_type)
             name = f"x_{param_type.name}_{idx}"
-            self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
-
+            #self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
+            self._var_tracker.register_readonly_variable(name, param_type)
+            
             if i > 0:
                 result = f"{result}, "
             result = f"{result}{name}: {param_type.vyper_type}"

@@ -8,13 +8,14 @@ class VarTracker:
 
     GLOBAL_KEY = "__global__"
     FUNCTION_KEY = "__function__"
-
+    READONLY_KEY = "__readonly__"
     def __init__(self):
         self._var_id = -1
         self._var_id_map = {}
         self._vars = {
             self.GLOBAL_KEY: {},
-            self.FUNCTION_KEY: {}
+            self.FUNCTION_KEY: {},
+            self.READONLY_KEY: {}
         }
 
     def next_id(self, var_type) -> int:
@@ -68,6 +69,39 @@ class VarTracker:
         self._vars[self.GLOBAL_KEY][var_type.vyper_type].append(name)
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
+        
+    def register_readonly_variable(self, name, var_type: BaseType):
+        """
+        Sets a new read-only variable
+        :param name: name of the new variable
+        :param var_type:
+        """
+        if var_type.vyper_type not in self._vars[self.READONLY_KEY]:
+            self._vars[self.READONLY_KEY][var_type.vyper_type] = []
+        # TODO: check if a variable already exist
+        self._vars[self.READONLY_KEY][var_type.vyper_type].append(name)
+        self._var_id += 1
+        self._var_id_map[var_type.name] = self.next_id(var_type)
+
+    def remove_readonly_variables(self):
+        """
+        Removes the readonly variables
+        :param level:
+        """
+        for vyper_type in self._vars[self.READONLY_KEY]:
+            self._var_id -= len(self._vars[self.READONLY_KEY][vyper_type])
+            self._vars[self.READONLY_KEY][vyper_type] = []
+
+    def get_readonly_variables(self, var_type: BaseType):
+        """
+
+        :param level:
+        :param var_type:
+        :return: list of allowed variables. It's a united of the global variables and function variables
+        allowed on the given level
+        """
+        allowed_vars = [v for v in self._vars[self.READONLY_KEY].get(var_type.vyper_type, [])]
+        return allowed_vars
 
     def remove_function_level(self, level: int):
         """
@@ -89,6 +123,7 @@ class VarTracker:
         allowed on the given level
         """
         allowed_vars = self.get_global_vars(var_type)
+        allowed_vars.extend(self.get_readonly_variables(var_type))
         for i in range(level + 1):
             allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
         return allowed_vars
