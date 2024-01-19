@@ -1,7 +1,7 @@
 import dataclasses
 import random
 
-from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS
+from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from types_d.base import BaseType
@@ -197,6 +197,10 @@ class TypedConverter:
             if i > 0:
                 result = f"{result}, "
             result = f"{result}{name}: {param_type.vyper_type}"
+            
+            if i + 1 == MAX_FUNCTION_INPUT:
+                break
+            
         return result
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
@@ -204,6 +208,9 @@ class TypedConverter:
         for i, output_param in enumerate(output_params):
             param_type = self.visit_type(output_param)
             output_types.append(param_type)
+            
+            if i + 1 == MAX_FUNCTION_OUTPUT:
+                break
         return output_types
 
     def _generate_function_name(self):
