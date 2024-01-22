@@ -1,0 +1,42 @@
+{
+  "functions": [
+    {
+      "outputParams": [
+      ],
+      "block": {
+        "statements": [
+          {
+            "for_stmt": {
+              "ranged": {
+                "start": 5,
+                "stop": 5
+              },
+              "body": {
+                "statements": [
+                {
+                  "assignment": {
+                      "ref_id": {
+                        "i": {
+                          "n": 511,
+                          "sign" : false
+                        },
+                        "varnum": 0
+                      },
+                      "expr": {
+                      "intExp": {
+                        "lit": {
+                          "intval": 5
+                        }
+                      }
+                    }
+                  }
+                }
+               ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

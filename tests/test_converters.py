@@ -380,7 +380,9 @@ full_cases = [
     "raise_statement",
     "max_functions_arguments",
     "variable_scoping",
-    "function_variable_scoping"
+    "function_variable_scoping",
+    "for_statement_variable_write",
+    "for_statement_boundaries"
 ]
 
 

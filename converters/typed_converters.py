@@ -282,7 +282,7 @@ class TypedConverter:
             for_stmt_ranged.start, for_stmt_ranged.stop) if for_stmt_ranged.start < for_stmt_ranged.stop else (
             for_stmt_ranged.stop, for_stmt_ranged.start
         )
-        if stop == 0:
+        if stop == start:
             stop += 1 
         ivar_type = Int()
         idx = self._var_tracker.next_id(ivar_type)
@@ -303,7 +303,7 @@ class TypedConverter:
             length += 1
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
-        self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type)
+        self._var_tracker.register_readonly_variable(var_name, self._block_level_count + 1, ivar_type)
         if variable is None:
             result = f"for {var_name} in range({length}):"
             return result
