@@ -54,6 +54,7 @@ LITERAL_ATTR_MAP = {
     "INT": "intval"
 }
 
+VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
 def get_bin_op(op, op_set):
     return op_set[op]
@@ -225,13 +226,14 @@ class TypedConverter:
 
     def _visit_reentrancy(self, ret):
         # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/nodes.py#L878
+        # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/identifiers.py#L8
         result = ""
         for c in ret.key:
-            if ord(c) >= 256:
+            if c not in VALID_CHARS:
                 continue
             result += c
-        
-        return f'@nonreentrant("{result}")\n'
+            
+        return f'@nonreentrant("{result}")\n' if result else ""
 
     def __get_mutability(self, mut):
         return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
