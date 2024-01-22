@@ -224,7 +224,14 @@ class TypedConverter:
         return f"func_{_id}"
 
     def _visit_reentrancy(self, ret):
-        return f'@nonreentrant("{ret.key}")\n' if ret.key else ""
+        # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/nodes.py#L878
+        result = ""
+        for c in ret.key:
+            if ord(c) >= 256:
+                continue
+            result += c
+        
+        return f'@nonreentrant("{result}")\n'
 
     def __get_mutability(self, mut):
         return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
@@ -273,6 +280,8 @@ class TypedConverter:
             for_stmt_ranged.start, for_stmt_ranged.stop) if for_stmt_ranged.start < for_stmt_ranged.stop else (
             for_stmt_ranged.stop, for_stmt_ranged.start
         )
+        if stop == 0:
+            stop += 1 
         ivar_type = Int()
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
@@ -288,6 +297,8 @@ class TypedConverter:
             variable = self._visit_var_ref(for_stmt_variable.ref_id, self._block_level_count)
             self.type_stack.pop()
         length = for_stmt_variable.length
+        if length == 0:
+            length += 1
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type)
