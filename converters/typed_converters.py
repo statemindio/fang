@@ -113,6 +113,11 @@ class TypedConverter:
 
         if self.result != "":
             self.result += "\n"
+        
+        # TODO: if immutable must be init
+        if self.contract.init.flag:
+            self.result += self.visit_init(self.contract.init)
+            self.result += "\n"
 
         for i, func in enumerate(self.contract.functions):
             if i >= MAX_FUNCTIONS:
@@ -274,6 +279,30 @@ class TypedConverter:
             mutability = f"{mutability}\n"
         """
         result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
+
+        return result
+
+    def visit_init(self, init):
+        self._mutability_level = 0
+
+        visibility = "@external"
+
+        input_params = self._visit_input_parameters(init.input_params)
+
+        function_name = "__init__"
+        # self._func_tracker.register_function(function_name)
+
+
+        self._block_level_count = 1
+        block = self._visit_block(init.block)
+        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._block_level_count = 0
+        self._var_tracker.remove_function_level(self._block_level_count)
+
+        mutability = "@payable\n" if init.mut else ""
+
+        result = f"{visibility}\n{mutability}def {function_name}({input_params}):\n{block}"
 
         return result
 

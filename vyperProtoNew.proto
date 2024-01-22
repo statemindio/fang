@@ -370,9 +370,21 @@ message Func {
   Block block = 6;
 }
 
+message ContractInit {
+  enum Mutability {
+    NONPAYABLE = 0;
+    PAYABLE = 1;
+  }
+  Mutability mut = 1;
+  repeated FuncParam input_params = 2;
+  Block block = 3;
+  bool flag = 4;
+}
+
 message Contract {
   repeated VarDecl decls = 1;
   repeated Func functions = 2;
+  ContractInit init = 3;
 }
 
 //message Convert {
