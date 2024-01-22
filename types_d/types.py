@@ -1,6 +1,8 @@
 from types_d.base import BaseType
 from types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
     AddressRandomGen, DecimalRandomGen
+from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen, BytesMLiteralGen, IntLiteralGen, \
+    BoolLiteralGen, DecimalLiteralGen, StringLiteralGen
 
 
 class TypeRangeError(Exception):
@@ -13,6 +15,7 @@ class Bytes(BaseType):
             raise TypeRangeError(m)
         self._m = m
         self._value_generator = BytesRandomGen()
+        self._literal_generator = BytesLiteralGen()
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self._m == other.m
@@ -31,6 +34,9 @@ class Bytes(BaseType):
     def generate(self):
         return self._value_generator.generate(self._m)
 
+    def generate_literal(self, value):
+        return self._literal_generator.generate(self._m, value)
+
 
 class BytesM(Bytes):
     def __init__(self, m=32):
@@ -38,6 +44,7 @@ class BytesM(Bytes):
         if not 0 < m <= 32:
             raise TypeRangeError(m)
         self._value_generator = BytesMRandomGen()
+        self._literal_generator = BytesMLiteralGen()
 
     @property
     def vyper_type(self):
@@ -51,6 +58,7 @@ class Int(BaseType):
         self._n = n
         self._signed = signed
         self._value_generator = IntRandomGen()
+        self._literal_generator = IntLiteralGen()
 
     def __eq__(self, other):
         return isinstance(other, Int) and self._n == other.n and self._signed == other.signed
@@ -74,10 +82,14 @@ class Int(BaseType):
     def generate(self):
         return self._value_generator.generate(self._n, self._signed)
 
+    def generate_literal(self, value):
+        return self._literal_generator.generate(self._n, self._signed, value)
+
 
 class Bool(BaseType):
     def __init__(self):
         self._value_generator = BoolRandomGen()
+        self._literal_generator = BoolLiteralGen()
 
     @property
     def vyper_type(self):
@@ -86,10 +98,14 @@ class Bool(BaseType):
     def generate(self):
         return self._value_generator.generate()
 
+    def generate_literal(self, value):
+        return self._literal_generator.generate(value)
+
 
 class Decimal(BaseType):
     def __init__(self):
         self._value_generator = DecimalRandomGen()
+        self._literal_generator = DecimalLiteralGen()
 
     @property
     def vyper_type(self):
@@ -98,11 +114,15 @@ class Decimal(BaseType):
     def generate(self):
         return self._value_generator.generate()
 
+    def generate_literal(self, value):
+        return self._literal_generator.generate(value)
+
 
 class String(Bytes):
     def __init__(self, m):
         super().__init__(m)
         self._value_generator = StringRandomGen()
+        self._literal_generator = StringLiteralGen()
 
     @property
     def vyper_type(self):
@@ -112,6 +132,7 @@ class String(Bytes):
 class Address(BaseType):
     def __init__(self):
         self._value_generator = AddressRandomGen()
+        self._literal_generator = AddressLiteralGen()
 
     @property
     def vyper_type(self):
@@ -119,3 +140,6 @@ class Address(BaseType):
 
     def generate(self):
         return self._value_generator.generate()
+
+    def generate_literal(self, value):
+        return self._literal_generator.generate(value)

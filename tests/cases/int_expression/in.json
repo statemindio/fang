@@ -1,0 +1,61 @@
+{
+  "decls": [
+    {
+      "i":{
+        "sign" : true
+      }
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "ref_id": {
+                "i": {
+                  "sign" : true
+                },
+                "varnum": 0
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "MUL",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "unOp": {
+                        "expr": {
+                          "binOp": {
+                            "op": "ADD",
+                            "left": {
+                              "lit": {
+                              "intval": 5
+                              }
+                            },
+                            "right": {
+                              "lit": {
+                              "intval": 3
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
+    }
+  ]
+}

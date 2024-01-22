@@ -1,0 +1,36 @@
+{
+  "decls": [
+    {
+      "bM": {}
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m" : 31
+              },
+              "expr": {
+                "bmExp": {
+                  "sha": {
+                    "bmVal": {
+                      "lit": {
+                        "bMval" : "0101"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
+    }
+  ]
+}

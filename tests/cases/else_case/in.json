@@ -1,0 +1,81 @@
+{
+  "decls": [
+    {}
+  ],
+  "functions": [
+    {
+      "outputParams": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "if_stmt": {
+              "cases": [
+                {
+                  "cond": {
+                    "intBoolBinOp": {
+                      "op": "EQ",
+                      "left": {
+                        "lit": {
+                          "intval": 2
+                        }
+                      },
+                      "right": {
+                        "lit": {
+                          "intval": 5
+                        }
+                      }
+                    }
+                  },
+                  "if_body": {
+                    "statements": [
+                    ],
+                    "exit_d": {
+                      "flag": true,
+                      "selfd": {}
+                    }
+                  }
+                }
+              ],
+              "else_case": {
+                "statements": [
+                  {
+                    "assignment": {
+                      "ref_id": {
+                        "d": {}
+                      },
+                      "expr": {
+                        "decExpression": {
+                          "unOp": {
+                            "expr": {
+                              "binOp": {
+                                "op": "SUB",
+                                "left": {
+                                  "lit": {
+                                    "decimalval": 7
+                                  }
+                                },
+                                "right": {
+                                  "lit": {
+                                    "decimalval": 5
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

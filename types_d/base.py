@@ -15,6 +15,9 @@ class BaseType:
     def generate(self):
         raise NotImplementedError()
 
+    def generate_literal(self, value):
+        raise NotImplementedError()
+
     @property
     def name(self):
         return self.__class__.__name__.upper()

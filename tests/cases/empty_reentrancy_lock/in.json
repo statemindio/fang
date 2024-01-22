@@ -1,0 +1,24 @@
+{
+  "decls": [
+    {}
+  ],
+  "functions": [
+    {
+      "ret": {
+        "key": ""
+      },
+      "outputParams": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "selfd": {}
+        }
+      }
+    }
+  ]
+}

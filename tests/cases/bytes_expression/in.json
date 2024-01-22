@@ -1,0 +1,29 @@
+{
+  "decls": [
+    {
+      "barr": {}
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "barr": {},
+              "expr": {
+                "bExp": {
+                  "varRef": {
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
+    }
+  ]
+}

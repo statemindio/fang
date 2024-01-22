@@ -1,0 +1,65 @@
+{
+  "decls": [
+    {
+      "d": {}
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "ref_id": {
+                "b": {},
+                "i": {
+                  "n": 256,
+                  "sign": true
+                },
+                "varnum": 0
+              },
+              "expr": {
+                "boolExp": {
+                  "decBoolBinOp": {
+                    "op": "LESSEQ",
+                    "left": {
+                      "varRef": {
+                        "d": {}
+                      }
+                    },
+                    "right": {
+                      "unOp": {
+                        "expr": {
+                          "binOp": {
+                            "op": "ADD",
+                            "left": {
+                              "unOp": {
+                                "expr": {
+                                  "lit": {
+                                    "decimalval": 5
+                                  }
+                                }
+                              }
+                            },
+                            "right": {
+                              "lit": {
+                                "decimalval": 3
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
+    }
+  ]
+}

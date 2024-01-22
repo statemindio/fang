@@ -1,0 +1,53 @@
+{
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b" : {},
+              "expr" : {
+                "boolExp" : {
+                  "lit" : {
+                    "boolval" : true
+                  }
+                }
+              }
+            }
+          },
+          {
+            "assignment": {
+              "ref_id": {
+                "b": {}
+              },
+              "expr": {
+                "boolExp": {
+                  "boolBinOp": {
+                    "op": "OR",
+                    "left": {
+                      "varRef": {
+                        "b": {}
+                      }
+                    },
+                    "right": {
+                      "boolUnOp": {
+                        "expr": {
+                            "lit":{
+                              "boolval" : true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
+    }
+  ]
+}

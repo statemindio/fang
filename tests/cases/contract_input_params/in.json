@@ -1,0 +1,35 @@
+{
+  "decls": [
+    {}
+  ],
+  "functions": [
+    {
+      "input_params": [
+        {
+          "d": {}
+        },
+        {
+          "b": {}
+        }
+      ],
+      "output_params": [
+        {
+          "d": {}
+        },
+        {
+          "i": {
+            "n": 511,
+            "sign": false
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "selfd": {}
+        }
+      }
+    }
+  ]
+}
