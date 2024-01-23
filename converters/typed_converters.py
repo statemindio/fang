@@ -125,6 +125,10 @@ class TypedConverter:
                 break
             self.result += self.visit_func(func)
             self.result += "\n"
+            
+        if self.contract.HasField("def_func"):
+            self.result += self.visit_default_func(self.contract.def_func)
+            self.result += "\n"
 
     def visit_type(self, instance):
         if instance.HasField("b"):
@@ -304,12 +308,7 @@ class TypedConverter:
         if function.HasField("ret") and self._mutability_level > PURE:
             reentrancy = self._visit_reentrancy(function.ret)
         mutability = self.__get_mutability(function.mut)
-        """
-        if mutability == "@nonpayable":
-            mutability = ""
-        else:
-            mutability = f"{mutability}\n"
-        """
+
         result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
 
         return result
@@ -336,6 +335,36 @@ class TypedConverter:
         mutability = "@payable\n" if init.mut else ""
 
         result = f"{visibility}\n{mutability}def {function_name}({input_params}):\n{block}"
+
+        return result
+    
+    def visit_default_func(self, function):
+        self._mutability_level = 0
+        visibility = "@external"
+        
+        
+        self._function_output = self._visit_output_parameters(function.output_params)
+        function_name = "__default__"
+
+        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
+        if len(self._function_output) > 1:
+            output_str = f"({output_str})"
+        if len(self._function_output) > 0:
+            output_str = f" -> {output_str}"
+
+        self._block_level_count = 1
+        block = self._visit_block(function.block)
+        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._block_level_count = 0
+        self._var_tracker.remove_function_level(self._block_level_count)
+
+        reentrancy = ""
+        if function.HasField("ret") and self._mutability_level > PURE:
+            reentrancy = self._visit_reentrancy(function.ret)
+        mutability = self.__get_mutability(function.mut)
+
+        result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}(){output_str}:\n{block}"
 
         return result
 

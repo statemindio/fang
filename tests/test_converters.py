@@ -384,7 +384,8 @@ full_cases = [
     "for_statement_variable_write",
     "for_statement_boundaries",
     "init_payable",
-    "immutable_no_init"
+    "immutable_no_init",
+    "default_function"
 ]
 
 
