@@ -56,6 +56,7 @@ LITERAL_ATTR_MAP = {
 
 VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
+
 def get_bin_op(op, op_set):
     return op_set[op]
 
@@ -152,7 +153,7 @@ class TypedConverter:
         if not assignment and level is not None:
             read_only_vars = self._var_tracker.get_readonly_variables(level, current_type)
             allowed_vars.extend(read_only_vars)
- 
+
         if len(allowed_vars) == 0:
             return None
 
@@ -194,28 +195,30 @@ class TypedConverter:
 
     def _visit_input_parameters(self, input_params):
         result = ""
+        input_types = []
         for i, input_param in enumerate(input_params):
             param_type = self.visit_type(input_param)
+            input_types.append(param_type)
             idx = self._var_tracker.next_id(param_type)
             name = f"x_{param_type.name}_{idx}"
-            #self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
+            # self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
             self._var_tracker.register_readonly_variable(name, 1, param_type)
-            
+
             if i > 0:
                 result = f"{result}, "
             result = f"{result}{name}: {param_type.vyper_type}"
-            
+
             if i + 1 == MAX_FUNCTION_INPUT:
                 break
-            
-        return result
+
+        return result, input_types
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
         output_types = []
         for i, output_param in enumerate(output_params):
             param_type = self.visit_type(output_param)
             output_types.append(param_type)
-            
+
             if i + 1 == MAX_FUNCTION_OUTPUT:
                 break
         return output_types
@@ -232,7 +235,7 @@ class TypedConverter:
             if c not in VALID_CHARS:
                 continue
             result += c
-            
+
         return f'@nonreentrant("{result}")\n' if result else ""
 
     def __get_mutability(self, mut):
@@ -244,11 +247,9 @@ class TypedConverter:
             visibility = "@external"
         else:
             visibility = "@internal"
-        input_params = self._visit_input_parameters(function.input_params)
-        
+        input_params, input_types = self._visit_input_parameters(function.input_params)
+
         self._function_output = self._visit_output_parameters(function.output_params)
-        function_name = self._generate_function_name()
-        self._func_tracker.register_function(function_name)
 
         output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
         if len(self._function_output) > 1:
@@ -267,6 +268,9 @@ class TypedConverter:
         if function.HasField("ret") and self._mutability_level > PURE:
             reentrancy = self._visit_reentrancy(function.ret)
         mutability = self.__get_mutability(function.mut)
+        function_name = self._generate_function_name()
+        self._func_tracker.register_function(function_name, self._mutability_level, function.vis, input_types,
+                                             self._function_output)
         """
         if mutability == "@nonpayable":
             mutability = ""
@@ -283,7 +287,7 @@ class TypedConverter:
             for_stmt_ranged.stop, for_stmt_ranged.start
         )
         if stop == start:
-            stop += 1 
+            stop += 1
         ivar_type = Int()
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
@@ -315,7 +319,7 @@ class TypedConverter:
             for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_variable(for_stmt.variable)
         else:
             for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_ranged(for_stmt.ranged)
-        
+
         self._for_block_count += 1
         self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
@@ -323,9 +327,9 @@ class TypedConverter:
         self._var_tracker.remove_readonly_level(self._block_level_count)
         self._block_level_count -= 1
         self._for_block_count -= 1
-        
+
         result = f"{for_statement}\n{body}"
-        
+
         return result
 
     def _visit_if_cases(self, expr):
