@@ -383,7 +383,8 @@ full_cases = [
     "function_variable_scoping",
     "for_statement_variable_write",
     "for_statement_boundaries",
-    "init_payable"
+    "init_payable",
+    "immutable_no_init"
 ]
 
 

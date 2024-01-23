@@ -100,6 +100,7 @@ class TypedConverter:
         self._mutability_level = 0
         self._function_output = []
         self._for_block_count = 0
+        self._immutable_exp = []
 
     def visit(self):
         """
@@ -108,14 +109,14 @@ class TypedConverter:
         for i, var in enumerate(self.contract.decls):
             if i >= MAX_STORAGE_VARIABLES:
                 break
-            self.result += self.visit_var_decl(var, True)
+            self.result += self.__var_decl_global(var)
             self.result += "\n"
 
         if self.result != "":
             self.result += "\n"
         
         # TODO: if immutable must be init
-        if self.contract.init.flag:
+        if self.contract.init.flag or len(self._immutable_exp):
             self.result += self.visit_init(self.contract.init)
             self.result += "\n"
 
@@ -191,6 +192,37 @@ class TypedConverter:
             result = f"{result} = {value}"
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
+        return result
+
+    def __var_decl_global(self, variable):
+        current_type = self.visit_type(variable)
+        self.type_stack.append(current_type)
+        idx = self._var_tracker.next_id(current_type)
+
+        prefixes = {
+            0: "x",
+            1: "C",
+            2: "IM"
+        }
+
+        var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
+        result = var_name + " : " 
+        
+        if variable.mut == 0:
+            result += current_type.vyper_type
+            self._var_tracker.register_global_variable(var_name, current_type)
+        else:
+            value = self.visit_typed_expression(variable.expr, current_type)
+            self._var_tracker.register_readonly_variable(var_name, 0, current_type)
+            
+            if variable.mut == 1:
+                result += f"constant({current_type.vyper_type})"
+                result = f"{result} = {value}"
+            else:
+                result += f"immutable({current_type.vyper_type})"
+                self._immutable_exp.append((var_name, value))
+        
+        self.type_stack.pop()
         return result
 
     def visit_var_decl(self, variable, is_global=False):
@@ -294,7 +326,8 @@ class TypedConverter:
 
 
         self._block_level_count = 1
-        block = self._visit_block(init.block)
+        block = self._visit_init_immutables()
+        block += self._visit_block(init.block)
         self._var_tracker.remove_function_level(self._block_level_count)
         self._var_tracker.remove_readonly_level(self._block_level_count)
         self._block_level_count = 0
@@ -304,6 +337,12 @@ class TypedConverter:
 
         result = f"{visibility}\n{mutability}def {function_name}({input_params}):\n{block}"
 
+        return result
+
+    def _visit_init_immutables(self):
+        result = ""
+        for var, expr in self._immutable_exp:
+            result += f"{self.TAB}{var} = {expr}\n"
         return result
 
     def _visit_for_stmt_ranged(self, for_stmt_ranged):

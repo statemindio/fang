@@ -297,6 +297,12 @@ message ForStmt {
 }
 
 message VarDecl {
+  enum Mutability {
+    REGULAR = 0;
+    CONSTANT = 1;
+    IMMUTABLE = 2;
+  }
+
   oneof type {
     Bool b = 2;
     Decimal d = 3;
@@ -307,6 +313,7 @@ message VarDecl {
   }
   Int i = 1;
   TypedExpression expr = 8;
+  Mutability mut = 9;
 }
 
 message AssignmentStatement {
