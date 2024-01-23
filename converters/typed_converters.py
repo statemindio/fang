@@ -180,19 +180,18 @@ class TypedConverter:
         handler, attr = self._expression_handlers[current_type.name]
         return handler(getattr(expr, attr))
 
-    def __var_decl(self, expr, current_type, is_global=False):
+    def __var_decl(self, expr, current_type):
         self.type_stack.append(current_type)
 
         idx = self._var_tracker.next_id(current_type)
 
         var_name = f"x_{current_type.name}_{str(idx)}"
         result = var_name + " : " + current_type.vyper_type
-        if is_global:
-            self._var_tracker.register_global_variable(var_name, current_type)
-        else:
-            value = self.visit_typed_expression(expr, current_type)
-            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
-            result = f"{result} = {value}"
+
+        value = self.visit_typed_expression(expr, current_type)
+        self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
+        result = f"{result} = {value}"
+        
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
         return result
@@ -228,9 +227,9 @@ class TypedConverter:
         self.type_stack.pop()
         return result
 
-    def visit_var_decl(self, variable, is_global=False):
+    def visit_var_decl(self, variable):
         current_type = self.visit_type(variable)
-        return self.__var_decl(variable.expr, current_type, is_global)
+        return self.__var_decl(variable.expr, current_type)
 
     def _visit_input_parameters(self, input_params):
         result = ""
