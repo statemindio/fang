@@ -54,7 +54,6 @@ LITERAL_ATTR_MAP = {
     "INT": "intval"
 }
 
-VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
 def get_bin_op(op, op_set):
     return op_set[op]
