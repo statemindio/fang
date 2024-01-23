@@ -5,7 +5,7 @@ from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from types_d.base import BaseType
-from utils import get_nearest_multiple
+from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
 from vyperProtoNew_pb2 import Func
 

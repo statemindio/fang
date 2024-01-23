@@ -49,6 +49,11 @@ class DecimalLiteralGen:
 
 class StringLiteralGen:
     def generate(self, m, value):
-        result = value
+        result = ""
+        for c in value:
+            if ord(c) >= 256:
+                continue
+            result += c
+            
         result = result if len(result) <= m * 2 else result[:m * 2]
         return result

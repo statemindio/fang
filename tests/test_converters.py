@@ -385,7 +385,9 @@ full_cases = [
     "for_statement_boundaries",
     "init_payable",
     "immutable_no_init",
-    "default_function"
+    "default_function",
+    "invalid_string_literal_reentrancy",
+    "invalid_string_literal_string"
 ]
 
 
