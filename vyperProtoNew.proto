@@ -306,6 +306,7 @@ message VarDecl {
     ByteArray barr = 7;
   }
   Int i = 1;
+  optional FuncCall func_call = 9;
   TypedExpression expr = 8;
 }
 
@@ -314,13 +315,17 @@ message AssignmentStatement {
   TypedExpression expr = 2;
 }
 
+message FuncCall {
+  optional VarRef ref_id = 1;
+}
+
 // probably add builtins to expression too
 message Statement {
   oneof stmt_oneof {
     VarDecl decl = 1;
     ForStmt for_stmt = 3;
     IfStmt if_stmt = 4;
-    // Selfdestruct selfd = 7;
+    FuncCall func_call = 7;
     ContinueStatement cont_stmt = 8;
     BreakStatement break_stmt = 9;
     AssertStatement assert_stmt = 10;
