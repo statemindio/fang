@@ -1,0 +1,45 @@
+{
+  "decls": [
+    {
+      "b": {},
+      "mut": "CONSTANT"
+    },
+    {
+      "i": {
+        "sign" : true
+      },
+      "mut": "IMMUTABLE",
+      "expr": {
+        "intExp": {
+          "binOp": {
+            "op": "MUL",
+            "left": {
+              "lit": {
+                "intval": 2
+              }
+            },
+            "right": {
+              "unOp": {
+                "expr": {
+                  "binOp": {
+                    "op": "ADD",
+                    "left": {
+                      "lit": {
+                      "intval": 5
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                      "intval": 3
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

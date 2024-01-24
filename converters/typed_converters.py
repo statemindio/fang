@@ -5,7 +5,7 @@ from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from types_d.base import BaseType
-from utils import get_nearest_multiple
+from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
 from vyperProtoNew_pb2 import Func
 
@@ -54,7 +54,6 @@ LITERAL_ATTR_MAP = {
     "INT": "intval"
 }
 
-VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
 
 def get_bin_op(op, op_set):
@@ -101,6 +100,7 @@ class TypedConverter:
         self._mutability_level = 0
         self._function_output = []
         self._for_block_count = 0
+        self._immutable_exp = []
 
     def visit(self):
         """
@@ -109,16 +109,25 @@ class TypedConverter:
         for i, var in enumerate(self.contract.decls):
             if i >= MAX_STORAGE_VARIABLES:
                 break
-            self.result += self.visit_var_decl(var, True)
+            self.result += self.__var_decl_global(var)
             self.result += "\n"
 
         if self.result != "":
+            self.result += "\n"
+
+        # TODO: if immutable must be init
+        if self.contract.init.flag or len(self._immutable_exp):
+            self.result += self.visit_init(self.contract.init)
             self.result += "\n"
 
         for i, func in enumerate(self.contract.functions):
             if i >= MAX_FUNCTIONS:
                 break
             self.result += self.visit_func(func)
+            self.result += "\n"
+
+        if self.contract.HasField("def_func"):
+            self.result += self.visit_default_func(self.contract.def_func)
             self.result += "\n"
 
     def visit_type(self, instance):
@@ -172,26 +181,56 @@ class TypedConverter:
         handler, attr = self._expression_handlers[current_type.name]
         return handler(getattr(expr, attr))
 
-    def __var_decl(self, expr, current_type, is_global=False):
+    def __var_decl(self, expr, current_type):
         self.type_stack.append(current_type)
 
         idx = self._var_tracker.next_id(current_type)
 
         var_name = f"x_{current_type.name}_{str(idx)}"
         result = var_name + " : " + current_type.vyper_type
-        if is_global:
-            self._var_tracker.register_global_variable(var_name, current_type)
-        else:
-            value = self.visit_typed_expression(expr, current_type)
-            self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
-            result = f"{result} = {value}"
+
+        value = self.visit_typed_expression(expr, current_type)
+        self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
+        result = f"{result} = {value}"
+
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
         return result
 
-    def visit_var_decl(self, variable, is_global=False):
+    def __var_decl_global(self, variable):
         current_type = self.visit_type(variable)
-        return self.__var_decl(variable.expr, current_type, is_global)
+        self.type_stack.append(current_type)
+        idx = self._var_tracker.next_id(current_type)
+
+        prefixes = {
+            0: "x",
+            1: "C",
+            2: "IM"
+        }
+
+        var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
+        result = var_name + " : "
+
+        if variable.mut == 0:
+            result += current_type.vyper_type
+            self._var_tracker.register_global_variable(var_name, current_type)
+        else:
+            value = self.visit_typed_expression(variable.expr, current_type)
+            self._var_tracker.register_readonly_variable(var_name, 0, current_type)
+
+            if variable.mut == 1:
+                result += f"constant({current_type.vyper_type})"
+                result = f"{result} = {value}"
+            else:
+                result += f"immutable({current_type.vyper_type})"
+                self._immutable_exp.append((var_name, value))
+
+        self.type_stack.pop()
+        return result
+
+    def visit_var_decl(self, variable):
+        current_type = self.visit_type(variable)
+        return self.__var_decl(variable.expr, current_type)
 
     def _visit_input_parameters(self, input_params):
         result = ""
@@ -268,17 +307,74 @@ class TypedConverter:
         if function.HasField("ret") and self._mutability_level > PURE:
             reentrancy = self._visit_reentrancy(function.ret)
         mutability = self.__get_mutability(function.mut)
+
         function_name = self._generate_function_name()
         self._func_tracker.register_function(function_name, self._mutability_level, function.vis, input_types,
                                              self._function_output)
-        """
-        if mutability == "@nonpayable":
-            mutability = ""
-        else:
-            mutability = f"{mutability}\n"
-        """
+
         result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
 
+        return result
+
+    def visit_init(self, init):
+        self._mutability_level = 0
+
+        visibility = "@external"
+
+        input_params = self._visit_input_parameters(init.input_params)
+
+        function_name = "__init__"
+        # self._func_tracker.register_function(function_name)
+
+
+        self._block_level_count = 1
+        block = self._visit_init_immutables()
+        block += self._visit_block(init.block)
+        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._block_level_count = 0
+        self._var_tracker.remove_function_level(self._block_level_count)
+
+        mutability = "@payable\n" if init.mut else ""
+
+        result = f"{visibility}\n{mutability}def {function_name}({input_params}):\n{block}"
+
+        return result
+
+    def visit_default_func(self, function):
+        self._mutability_level = 0
+        visibility = "@external"
+
+
+        self._function_output = self._visit_output_parameters(function.output_params)
+        function_name = "__default__"
+
+        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
+        if len(self._function_output) > 1:
+            output_str = f"({output_str})"
+        if len(self._function_output) > 0:
+            output_str = f" -> {output_str}"
+
+        self._block_level_count = 1
+        block = self._visit_block(function.block)
+        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._block_level_count = 0
+        self._var_tracker.remove_function_level(self._block_level_count)
+
+        reentrancy = ""
+        if function.HasField("ret") and self._mutability_level > PURE:
+            reentrancy = self._visit_reentrancy(function.ret)
+        mutability = self.__get_mutability(function.mut)
+
+        result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}(){output_str}:\n{block}"
+
+        return result
+
+    def _visit_init_immutables(self):
+        result = ""
+        for var, expr in self._immutable_exp:
+            result += f"{self.TAB}{var} = {expr}\n"
         return result
 
     def _visit_for_stmt_ranged(self, for_stmt_ranged):

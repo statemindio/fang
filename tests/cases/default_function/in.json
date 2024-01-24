@@ -1,0 +1,43 @@
+{
+  "decls": [
+    {
+      "i":{}
+    }
+  ],
+  "def_func":{
+    "ret": {
+      "key": "test"
+    },
+    "outputParams": [
+      {
+        "b": {}
+      },
+      {
+        "i": {}
+      }
+    ],
+    "block": {
+      "statements": [
+        {
+          "assignment": {
+            "ref_id": {
+              "i": {
+              },
+              "varnum": 0
+            },
+            "expr": {
+              "intExp": {
+                "lit": {
+                  "intval": 5
+                }
+              }
+            }
+          }
+        }
+      ],
+      "exit_d": {
+        "flag": true
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "init": {
+    "inputParams": [
+      {
+        "d": {}
+      }
+    ],
+    "flag": true,
+    "mut" : 1
+  }
+}

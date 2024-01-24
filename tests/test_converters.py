@@ -382,7 +382,12 @@ full_cases = [
     "variable_scoping",
     "function_variable_scoping",
     "for_statement_variable_write",
-    "for_statement_boundaries"
+    "for_statement_boundaries",
+    "init_payable",
+    "immutable_no_init",
+    "default_function",
+    "invalid_string_literal_reentrancy",
+    "invalid_string_literal_string"
 ]
 
 
