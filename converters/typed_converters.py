@@ -3,7 +3,7 @@ import random
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 from func_tracker import FuncTracker
-from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
+from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList
 from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
@@ -90,7 +90,12 @@ class TypedConverter:
             "BYTES": (self._visit_bytes_expression, "bExp"),
             "DECIMAL": (self._visit_decimal_expression, "decExpression"),
             "STRING": (self._visit_string_expression, "strExp"),
-            "ADDRESS": (self.visit_address_expression, "addrExp")
+            "ADDRESS": (self.visit_address_expression, "addrExp"),
+            "FIXEDLISTINT": (self._visit_int_list, "intList"),
+            "FIXEDLISTBYTESM": (self._visit_bytes_m_list, "bmList"),
+            "FIXEDLISTBOOL": (self._visit_bool_list, "boolList"),
+            "FIXEDLISTDECIMAL": (self._visit_decimal_list, "decList"),
+            "FIXEDLISTADDRESS": (self.visit_address_list, "addrList")
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -145,12 +150,44 @@ class TypedConverter:
         elif instance.HasField("barr"):
             max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
             current_type = Bytes(max_len)
+        elif instance.HasField("list"):
+            list_len = 1 if instance.list.n == 0 else instance.list.n
+            current_type = self.visit_list_type(instance.list)
+            current_type = FixedList(list_len, current_type)
         else:
             n = instance.i.n % 256 + 1
             n = get_nearest_multiple(n, 8)
             current_type = Int(n, instance.i.sign)
 
         return current_type
+
+    def visit_list_type(self, instance):
+        if instance.HasField("b"):
+            current_type = Bool()
+        elif instance.HasField("d"):
+            current_type = Decimal()
+        elif instance.HasField("bM"):
+            m = instance.bM.m % 32 + 1
+            current_type = BytesM(m)
+        elif instance.HasField("adr"):
+            current_type = Address()
+        else:
+            n = instance.i.n % 256 + 1
+            n = get_nearest_multiple(n, 8)
+            current_type = Int(n, instance.i.sign)
+
+        return current_type
+
+    def _visit_int_list(self, expr):
+        pass
+    def _visit_bytes_m_list(self, expr):
+        pass
+    def _visit_bool_list(self, expr):
+        pass
+    def _visit_decimal_list(self, expr):
+        pass
+    def visit_address_list(self, expr):
+        pass
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]

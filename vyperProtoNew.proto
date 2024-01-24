@@ -31,6 +31,7 @@ message VarRef {
     String s = 5;
     Address adr = 6;
     ByteArray barr = 7;
+    FixedList list = 9;
   }
   Int i = 1;
   uint32 varnum = 8;
@@ -197,7 +198,41 @@ message TypedExpression {
   StringExpression strExp = 5;
   DecimalExpression decExpression = 6;
   IntExpression intExp = 7;
+  FixedListAddress addrList = 9;
+  FixedListBool boolList = 10;
+  FixedListBytesM bmList = 11;
+  FixedListInt intList = 12;
+  FixedListDecimal decList = 13;
 }
+
+
+
+// must have atleast one member
+message FixedListAddress{
+  AddressExpression rexp = 1;
+  repeated AddressExpression exp = 2;
+}
+
+message FixedListBool{
+  BoolExpression rexp = 1;
+  repeated BoolExpression exp = 2;
+}
+
+message FixedListBytesM{
+  BytesMExpression rexp = 1;
+  repeated BytesMExpression exp = 2;
+}
+
+message FixedListInt{
+  IntExpression rexp = 1;
+  repeated IntExpression exp = 2;
+}
+
+message FixedListDecimal{
+  DecimalExpression rexp = 1;
+  repeated DecimalExpression exp = 2;
+}
+
 
 message Literal {
   bool boolval = 2;
@@ -310,6 +345,7 @@ message VarDecl {
     String s = 5;
     Address adr = 6;
     ByteArray barr = 7;
+    FixedList list = 10;
   }
   Int i = 1;
   TypedExpression expr = 8;
@@ -344,6 +380,17 @@ message Reentrancy {
   string key = 1;
 }
 
+message FixedList{
+  oneof type {
+    Bool b = 2;
+    Decimal d = 3;
+    BytesM bM = 4;
+    Address adr = 5;
+  }
+  Int i = 1;
+  uint32 n = 6;
+}
+
 message FuncParam {
   oneof type {
     Bool b = 2;
@@ -352,6 +399,7 @@ message FuncParam {
     String s = 5;
     Address adr = 6;
     ByteArray barr = 7;
+    FixedList list = 8;
   }
   Int i = 1;
 }
