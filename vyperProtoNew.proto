@@ -297,6 +297,12 @@ message ForStmt {
 }
 
 message VarDecl {
+  enum Mutability {
+    REGULAR = 0;
+    CONSTANT = 1;
+    IMMUTABLE = 2;
+  }
+
   oneof type {
     Bool b = 2;
     Decimal d = 3;
@@ -307,6 +313,7 @@ message VarDecl {
   }
   Int i = 1;
   TypedExpression expr = 8;
+  Mutability mut = 9;
 }
 
 message AssignmentStatement {
@@ -370,9 +377,37 @@ message Func {
   Block block = 6;
 }
 
+message ContractInit {
+  enum Mutability {
+    NONPAYABLE = 0;
+    PAYABLE = 1;
+  }
+
+  Mutability mut = 1;
+  repeated FuncParam input_params = 2;
+  Block block = 3;
+  bool flag = 4;
+}
+
+message DefaultFunc {
+  enum Mutability {
+    PURE = 0;
+    VIEW = 1;
+    NONPAYABLE = 2;
+    PAYABLE = 3;
+  }
+
+  Mutability mut = 2;
+  optional Reentrancy ret = 3;
+  repeated FuncParam output_params = 5;
+  Block block = 6;
+}
+
 message Contract {
   repeated VarDecl decls = 1;
   repeated Func functions = 2;
+  ContractInit init = 3;
+  optional DefaultFunc def_func = 4;
 }
 
 //message Convert {

@@ -1,0 +1,30 @@
+{
+  "decls": [
+    {}
+  ],
+  "functions": [
+    {
+      "ret": {
+        "key": "test"
+      },
+      "outputParams": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "raise_st": {
+            "errval": {
+              "lit": {
+                "strval": "test error\udbc8\udfe7\udb77\udf98\udb3e\udd66\ud931\ude30\ud985\udc36\udb7b\udfe6\udb86\uddab\udb8b\ude9d\uda4c\uddf6\udabc\ude5d\uda0d\udf7f\ud9c9\udc52\ud852\udf33\ud920\uddc3\ud97a\udce5\uda8e\ude77\ud96c\udccf\udbfc\ude7f\ud977\udf06\ud967\udd34\ud853\udf33\ud97e\udfae\ud34d"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
