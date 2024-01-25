@@ -18,7 +18,7 @@ class Function:
         self.visibility = visibility
         self.input_parameters = input_parameters
         self.output_parameters = output_parameters
-        self._body = ""
+        self.body = ""
         self._function_calls = []
 
     @property
@@ -47,7 +47,7 @@ class Function:
 
     def render_definition(self, input_parameters: Sequence[str]):
         signature = self.render_signature(input_parameters)
-        body = self._body.format(f.render_call(input_parameters) for f in self._function_calls)
+        body = self.body.format(f.render_call(input_parameters) for f in self._function_calls)
         definition = f"{signature}:\n{body}"
         return definition
 
