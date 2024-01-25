@@ -312,9 +312,9 @@ message VarDecl {
     ByteArray barr = 7;
   }
   Int i = 1;
-  optional FuncCall func_call = 9;
   TypedExpression expr = 8;
   Mutability mut = 9;
+  optional FuncCall func_call = 10;
 }
 
 message AssignmentStatement {

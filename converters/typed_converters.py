@@ -55,7 +55,6 @@ LITERAL_ATTR_MAP = {
 }
 
 
-
 def get_bin_op(op, op_set):
     return op_set[op]
 
@@ -321,11 +320,10 @@ class TypedConverter:
 
         visibility = "@external"
 
-        input_params = self._visit_input_parameters(init.input_params)
+        input_params, _ = self._visit_input_parameters(init.input_params)
 
         function_name = "__init__"
         # self._func_tracker.register_function(function_name)
-
 
         self._block_level_count = 1
         block = self._visit_init_immutables()
@@ -344,7 +342,6 @@ class TypedConverter:
     def visit_default_func(self, function):
         self._mutability_level = 0
         visibility = "@external"
-
 
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = "__default__"
