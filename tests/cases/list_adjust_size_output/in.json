@@ -1,0 +1,51 @@
+{
+  "functions": [
+    {
+      "outputParams": [
+        {
+          "list": {
+            "adr": {},
+            "n" : 3
+          }
+        },
+        {
+          "list": {
+            "d": {},
+            "n" : 35
+          }
+        },
+        {
+          "list": {
+            "b": {},
+            "n" : 2
+          }
+        }
+      ]
+    },
+    {
+      "inputParams": [
+        {
+          "list": {
+            "d": {}
+          }
+        }
+      ],
+      "outputParams": [
+        {
+          "list": {
+            "bM": {}
+          }
+        },
+        {
+          "list": {}
+        },
+        {
+          "list": {
+            "d": {}
+          }
+        }
+      ],
+      "block": {}
+    }
+  ]
+}

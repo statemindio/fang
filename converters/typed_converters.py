@@ -91,11 +91,11 @@ class TypedConverter:
             "DECIMAL": (self._visit_decimal_expression, "decExpression"),
             "STRING": (self._visit_string_expression, "strExp"),
             "ADDRESS": (self.visit_address_expression, "addrExp"),
-            "FIXEDLISTINT": (self._visit_int_list, "intList"),
-            "FIXEDLISTBYTESM": (self._visit_bytes_m_list, "bmList"),
-            "FIXEDLISTBOOL": (self._visit_bool_list, "boolList"),
-            "FIXEDLISTDECIMAL": (self._visit_decimal_list, "decList"),
-            "FIXEDLISTADDRESS": (self.visit_address_list, "addrList")
+            "FIXEDLISTINT": (self._visit_list_expression, "intList"),
+            "FIXEDLISTBYTESM": (self._visit_list_expression, "bmList"),
+            "FIXEDLISTBOOL": (self._visit_list_expression, "boolList"),
+            "FIXEDLISTDECIMAL": (self._visit_list_expression, "decList"),
+            "FIXEDLISTADDRESS": (self._visit_list_expression, "addrList")
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -161,6 +161,7 @@ class TypedConverter:
 
         return current_type
 
+    # TODO: perhaps can be refactored to regular visit_type
     def visit_list_type(self, instance):
         if instance.HasField("b"):
             current_type = Bool()
@@ -178,16 +179,33 @@ class TypedConverter:
 
         return current_type
 
-    def _visit_int_list(self, expr):
-        pass
-    def _visit_bytes_m_list(self, expr):
-        pass
-    def _visit_bool_list(self, expr):
-        pass
-    def _visit_decimal_list(self, expr):
-        pass
-    def visit_address_list(self, expr):
-        pass
+    def _visit_list_expression(self, list, current_type):
+        # TODO: mb can mesh with expression handler somehow
+        list_handlers = {
+            "INT": (self._visit_int_expression),
+            "BYTESM": (self._visit_bytes_m_expression),
+            "BOOL": (self._visit_bool_expression),
+            "BYTES": (self._visit_bytes_expression),
+            "DECIMAL": (self._visit_decimal_expression),
+            "STRING": (self._visit_string_expression),
+            "ADDRESS": (self.visit_address_expression)
+        }
+        base_type = current_type.base_type
+
+        handler = list_handlers[base_type.name]
+        list_size = 1
+
+        self.type_stack.append(base_type)   
+        value = handler(list.rexp)
+
+        for i, expr in enumerate(list.exp):
+            list_size += 1
+            value += f", {handler(expr)}"
+        self.type_stack.pop()
+
+        current_type.adjust_size(list_size)
+
+        return f"[{value}]"
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
@@ -215,6 +233,9 @@ class TypedConverter:
 
     def visit_typed_expression(self, expr, current_type):
         handler, attr = self._expression_handlers[current_type.name]
+        # let handler adjust list size
+        if isinstance(current_type, FixedList):
+            return handler(getattr(expr, attr), current_type)
         return handler(getattr(expr, attr))
 
     def __var_decl(self, expr, current_type):
@@ -222,13 +243,14 @@ class TypedConverter:
 
         idx = self._var_tracker.next_id(current_type)
 
+        value = self.visit_typed_expression(expr, current_type)
+
         var_name = f"x_{current_type.name}_{str(idx)}"
         result = var_name + " : " + current_type.vyper_type
 
-        value = self.visit_typed_expression(expr, current_type)
         self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
         result = f"{result} = {value}"
-        
+
         self.type_stack.pop()
         result = f"{self.TAB * self._block_level_count}{result}"
         return result
@@ -326,18 +348,18 @@ class TypedConverter:
         function_name = self._generate_function_name()
         self._func_tracker.register_function(function_name)
 
-        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
-        if len(self._function_output) > 1:
-            output_str = f"({output_str})"
-        if len(self._function_output) > 0:
-            output_str = f" -> {output_str}"
-
         self._block_level_count = 1
         block = self._visit_block(function.block)
         self._var_tracker.remove_function_level(self._block_level_count)
         self._var_tracker.remove_readonly_level(self._block_level_count)
         self._block_level_count = 0
         self._var_tracker.remove_function_level(self._block_level_count)
+
+        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
+        if len(self._function_output) > 1:
+            output_str = f"({output_str})"
+        if len(self._function_output) > 0:
+            output_str = f" -> {output_str}"
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
@@ -381,18 +403,18 @@ class TypedConverter:
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = "__default__"
 
-        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
-        if len(self._function_output) > 1:
-            output_str = f"({output_str})"
-        if len(self._function_output) > 0:
-            output_str = f" -> {output_str}"
-
         self._block_level_count = 1
         block = self._visit_block(function.block)
         self._var_tracker.remove_function_level(self._block_level_count)
         self._var_tracker.remove_readonly_level(self._block_level_count)
         self._block_level_count = 0
         self._var_tracker.remove_function_level(self._block_level_count)
+
+        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
+        if len(self._function_output) > 1:
+            output_str = f"({output_str})"
+        if len(self._function_output) > 0:
+            output_str = f" -> {output_str}"
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
