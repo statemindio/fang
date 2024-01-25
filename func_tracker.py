@@ -60,6 +60,9 @@ class FuncTracker:
     def __getitem__(self, item):
         return self._functions[item]
 
+    def __iter__(self):
+        return iter(self._functions)
+
     def register_function(
             self,
             name,
