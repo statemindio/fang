@@ -5,6 +5,13 @@ from vyperProtoNew_pb2 import Func
 
 
 class Function:
+    MUTABILITY_MAPPING = (
+        "@pure",
+        "@view",
+        "@nonpayable",
+        "@payable"
+    )
+
     def __init__(
             self,
             name: str,
@@ -19,6 +26,7 @@ class Function:
         self.input_parameters = input_parameters
         self.output_parameters = output_parameters
         self.body = ""
+        self.reentrancy = ""
         self._function_calls = []
 
     @property
@@ -46,9 +54,14 @@ class Function:
         return signature
 
     def render_definition(self, input_parameters: Sequence[str]):
+        mutability = self.MUTABILITY_MAPPING[self.mutability]
         signature = self.render_signature(input_parameters)
         body = self.body.format(f.render_call(input_parameters) for f in self._function_calls)
-        definition = f"{signature}:\n{body}"
+        if self.visibility == Func.Visibility.EXTERNAL:
+            visibility = "@external"
+        else:
+            visibility = "@internal"
+        definition = f"{visibility}\n{self.reentrancy}{mutability}\n{signature}:\n{body}"
         return definition
 
 

@@ -1,4 +1,3 @@
-import dataclasses
 import random
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
@@ -7,7 +6,6 @@ from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
 from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
-from vyperProtoNew_pb2 import Func
 
 PURE = 0
 VIEW = 1
@@ -119,10 +117,21 @@ class TypedConverter:
             self.result += self.visit_init(self.contract.init)
             self.result += "\n"
 
+        input_names = []
         for i, func in enumerate(self.contract.functions):
             if i >= MAX_FUNCTIONS:
                 break
-            self.result += self.visit_func(func)
+            function_name = self._generate_function_name()
+            input_params, input_types, names = self._visit_input_parameters(func.input_params)
+            input_names.append(names)
+            output_types = self._visit_output_parameters(func.output_params)
+            self._func_tracker.register_function(function_name, func.mut, func.vis, input_types, output_types)
+
+        for func_obj, func in zip(self._func_tracker, self.contract.functions):
+            self.visit_func(func_obj, func)
+
+        for func_obj, names in zip(self._func_tracker, input_names):
+            self.result += func_obj.render_definition(names)
             self.result += "\n"
 
         if self.contract.HasField("def_func"):
@@ -234,11 +243,13 @@ class TypedConverter:
     def _visit_input_parameters(self, input_params):
         result = ""
         input_types = []
+        names = []
         for i, input_param in enumerate(input_params):
             param_type = self.visit_type(input_param)
             input_types.append(param_type)
             idx = self._var_tracker.next_id(param_type)
             name = f"x_{param_type.name}_{idx}"
+            names.append(name)
             # self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
             self._var_tracker.register_readonly_variable(name, 1, param_type)
 
@@ -249,7 +260,7 @@ class TypedConverter:
             if i + 1 == MAX_FUNCTION_INPUT:
                 break
 
-        return result, input_types
+        return result, input_types, names
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
         output_types = []
@@ -279,21 +290,11 @@ class TypedConverter:
     def __get_mutability(self, mut):
         return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
 
-    def visit_func(self, function):
+    def visit_func(self, function_obj, function):
         self._mutability_level = 0
-        if function.vis == Func.Visibility.EXTERNAL:
-            visibility = "@external"
-        else:
-            visibility = "@internal"
-        input_params, input_types = self._visit_input_parameters(function.input_params)
 
+        # FIXME: have to leave it to keep `return` statement properly
         self._function_output = self._visit_output_parameters(function.output_params)
-
-        output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
-        if len(self._function_output) > 1:
-            output_str = f"({output_str})"
-        if len(self._function_output) > 0:
-            output_str = f" -> {output_str}"
 
         self._block_level_count = 1
         block = self._visit_block(function.block)
@@ -305,22 +306,16 @@ class TypedConverter:
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
             reentrancy = self._visit_reentrancy(function.ret)
-        mutability = self.__get_mutability(function.mut)
-
-        function_name = self._generate_function_name()
-        self._func_tracker.register_function(function_name, self._mutability_level, function.vis, input_types,
-                                             self._function_output)
-
-        result = f"{visibility}\n{reentrancy}{mutability}\ndef {function_name}({input_params}){output_str}:\n{block}"
-
-        return result
+        function_obj.mutability = max(self._mutability_level, function.mut)
+        function_obj.body = block
+        function_obj.reentrancy = reentrancy
 
     def visit_init(self, init):
         self._mutability_level = 0
 
         visibility = "@external"
 
-        input_params, _ = self._visit_input_parameters(init.input_params)
+        input_params, _, _ = self._visit_input_parameters(init.input_params)
 
         function_name = "__init__"
         # self._func_tracker.register_function(function_name)
