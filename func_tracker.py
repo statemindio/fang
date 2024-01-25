@@ -1,4 +1,4 @@
-from typing import List, Iterable
+from typing import Sequence
 
 from types_d.base import BaseType
 
@@ -9,8 +9,8 @@ class Function:
             name: str,
             mutability: int,
             visibility: str,
-            input_parameters: List[BaseType],
-            output_parameters: List[BaseType]
+            input_parameters: Sequence[BaseType],
+            output_parameters: Sequence[BaseType]
     ):
         self.name = name
         self.mutability = mutability
@@ -20,10 +20,14 @@ class Function:
         self._body = ""
         self._function_calls = []
 
-    def render_call(self, input_parameters: Iterable[str]):
+    def render_call(self, input_parameters: Sequence[str]):
         return f"{self.name}({', '.join(input_parameters)})"
 
-    def render_signature(self, input_parameters: Iterable[str]):
+    def render_signature(self, input_parameters: Sequence[str]):
+        if len(input_parameters) != len(self.input_parameters):
+            raise ValueError(
+                f"parameter length {len(input_parameters)} does not match signature length {len(self.input_parameters)}"
+            )
         output = ""
         if len(self.output_parameters) > 0:
             output = ", ".join(o.vyper_type for o in self.output_parameters)
@@ -34,7 +38,7 @@ class Function:
         signature = f"def {self.name}({', '.join(f'{n}: {t}' for n, t in zip(input_parameters, self.input_parameters))}){output}:"
         return signature
 
-    def render_definition(self, input_parameters: Iterable[str]):
+    def render_definition(self, input_parameters: Sequence[str]):
         signature = self.render_signature(input_parameters)
         body = self._body.format(f.render_call(input_parameters) for f in self._function_calls)
         definition = f"{signature}\n{body}"
