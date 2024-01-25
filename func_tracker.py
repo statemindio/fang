@@ -1,16 +1,44 @@
-from dataclasses import dataclass
-from typing import List
+from typing import List, Iterable
 
 from types_d.base import BaseType
 
 
-@dataclass
 class Function:
-    name: str
-    mutability: int
-    visibility: str
-    input_parameters: List[BaseType]
-    output_parameters: List[BaseType]
+    def __init__(
+            self,
+            name: str,
+            mutability: int,
+            visibility: str,
+            input_parameters: List[BaseType],
+            output_parameters: List[BaseType]
+    ):
+        self.name = name
+        self.mutability = mutability
+        self.visibility = visibility
+        self.input_parameters = input_parameters
+        self.output_parameters = output_parameters
+        self._body = ""
+        self._function_calls = []
+
+    def render_call(self, input_parameters: Iterable[str]):
+        return f"{self.name}({', '.join(input_parameters)})"
+
+    def render_signature(self, input_parameters: Iterable[str]):
+        output = ""
+        if len(self.output_parameters) > 0:
+            output = ", ".join(o.vyper_type for o in self.output_parameters)
+            if len(self.output_parameters) > 1:
+                output = f" -> ({output})"
+            else:
+                output = f" -> {output}"
+        signature = f"def {self.name}({', '.join(f'{n}: {t}' for n, t in zip(input_parameters, self.input_parameters))}){output}:"
+        return signature
+
+    def render_definition(self, input_parameters: Iterable[str]):
+        signature = self.render_signature(input_parameters)
+        body = self._body.format(f.render_call(input_parameters) for f in self._function_calls)
+        definition = f"{signature}\n{body}"
+        return definition
 
 
 class FuncTracker:
