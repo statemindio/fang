@@ -1,6 +1,7 @@
 from typing import Sequence
 
 from types_d.base import BaseType
+from vyperProtoNew_pb2 import Func
 
 
 class Function:
@@ -12,13 +13,19 @@ class Function:
             input_parameters: Sequence[BaseType],
             output_parameters: Sequence[BaseType]
     ):
-        self.name = name
+        self._name = name
         self.mutability = mutability
         self.visibility = visibility
         self.input_parameters = input_parameters
         self.output_parameters = output_parameters
         self._body = ""
         self._function_calls = []
+
+    @property
+    def name(self) -> str:
+        if Func.Visibility.EXTERNAL == self.visibility:
+            return f"self.{self._name}"
+        return self._name
 
     def render_call(self, input_parameters: Sequence[str]):
         return f"{self.name}({', '.join(input_parameters)})"
@@ -35,13 +42,13 @@ class Function:
                 output = f" -> ({output})"
             else:
                 output = f" -> {output}"
-        signature = f"def {self.name}({', '.join(f'{n}: {t}' for n, t in zip(input_parameters, self.input_parameters))}){output}:"
+        signature = f"def {self._name}({', '.join(f'{n}: {t}' for n, t in zip(input_parameters, self.input_parameters))}){output}"
         return signature
 
     def render_definition(self, input_parameters: Sequence[str]):
         signature = self.render_signature(input_parameters)
         body = self._body.format(f.render_call(input_parameters) for f in self._function_calls)
-        definition = f"{signature}\n{body}"
+        definition = f"{signature}:\n{body}"
         return definition
 
 
@@ -61,7 +68,6 @@ class FuncTracker:
             input_parameters,
             output_parameters
     ):
-        # TODO: add `self.` the prefix to the name if `visibility` is `external`
         func = Function(name, mutability, visibility, input_parameters, output_parameters)
         self._functions.append(func)
         self._id = len(self._functions) - 1
