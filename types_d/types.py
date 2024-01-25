@@ -149,14 +149,22 @@ class FixedList(BaseType):
     def __init__(self, size, base_type: BaseType):
         self._base_type = base_type
         self._size = size
-    
+
     def adjust_size(self, size):
         self._size = size
-    
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def base_type(self):
+        return self._base_type
+
     @property
     def vyper_type(self):
         return f"{self._base_type.vyper_type}[{self._size}]"
-    
+
     @property
     def name(self):
         return self.__class__.__name__.upper() + self._base_type.name

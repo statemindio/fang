@@ -31,8 +31,19 @@ class BytesMLiteralGen:
 
 
 class IntLiteralGen:
+    @classmethod
+    def _get_value_boundaries(cls, n, signed):
+        low_limit = 0
+        upper_limit = (2 ** n) - 1
+        if signed:
+            low_limit = -(2 ** (n - 1))
+            upper_limit = (2 ** (n - 1)) - 1
+        return low_limit, upper_limit
+
     def generate(self, n, signed, value):
         # FIXME: the current implementation doesn't consider a concrete kind of int
+        low, up = self._get_value_boundaries(n, signed)
+        value = value % (up - low + 1) + low
         return str(value)
 
 
