@@ -142,20 +142,9 @@ class VarTracker:
         :param var_type list's base type:
         :return: list of allowed global list variables
         """
-        allowed_vars = [f"self.{v}[{s}]" for v, s in self._lists[self.GLOBAL_KEY].get(var_type.vyper_type, [])]
-        return allowed_vars
-
-    def get_readonly_variables(self, level: int, var_type: BaseType):
-        """
-        Returns read-only variables upto `level`
-        :param level:
-        :param var_type:
-        :return: list of allowed readonly variables
-        """
         allowed_vars = []
-        allowed_vars.extend(self._get_list_items(level, var_type, False))
-        for i in range(level + 1):
-            allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
+        for v, s in self._lists[self.GLOBAL_KEY].get(var_type.vyper_type, []):
+            allowed_vars.extend([f"self.{v}[{i}]" for i in range(s)])
         return allowed_vars
 
     def _remove_list_items(self, level: int, mutable: bool):
@@ -188,6 +177,18 @@ class VarTracker:
 
         self._remove_list_items(level, mutable)
 
+    def get_readonly_variables(self, level: int, var_type: BaseType):
+        """
+        Returns read-only variables upto `level`
+        :param level:
+        :param var_type:
+        :return: list of allowed readonly variables
+        """
+        allowed_vars = []
+        allowed_vars.extend(self._get_list_items(level, var_type, False))
+        for i in range(level + 1):
+            allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
+        return allowed_vars
 
     def get_all_allowed_vars(self, level: int, var_type: BaseType):
         """
@@ -198,10 +199,12 @@ class VarTracker:
         allowed on the given level
         """
         allowed_vars = self.get_global_vars(var_type)
-        allowed_vars.extend(self._get_list_items(level, var_type, True))
 
         for i in range(level + 1):
             allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
+
+        allowed_vars.extend(self._get_list_items(level, var_type, True))
+
         return allowed_vars
 
     def get_global_vars(self, var_type: BaseType):

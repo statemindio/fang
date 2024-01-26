@@ -1,6 +1,6 @@
 import pytest
 
-from types_d import Int, Decimal
+from types_d import Int, Decimal, FixedList
 from var_tracker import VarTracker
 
 
@@ -20,6 +20,26 @@ def test_var_tracker_add_function_variable(var_tracker):
     assert var_tracker.get_all_allowed_vars(2, var_type) == ["foo1", "foo0"]
     assert var_tracker.get_all_allowed_vars(3, var_type) == ["foo1", "foo0", "foo2"]
 
+def test_var_tracker_add_function_variable_and_list(var_tracker):
+    var_type = Int()
+    mutable = True
+    var_tracker.register_function_variable("foo0", 1, var_type, mutable)
+    var_tracker.register_function_variable("foo1", 0, var_type, mutable)
+    var_tracker.register_function_variable("foo2", 3, var_type, mutable)
+
+    list_type = FixedList(2, var_type)
+    var_tracker.register_function_variable("baz0", 1, list_type, mutable)
+    var_tracker.register_function_variable("baz1", 0, list_type, mutable)
+    var_tracker.register_function_variable("baz2", 3, list_type, mutable)
+
+    assert var_tracker.get_all_allowed_vars(1, var_type) == ["foo1", "foo0", "baz1[0]", "baz1[1]",
+                                                             "baz0[0]", "baz0[1]"]
+    assert var_tracker.get_all_allowed_vars(2, var_type) == ["foo1", "foo0", "baz1[0]", "baz1[1]",
+                                                             "baz0[0]", "baz0[1]"]
+    assert var_tracker.get_all_allowed_vars(3, var_type) == ["foo1", "foo0", "foo2",
+                                                             "baz1[0]", "baz1[1]", "baz0[0]",
+                                                             "baz0[1]",  "baz2[0]", "baz2[1]"]
+
 
 def test_var_tracker_add_global_and_function_variables(var_tracker):
     var_type = Int()
@@ -27,7 +47,7 @@ def test_var_tracker_add_global_and_function_variables(var_tracker):
     var_tracker.register_global_variable("g_bar0", var_type)
     var_tracker.register_global_variable("g_bar2", var_type)
     var_tracker.register_global_variable("g_bar1", var_type)
-    
+
     var_tracker.register_function_variable("foo0", 1, var_type, mutable)
     var_tracker.register_function_variable("foo1", 0, var_type, mutable)
     var_tracker.register_function_variable("foo2", 3, var_type, mutable)
@@ -38,12 +58,45 @@ def test_var_tracker_add_global_and_function_variables(var_tracker):
                                                              "foo0", "foo2"]
 
 
+def test_var_tracker_add_global_and_function_variables_and_list(var_tracker):
+    var_type = Int()
+    mutable = True
+    var_tracker.register_global_variable("g_bar0", var_type)
+    var_tracker.register_global_variable("g_bar2", var_type)
+    var_tracker.register_global_variable("g_bar1", var_type)
+
+    var_tracker.register_function_variable("foo0", 1, var_type, mutable)
+    var_tracker.register_function_variable("foo1", 0, var_type, mutable)
+    var_tracker.register_function_variable("foo2", 3, var_type, mutable)
+
+    list_type = FixedList(2, var_type)
+    var_tracker.register_global_variable("g_baz0", list_type)
+    var_tracker.register_global_variable("g_baz1", list_type)
+
+    var_tracker.register_function_variable("qux0", 1, list_type, mutable)
+    var_tracker.register_function_variable("qux1", 0, list_type, mutable)
+    var_tracker.register_function_variable("qux2", 3, list_type, mutable)
+
+    assert var_tracker.get_global_vars(var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1",
+                                                     "self.g_baz0[0]", "self.g_baz0[1]",
+                                                     "self.g_baz1[0]", "self.g_baz1[1]"]
+    assert var_tracker.get_all_allowed_vars(0, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1",
+                                                             "self.g_baz0[0]", "self.g_baz0[1]",
+                                                             "self.g_baz1[0]", "self.g_baz1[1]",
+                                                             "foo1", "qux1[0]", "qux1[1]"]
+    assert var_tracker.get_all_allowed_vars(4, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1",
+                                                             "self.g_baz0[0]", "self.g_baz0[1]",
+                                                             "self.g_baz1[0]", "self.g_baz1[1]",
+                                                             "foo1", "foo0", "foo2", "qux1[0]", "qux1[1]",
+                                                             "qux0[0]", "qux0[1]", "qux2[0]", "qux2[1]"]
+
+
 def test_var_tracker_add_different_types(var_tracker):
     var_type_uint256 = Int()
     var_type_int128 = Int(128, True)
     var_type_decimal = Decimal()
     mutable = True
-    
+
     var_tracker.register_global_variable("g_bar_uint256", var_type_uint256)
     var_tracker.register_function_variable("foo_uint256_0", 0, var_type_uint256, mutable)
     var_tracker.register_function_variable("foo_uint256_1", 0, var_type_uint256, mutable)
