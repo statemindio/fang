@@ -390,7 +390,9 @@ full_cases = [
     "invalid_string_literal_string",
     "list_adjust_size_output",
     "list_expression",
-    "variable_literal_overflow"
+    "variable_literal_overflow",
+    "list_expression_ref_base_type",
+    "list_expression_ref_list"
 ]
 
 

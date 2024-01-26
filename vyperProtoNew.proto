@@ -209,26 +209,41 @@ message TypedExpression {
 
 // must have atleast one member
 message FixedListAddress{
+  oneof other {
+    VarRef varRef = 3;
+  }
   AddressExpression rexp = 1;
   repeated AddressExpression exp = 2;
 }
 
 message FixedListBool{
+  oneof other {
+    VarRef varRef = 3;
+  }
   BoolExpression rexp = 1;
   repeated BoolExpression exp = 2;
 }
 
 message FixedListBytesM{
+  oneof other {
+    VarRef varRef = 3;
+  }
   BytesMExpression rexp = 1;
   repeated BytesMExpression exp = 2;
 }
 
 message FixedListInt{
+  oneof other {
+    VarRef varRef = 3;
+  }
   IntExpression rexp = 1;
   repeated IntExpression exp = 2;
 }
 
 message FixedListDecimal{
+  oneof other {
+    VarRef varRef = 3;
+  }
   DecimalExpression rexp = 1;
   repeated DecimalExpression exp = 2;
 }

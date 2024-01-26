@@ -181,7 +181,12 @@ class TypedConverter:
         return current_type
 
     def _visit_list_expression(self, list, current_type):
-        # TODO: add var_ref
+
+        if list.HasField("varRef"):
+            result = self._visit_var_ref(list.varRef, self._block_level_count)
+            if result is not None:
+                return result
+
         base_type = current_type.base_type
 
         handler, _ = self._expression_handlers[base_type.name]

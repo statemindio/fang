@@ -1,0 +1,38 @@
+{
+  "functions": [
+    {
+      "inputParams": [
+        {
+          "list": {
+            "i": {},
+            "n": 1
+          }
+        }
+      ],
+      "outputParams": [
+        {
+          "i": {}
+        },
+        {
+          "i": {}
+        }
+      ],
+      "block": {
+        "exit_d": {
+          "payload": {
+            "one": {
+              "intExp": {
+                "varRef": {}
+              }
+            },
+            "two": {
+              "intExp": {
+                "lit": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
