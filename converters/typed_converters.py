@@ -500,9 +500,34 @@ class TypedConverter:
             return self._visit_if_stmt(statement.if_stmt)
         if statement.HasField("assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
-        # if statement.HasField("selfd"):
-        #    return self._visit_selfd(statement.selfd)
+        if statement.HasField("func_call"):
+            return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
+
+    def _visit_func_call(self, func_call):
+        def __create_variable(var_type):
+            idx = self._var_tracker.next_id(var_type)
+            name = f"x_{var_type.name}_{idx}"
+            self._var_tracker.register_function_variable(name, self._block_level_count, var_type)
+            return name
+
+        func_num = func_call.func_num % len(self._func_tracker)
+        func_obj = self._func_tracker[func_num]
+        output_vars = []
+        for t in func_obj.output_parameters:
+            allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t)
+            if len(allowed_vars) > 0:
+                variable = random.choice(allowed_vars)
+                if variable in output_vars and len(allowed_vars) > 1:
+                    variable = random.choice(allowed_vars)
+                else:
+                    variable = __create_variable(t)
+            else:
+                variable = __create_variable(t)
+            output_vars.append(variable)
+
+        # TODO: check output_vars is not empty and assign the func call
+        # TODO: adjust mutability
 
     def _visit_block(self, block):
         result = ""

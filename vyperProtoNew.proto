@@ -323,7 +323,7 @@ message AssignmentStatement {
 }
 
 message FuncCall {
-  optional VarRef ref_id = 1;
+  uint32 func_num = 1;
 }
 
 // probably add builtins to expression too

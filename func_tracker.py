@@ -76,6 +76,9 @@ class FuncTracker:
     def __iter__(self):
         return iter(self._functions)
 
+    def __len__(self):
+        return len(self._functions)
+
     def register_function(
             self,
             name,
