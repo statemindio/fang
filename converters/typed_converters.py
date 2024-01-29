@@ -1,7 +1,7 @@
 import dataclasses
 import random
 
-from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
+from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT, MAX_LIST_SIZE
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList
 from types_d.base import BaseType
@@ -153,6 +153,8 @@ class TypedConverter:
         elif instance.HasField("list"):
             # TODO: compiler struggles with large inputs(?), perhaps should limit max
             list_len = 1 if instance.list.n == 0 else instance.list.n
+            list_len = list_len if instance.list.n < MAX_LIST_SIZE else MAX_LIST_SIZE
+
             current_type = self.visit_list_type(instance.list)
             current_type = FixedList(list_len, current_type)
         else:
@@ -198,6 +200,8 @@ class TypedConverter:
         for i, expr in enumerate(list.exp):
             list_size += 1
             value += f", {handler(expr)}"
+            if list_size == MAX_LIST_SIZE:
+                break
         self.type_stack.pop()
 
         current_type.adjust_size(list_size)

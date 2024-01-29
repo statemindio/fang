@@ -1,0 +1,8 @@
+x_FIXEDLISTADDRESS_0 : address[1]
+
+@external
+@nonpayable
+def func_0():
+    self.x_FIXEDLISTADDRESS_0[0] = 0x0000000000000000000000000000000000000000
+
+
