@@ -150,7 +150,7 @@ class FixedList(BaseType):
         self._base_type = base_type
         self._size = size
 
-    def adjust_size(self, size):
+    def adjust_max_size(self, size):
         self._size = size
 
     @property
@@ -168,3 +168,25 @@ class FixedList(BaseType):
     @property
     def name(self):
         return self.__class__.__name__.upper() + self._base_type.name
+        #return "FL" + self._base_type.name
+    
+class DynArray(FixedList):
+    def __init__(self, size, base_type: BaseType):
+        super().__init__(size, base_type)
+        self._current_size = 0
+
+    def adjust_current_size(self, size):
+        self._current_size = size
+
+    @property
+    def current_size(self):
+        return self._current_size
+
+    @property
+    def vyper_type(self):
+        return f"DynArray[{self._base_type.vyper_type},{self._size}]"
+
+    @property
+    def name(self):
+        #return self.__class__.__name__.upper() + self._base_type.name
+        return "DA" + self._base_type.name

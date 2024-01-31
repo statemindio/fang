@@ -7,7 +7,8 @@ __all__ = [
     "String",
     "Address",
     "TypeRangeError",
-    "FixedList"
+    "FixedList",
+    "DynArray"
 ]
 
-from .types import Bytes, BytesM, Int, Bool, Decimal, String, Address, TypeRangeError, FixedList
+from .types import Bytes, BytesM, Int, Bool, Decimal, String, Address, TypeRangeError, FixedList, DynArray

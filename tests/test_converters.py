@@ -393,7 +393,8 @@ full_cases = [
     "variable_literal_overflow",
     "list_expression_ref_base_type",
     "list_expression_ref_list",
-    "list_element_assignment"
+    "list_element_assignment",
+    "dynamic_assignment"
 ]
 
 

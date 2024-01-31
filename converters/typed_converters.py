@@ -3,7 +3,7 @@ import random
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT, MAX_LIST_SIZE
 from func_tracker import FuncTracker
-from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList
+from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
@@ -58,6 +58,11 @@ LITERAL_ATTR_MAP = {
 def get_bin_op(op, op_set):
     return op_set[op]
 
+def _has_field(instance, field):
+    try:
+        return instance.HasField(field)
+    except ValueError:
+        return False
 
 class TypedConverter:
     """
@@ -95,7 +100,19 @@ class TypedConverter:
             "FIXEDLISTBYTESM": (self._visit_list_expression, "bmList"),
             "FIXEDLISTBOOL": (self._visit_list_expression, "boolList"),
             "FIXEDLISTDECIMAL": (self._visit_list_expression, "decList"),
-            "FIXEDLISTADDRESS": (self._visit_list_expression, "addrList")
+            "FIXEDLISTADDRESS": (self._visit_list_expression, "addrList"),
+            "DAINT": (self._visit_list_expression, "intDyn"),
+            "DABYTESM": (self._visit_list_expression, "bmDyn"),
+            "DABOOL": (self._visit_list_expression, "boolDyn"),
+            "DADECIMAL": (self._visit_list_expression, "decDyn"),
+            "DAADDRESS": (self._visit_list_expression, "addrDyn"),
+            "DABYTES": (self._visit_list_expression, "bytesDyn"),
+            "DASTRING": (self._visit_list_expression, "strDyn"),
+            "DAFIXEDLISTINT": (self._visit_list_expression, "lintDyn"),
+            "DAFIXEDLISTBYTESM": (self._visit_list_expression, "lbmDyn"),
+            "DAFIXEDLISTBOOL": (self._visit_list_expression, "lboolByn"),
+            "DAFIXEDLISTDECIMAL": (self._visit_list_expression, "ldecDyn"),
+            "DAFIXEDLISTADDRESS": (self._visit_list_expression, "ladrDyn"),
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -129,7 +146,7 @@ class TypedConverter:
                 break
             self.result += self.visit_func(func)
             self.result += "\n"
-            
+
         if self.contract.HasField("def_func"):
             self.result += self.visit_default_func(self.contract.def_func)
             self.result += "\n"
@@ -142,21 +159,26 @@ class TypedConverter:
         elif instance.HasField("bM"):
             m = instance.bM.m % 32 + 1
             current_type = BytesM(m)
-        elif instance.HasField("s"):
+        elif _has_field(instance, "s"):
             max_len = 1 if instance.s.max_len == 0 else instance.s.max_len
             current_type = String(max_len)
         elif instance.HasField("adr"):
             current_type = Address()
-        elif instance.HasField("barr"):
+        elif _has_field(instance, "barr"):
             max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
             current_type = Bytes(max_len)
-        elif instance.HasField("list"):
-            # TODO: compiler struggles with large inputs(?), perhaps should limit max
+        elif _has_field(instance, "list"):
+            # TODO: handle size in class?
             list_len = 1 if instance.list.n == 0 else instance.list.n
             list_len = list_len if instance.list.n < MAX_LIST_SIZE else MAX_LIST_SIZE
 
-            current_type = self.visit_list_type(instance.list)
+            current_type = self.visit_type(instance.list)
             current_type = FixedList(list_len, current_type)
+        elif _has_field(instance, "dyn"):
+            list_len = 1 if instance.dyn.n == 0 else instance.dyn.n
+            list_len = list_len if instance.dyn.n < MAX_LIST_SIZE else MAX_LIST_SIZE
+            current_type = self.visit_type(instance.dyn)
+            current_type = DynArray(list_len, current_type)
         else:
             n = instance.i.n % 256 + 1
             n = get_nearest_multiple(n, 8)
@@ -164,23 +186,6 @@ class TypedConverter:
 
         return current_type
 
-    # TODO: perhaps can be refactored to regular visit_type
-    def visit_list_type(self, instance):
-        if instance.HasField("b"):
-            current_type = Bool()
-        elif instance.HasField("d"):
-            current_type = Decimal()
-        elif instance.HasField("bM"):
-            m = instance.bM.m % 32 + 1
-            current_type = BytesM(m)
-        elif instance.HasField("adr"):
-            current_type = Address()
-        else:
-            n = instance.i.n % 256 + 1
-            n = get_nearest_multiple(n, 8)
-            current_type = Int(n, instance.i.sign)
-
-        return current_type
 
     def _visit_list_expression(self, list, current_type):
 
@@ -194,17 +199,34 @@ class TypedConverter:
         handler, _ = self._expression_handlers[base_type.name]
         list_size = 1
 
-        self.type_stack.append(base_type)   
-        value = handler(list.rexp)
+        self.type_stack.append(base_type)
+
+        # TODO: ugly
+        is_list = isinstance(base_type, FixedList)
+        if is_list:
+            value = handler(list.rexp, base_type)
+        else:
+            value = handler(list.rexp)
 
         for i, expr in enumerate(list.exp):
+            if is_list:
+                expr_val = handler(expr, base_type)
+            else:
+                expr_val = handler(expr)
+
             list_size += 1
-            value += f", {handler(expr)}"
-            if list_size == MAX_LIST_SIZE:
+            value += f", {expr_val}"
+
+            if list_size == MAX_LIST_SIZE or \
+               (isinstance(current_type, DynArray) and list_size == current_type.size):
                 break
+
         self.type_stack.pop()
 
-        current_type.adjust_size(list_size)
+        if isinstance(current_type, DynArray):
+            current_type.adjust_current_size(list_size)    
+        else:
+            current_type.adjust_max_size(list_size)
 
         return f"[{value}]"
 
@@ -217,7 +239,7 @@ class TypedConverter:
         if not assignment and level is not None:
             read_only_vars = self._var_tracker.get_readonly_variables(level, current_type)
             allowed_vars.extend(read_only_vars)
- 
+
         if len(allowed_vars) == 0:
             return None
 
