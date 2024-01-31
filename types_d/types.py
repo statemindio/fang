@@ -150,7 +150,7 @@ class FixedList(BaseType):
         self._base_type = base_type
         self._size = size
 
-    def adjust_max_size(self, size):
+    def adjust_size(self, size):
         self._size = size
 
     @property

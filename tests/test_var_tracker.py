@@ -1,6 +1,6 @@
 import pytest
 
-from types_d import Int, Decimal, FixedList
+from types_d import Int, Decimal, FixedList, DynArray
 from var_tracker import VarTracker
 
 
@@ -40,6 +40,25 @@ def test_var_tracker_add_function_variable_and_list(var_tracker):
                                                              "baz1[0]", "baz1[1]", "baz0[0]",
                                                              "baz0[1]",  "baz2[0]", "baz2[1]"]
 
+def test_var_tracker_add_function_variable_and_dynamic_array(var_tracker):
+    var_type = Int()
+    mutable = True
+    var_tracker.register_function_variable("foo0", 1, var_type, mutable)
+    var_tracker.register_function_variable("foo1", 0, var_type, mutable)
+    var_tracker.register_function_variable("foo2", 3, var_type, mutable)
+
+    list_type = DynArray(2, var_type)
+    var_tracker.register_function_variable("baz0", 1, list_type, mutable)
+    var_tracker.register_function_variable("baz1", 0, list_type, mutable)
+    var_tracker.register_function_variable("baz2", 3, list_type, mutable)
+
+    assert var_tracker.get_all_allowed_vars(1, var_type) == ["foo1", "foo0", "baz1[0]", "baz1[1]",
+                                                             "baz0[0]", "baz0[1]"]
+    assert var_tracker.get_all_allowed_vars(2, var_type) == ["foo1", "foo0", "baz1[0]", "baz1[1]",
+                                                             "baz0[0]", "baz0[1]"]
+    assert var_tracker.get_all_allowed_vars(3, var_type) == ["foo1", "foo0", "foo2",
+                                                             "baz1[0]", "baz1[1]", "baz0[0]",
+                                                             "baz0[1]",  "baz2[0]", "baz2[1]"]
 
 def test_var_tracker_add_global_and_function_variables(var_tracker):
     var_type = Int()

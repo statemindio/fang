@@ -216,7 +216,7 @@ class TypedConverter:
 
             list_size += 1
             value += f", {expr_val}"
-
+            # TODO: move size handling to type class 
             if list_size == MAX_LIST_SIZE or \
                (isinstance(current_type, DynArray) and list_size == current_type.size):
                 break
@@ -224,9 +224,9 @@ class TypedConverter:
         self.type_stack.pop()
 
         if isinstance(current_type, DynArray):
-            current_type.adjust_current_size(list_size)    
+            current_type.adjust_current_size(list_size)
         else:
-            current_type.adjust_max_size(list_size)
+            current_type.adjust_size(list_size)
 
         return f"[{value}]"
 

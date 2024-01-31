@@ -1,0 +1,33 @@
+{
+  "decls": [
+    {
+      "dyn": {
+        "i": {},
+        "n": 3
+      }
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "ref_id": {
+                  "dyn":{
+                    "i": {},
+                    "n": 3
+                  }
+              },
+              "expr": {
+                "intDyn": {
+                  "rexp": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
