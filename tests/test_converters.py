@@ -387,7 +387,13 @@ full_cases = [
     "immutable_no_init",
     "default_function",
     "invalid_string_literal_reentrancy",
-    "invalid_string_literal_string"
+    "invalid_string_literal_string",
+    "list_adjust_size_output",
+    "list_expression",
+    "variable_literal_overflow",
+    "list_expression_ref_base_type",
+    "list_expression_ref_list",
+    "list_element_assignment"
 ]
 
 

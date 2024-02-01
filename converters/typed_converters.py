@@ -1,8 +1,8 @@
 import random
 
-from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
+from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT, MAX_LIST_SIZE
 from func_tracker import FuncTracker
-from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String
+from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList
 from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
@@ -88,7 +88,12 @@ class TypedConverter:
             "BYTES": (self._visit_bytes_expression, "bExp"),
             "DECIMAL": (self._visit_decimal_expression, "decExpression"),
             "STRING": (self._visit_string_expression, "strExp"),
-            "ADDRESS": (self.visit_address_expression, "addrExp")
+            "ADDRESS": (self.visit_address_expression, "addrExp"),
+            "FIXEDLISTINT": (self._visit_list_expression, "intList"),
+            "FIXEDLISTBYTESM": (self._visit_list_expression, "bmList"),
+            "FIXEDLISTBOOL": (self._visit_list_expression, "boolList"),
+            "FIXEDLISTDECIMAL": (self._visit_list_expression, "decList"),
+            "FIXEDLISTADDRESS": (self._visit_list_expression, "addrList")
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -154,12 +159,63 @@ class TypedConverter:
         elif instance.HasField("barr"):
             max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
             current_type = Bytes(max_len)
+        elif instance.HasField("list"):
+            # TODO: compiler struggles with large inputs(?), perhaps should limit max
+            list_len = 1 if instance.list.n == 0 else instance.list.n
+            list_len = list_len if instance.list.n < MAX_LIST_SIZE else MAX_LIST_SIZE
+
+            current_type = self.visit_list_type(instance.list)
+            current_type = FixedList(list_len, current_type)
         else:
             n = instance.i.n % 256 + 1
             n = get_nearest_multiple(n, 8)
             current_type = Int(n, instance.i.sign)
 
         return current_type
+
+    # TODO: perhaps can be refactored to regular visit_type
+    def visit_list_type(self, instance):
+        if instance.HasField("b"):
+            current_type = Bool()
+        elif instance.HasField("d"):
+            current_type = Decimal()
+        elif instance.HasField("bM"):
+            m = instance.bM.m % 32 + 1
+            current_type = BytesM(m)
+        elif instance.HasField("adr"):
+            current_type = Address()
+        else:
+            n = instance.i.n % 256 + 1
+            n = get_nearest_multiple(n, 8)
+            current_type = Int(n, instance.i.sign)
+
+        return current_type
+
+    def _visit_list_expression(self, list, current_type):
+
+        if list.HasField("varRef"):
+            result = self._visit_var_ref(list.varRef, self._block_level_count)
+            if result is not None:
+                return result
+
+        base_type = current_type.base_type
+
+        handler, _ = self._expression_handlers[base_type.name]
+        list_size = 1
+
+        self.type_stack.append(base_type)
+        value = handler(list.rexp)
+
+        for i, expr in enumerate(list.exp):
+            list_size += 1
+            value += f", {handler(expr)}"
+            if list_size == MAX_LIST_SIZE:
+                break
+        self.type_stack.pop()
+
+        current_type.adjust_size(list_size)
+
+        return f"[{value}]"
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
@@ -187,6 +243,9 @@ class TypedConverter:
 
     def visit_typed_expression(self, expr, current_type):
         handler, attr = self._expression_handlers[current_type.name]
+        # let handler adjust list size
+        if isinstance(current_type, FixedList):
+            return handler(getattr(expr, attr), current_type)
         return handler(getattr(expr, attr))
 
     def __var_decl(self, expr, current_type):
@@ -194,11 +253,12 @@ class TypedConverter:
 
         idx = self._var_tracker.next_id(current_type)
 
+        value = self.visit_typed_expression(expr, current_type)
+
         var_name = f"x_{current_type.name}_{str(idx)}"
         result = var_name + " : " + current_type.vyper_type
 
-        value = self.visit_typed_expression(expr, current_type)
-        self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type)
+        self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type, True)
         result = f"{result} = {value}"
 
         self.type_stack.pop()
@@ -224,7 +284,7 @@ class TypedConverter:
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
             value = self.visit_typed_expression(variable.expr, current_type)
-            self._var_tracker.register_readonly_variable(var_name, 0, current_type)
+            self._var_tracker.register_function_variable(var_name, 0, current_type, False)
 
             if variable.mut == 1:
                 result += f"constant({current_type.vyper_type})"
@@ -250,8 +310,9 @@ class TypedConverter:
             idx = self._var_tracker.next_id(param_type)
             name = f"x_{param_type.name}_{idx}"
             names.append(name)
-            # self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
-            self._var_tracker.register_readonly_variable(name, 1, param_type)
+
+            #self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
+            self._var_tracker.register_function_variable(name, 1, param_type, False)
 
             if i > 0:
                 result = f"{result}, "
@@ -298,10 +359,10 @@ class TypedConverter:
 
         self._block_level_count = 1
         block = self._visit_block(function.block)
-        self._var_tracker.remove_function_level(self._block_level_count)
-        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
+        self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
@@ -323,10 +384,10 @@ class TypedConverter:
         self._block_level_count = 1
         block = self._visit_init_immutables()
         block += self._visit_block(init.block)
-        self._var_tracker.remove_function_level(self._block_level_count)
-        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
+        self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         mutability = "@payable\n" if init.mut else ""
 
@@ -341,18 +402,18 @@ class TypedConverter:
         self._function_output = self._visit_output_parameters(function.output_params)
         function_name = "__default__"
 
+        self._block_level_count = 1
+        block = self._visit_block(function.block)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
+        self._var_tracker.remove_function_level(self._block_level_count, False)
+        self._block_level_count = 0
+        self._var_tracker.remove_function_level(self._block_level_count, True)
+
         output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
         if len(self._function_output) > 1:
             output_str = f"({output_str})"
         if len(self._function_output) > 0:
             output_str = f" -> {output_str}"
-
-        self._block_level_count = 1
-        block = self._visit_block(function.block)
-        self._var_tracker.remove_function_level(self._block_level_count)
-        self._var_tracker.remove_readonly_level(self._block_level_count)
-        self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count)
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
@@ -379,7 +440,7 @@ class TypedConverter:
         ivar_type = Int()
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
-        self._var_tracker.register_readonly_variable(var_name, self._block_level_count + 1, ivar_type)
+        self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
         result = f"for {var_name} in range({start}, {stop}):"
         return result
 
@@ -395,7 +456,7 @@ class TypedConverter:
             length += 1
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
-        self._var_tracker.register_readonly_variable(var_name, self._block_level_count + 1, ivar_type)
+        self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
         if variable is None:
             result = f"for {var_name} in range({length}):"
             return result
@@ -411,8 +472,8 @@ class TypedConverter:
         self._for_block_count += 1
         self._block_level_count += 1
         body = self._visit_block(for_stmt.body)
-        self._var_tracker.remove_function_level(self._block_level_count)
-        self._var_tracker.remove_readonly_level(self._block_level_count)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
+        self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count -= 1
         self._for_block_count -= 1
 
@@ -432,7 +493,7 @@ class TypedConverter:
             self.type_stack.pop()
             self._block_level_count += 1
             body = self._visit_block(case.if_body)
-            self._var_tracker.remove_function_level(self._block_level_count)
+            self._var_tracker.remove_function_level(self._block_level_count, True)
             self._block_level_count -= 1
             result = f"{result}{prefix} {condition}:\n{body}\n"
 
@@ -442,7 +503,7 @@ class TypedConverter:
         result = f"{self.TAB * self._block_level_count}else:"
         self._block_level_count += 1
         else_block = self._visit_block(expr)
-        self._var_tracker.remove_function_level(self._block_level_count)
+        self._var_tracker.remove_function_level(self._block_level_count, True)
         self._block_level_count -= 1
         result = f"{result}\n{else_block}"
         return result

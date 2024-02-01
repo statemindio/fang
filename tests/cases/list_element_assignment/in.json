@@ -1,0 +1,30 @@
+{
+  "decls": [
+    {
+      "list": {
+        "adr": {},
+        "n": 1
+      }
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "ref_id": {
+                "adr": {}
+              },
+              "expr": {
+                "addrExp": {
+                  "lit": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
