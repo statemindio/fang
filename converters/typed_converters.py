@@ -187,13 +187,14 @@ class TypedConverter:
         return current_type
 
 
-    def _visit_list_expression(self, list, current_type):
+    def _visit_list_expression(self, list):
 
         if list.HasField("varRef"):
             result = self._visit_var_ref(list.varRef, self._block_level_count)
             if result is not None:
                 return result
 
+        current_type = current_type = self.type_stack[len(self.type_stack) - 1]
         base_type = current_type.base_type
 
         handler, _ = self._expression_handlers[base_type.name]
@@ -201,18 +202,22 @@ class TypedConverter:
 
         self.type_stack.append(base_type)
 
+        """
         # TODO: ugly
         is_list = isinstance(base_type, FixedList)
         if is_list:
             value = handler(list.rexp, base_type)
         else:
-            value = handler(list.rexp)
+        """ 
+        value = handler(list.rexp)
 
         for i, expr in enumerate(list.exp):
+            """
             if is_list:
                 expr_val = handler(expr, base_type)
             else:
-                expr_val = handler(expr)
+            """
+            expr_val = handler(expr)
 
             list_size += 1
             value += f", {expr_val}"
@@ -223,10 +228,7 @@ class TypedConverter:
 
         self.type_stack.pop()
 
-        if isinstance(current_type, DynArray):
-            current_type.adjust_current_size(list_size)
-        else:
-            current_type.adjust_size(list_size)
+        current_type.adjust_size(list_size)
 
         return f"[{value}]"
 
@@ -257,8 +259,8 @@ class TypedConverter:
     def visit_typed_expression(self, expr, current_type):
         handler, attr = self._expression_handlers[current_type.name]
         # let handler adjust list size
-        if isinstance(current_type, FixedList):
-            return handler(getattr(expr, attr), current_type)
+        #if isinstance(current_type, FixedList):
+        #    return handler(getattr(expr, attr), current_type)
         return handler(getattr(expr, attr))
 
     def __var_decl(self, expr, current_type):
@@ -585,8 +587,10 @@ class TypedConverter:
             return self._visit_if_stmt(statement.if_stmt)
         if statement.HasField("assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
-        # if statement.HasField("selfd"):
-        #    return self._visit_selfd(statement.selfd)
+        #if statement.HasField("append_stmt"):
+        #    return self._visit_append_stmt(statement.append_stmt)
+        #if statement.HasField("pop_stmt"):
+        #    return self._visit_pop_stmt(statement.pop_stmt)
         return self._visit_assignment(statement.assignment)
 
     def _visit_block(self, block):
@@ -891,3 +895,10 @@ class TypedConverter:
             result = f"{result}, {value}"
 
         return result
+
+    # is skipping bad?
+    def _visit_append_stmt(self, stmt):
+        pass
+    
+    def _visit_pop_stmt(self, stmt):
+        pass

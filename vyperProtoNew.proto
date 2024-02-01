@@ -491,6 +491,8 @@ message Statement {
     ContinueStatement cont_stmt = 8;
     BreakStatement break_stmt = 9;
     AssertStatement assert_stmt = 10;
+    AppendArray append_stmt = 11;
+    PopArray pop_stmt = 12;
   }
   AssignmentStatement assignment = 2;
 }
@@ -661,4 +663,13 @@ message ContinueStatement {}
 message AssertStatement {
   BoolExpression cond = 1;
   StringExpression reason = 2;
+}
+
+message AppendArray {
+  VarRef varRef = 1;
+  TypedExpression expr = 2;
+}
+
+message PopArray {
+  VarRef varRef = 1;
 }

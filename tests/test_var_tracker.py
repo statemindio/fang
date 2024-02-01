@@ -48,6 +48,7 @@ def test_var_tracker_add_function_variable_and_dynamic_array(var_tracker):
     var_tracker.register_function_variable("foo2", 3, var_type, mutable)
 
     list_type = DynArray(2, var_type)
+    list_type.adjust_size(2)
     var_tracker.register_function_variable("baz0", 1, list_type, mutable)
     var_tracker.register_function_variable("baz1", 0, list_type, mutable)
     var_tracker.register_function_variable("baz2", 3, list_type, mutable)
