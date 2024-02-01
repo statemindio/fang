@@ -396,7 +396,8 @@ full_cases = [
     "list_element_assignment",
     "invalid_string_literal_string",
     "func_call",
-    "func_call_multiple"
+    "func_call_multiple",
+    "func_call_multiple_cyclic"
 ]
 
 

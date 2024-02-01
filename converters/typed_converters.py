@@ -628,9 +628,9 @@ class TypedConverter:
                 variable = __create_variable(t)
                 result = f"{result}{self.TAB * self._block_level_count}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
+        result += f"{self.TAB * self._block_level_count}"
         if len(output_vars) > 0:
-            result += f'{self.TAB * self._block_level_count}{", ".join(output_vars)} = '
-            # result = f"{result} = "
+            result += f'{", ".join(output_vars)} = '
 
         params_attrs = ("one", "two", "three", "four", "five")
         input_values = []
