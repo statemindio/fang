@@ -619,17 +619,18 @@ class TypedConverter:
         func_obj = __find_function(func_num)
 
         output_vars = []
+        result = ""
         for t in func_obj.output_parameters:
             allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t)
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
             else:
                 variable = __create_variable(t)
+                result = f"{result}{self.TAB * self._block_level_count}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
-        result = ""
         if len(output_vars) > 0:
-            result = ", ".join(output_vars)
-            result = f"{result} = "
+            result += f'{self.TAB * self._block_level_count}{", ".join(output_vars)} = '
+            # result = f"{result} = "
 
         params_attrs = ("one", "two", "three", "four", "five")
         input_values = []
@@ -638,7 +639,7 @@ class TypedConverter:
             input_values.append(self.visit_typed_expression(getattr(func_call.params, attr), input_type))
             self.type_stack.pop()
 
-        result = f"{self.TAB * self._block_level_count}{result}{func_obj.render_call(input_values)}"
+        result = f"{result}{func_obj.render_call(input_values)}"
         if self._mutability_level < func_obj.mutability:
             self._mutability_level = func_obj.mutability
 

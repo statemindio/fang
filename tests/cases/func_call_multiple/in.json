@@ -21,6 +21,14 @@
           "i": {}
         }
       ],
+      "outputParams": [
+        {
+          "i": {}
+        },
+        {
+          "d": {}
+        }
+      ],
       "block": {
         "statements": [
           {
