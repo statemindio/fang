@@ -1,3 +1,5 @@
+import copy
+
 from types_d.base import BaseType
 from types_d.types import FixedList
 
@@ -13,6 +15,7 @@ class VarTracker:
     def __init__(self):
         self._var_id = -1
         self._var_id_map = {}
+        self._global_var_id_map = {}
         self._vars = {
             self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {},
@@ -81,6 +84,7 @@ class VarTracker:
         self._vars[self.GLOBAL_KEY][var_type.vyper_type].append(name)
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
+        self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
         if isinstance(var_type, FixedList):
             self._register_global_list(name, var_type)
@@ -176,6 +180,11 @@ class VarTracker:
             self._vars[key][vyper_type][level] = []
 
         self._remove_list_items(level, mutable)
+
+    def reset_function_variables(self):
+        self._vars[self.FUNCTION_KEY] = {}
+        self._vars[self.READONLY_KEY] = {}
+        self._var_id_map = copy.copy(self._global_var_id_map)
 
     def get_readonly_variables(self, level: int, var_type: BaseType):
         """

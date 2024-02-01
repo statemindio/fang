@@ -365,7 +365,6 @@ message VarDecl {
   Int i = 1;
   TypedExpression expr = 8;
   Mutability mut = 9;
-  optional FuncCall func_call = 10;
 }
 
 message AssignmentStatement {
@@ -375,6 +374,7 @@ message AssignmentStatement {
 
 message FuncCall {
   uint32 func_num = 1;
+  ReturnPayload params = 2;
 }
 
 // probably add builtins to expression too

@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT, MAX_LIST_SIZE
 from func_tracker import FuncTracker
@@ -103,6 +104,12 @@ class TypedConverter:
         self._function_output = []
         self._for_block_count = 0
         self._immutable_exp = []
+        self._function_call_map = defaultdict(list)
+        self._excluded_call_map = defaultdict(list)
+        self._current_func = None
+        self.func_stack = []
+        self.func_handled = []
+        self.func_flag = True
 
     def visit(self):
         """
@@ -132,8 +139,32 @@ class TypedConverter:
             output_types = self._visit_output_parameters(func.output_params)
             self._func_tracker.register_function(function_name, func.mut, func.vis, input_types, output_types)
 
+        self.func_flag = False
+
         for func_obj, func in zip(self._func_tracker, self.contract.functions):
             self.visit_func(func_obj, func)
+
+        self.func_flag = True
+
+        def __convert_func(_func_id, function_def):
+            if len(self._function_call_map[_func_id]) == 0:
+                self.func_handled.append(_func_id)
+                _func_obj = self._func_tracker[_func_id]
+                self.visit_func(_func_obj, function_def)
+            else:
+                for func_id_internal in self._function_call_map[_func_id]:
+                    if func_id_internal in self.func_stack:
+                        self._excluded_call_map[_func_id].append(func_id_internal)
+                        self._function_call_map[_func_id].remove(func_id_internal)
+                        __convert_func(_func_id, function_def)
+                    if func_id_internal not in self.func_handled:
+                        __convert_func(func_id_internal, self.contract.functions[func_id_internal])
+
+        self._var_tracker.reset_function_variables()
+        for func_obj, func in zip(self._func_tracker, self.contract.functions):
+            input_params, input_types, names = self._visit_input_parameters(func.input_params)
+            self.func_stack = [func_obj.id]
+            __convert_func(func_obj.id, func)
 
         for func_obj, names in zip(self._func_tracker, input_names):
             self.result += func_obj.render_definition(names)
@@ -311,7 +342,7 @@ class TypedConverter:
             name = f"x_{param_type.name}_{idx}"
             names.append(name)
 
-            #self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
+            # self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
             self._var_tracker.register_function_variable(name, 1, param_type, False)
 
             if i > 0:
@@ -353,6 +384,7 @@ class TypedConverter:
 
     def visit_func(self, function_obj, function):
         self._mutability_level = 0
+        self._current_func = function_obj
 
         # FIXME: have to leave it to keep `return` statement properly
         self._function_output = self._visit_output_parameters(function.output_params)
@@ -370,6 +402,7 @@ class TypedConverter:
         function_obj.mutability = max(self._mutability_level, function.mut)
         function_obj.body = block
         function_obj.reentrancy = reentrancy
+        function_obj.output_parameters = self._function_output
 
     def visit_init(self, init):
         self._mutability_level = 0
@@ -562,33 +595,54 @@ class TypedConverter:
         if statement.HasField("assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
-            return self._visit_func_call(statement.func_call)
+            func_num = statement.func_call.func_num % len(self._func_tracker)
+            if not self.func_flag or func_num not in self._excluded_call_map[self.func_stack[0]]:
+                return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
 
     def _visit_func_call(self, func_call):
         def __create_variable(var_type):
             idx = self._var_tracker.next_id(var_type)
             name = f"x_{var_type.name}_{idx}"
-            self._var_tracker.register_function_variable(name, self._block_level_count, var_type)
+            self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
             return name
 
+        def __find_function(_func_num):
+            if self._func_tracker[func_num].id == self._current_func.id:
+                _func_num = (_func_num + 1) % len(self._func_tracker)
+            # else:
+            if not self.func_flag:
+                self._function_call_map[self._current_func.id].append(self._func_tracker[_func_num].id)
+            return self._func_tracker[_func_num]
+
         func_num = func_call.func_num % len(self._func_tracker)
-        func_obj = self._func_tracker[func_num]
+        func_obj = __find_function(func_num)
+
         output_vars = []
         for t in func_obj.output_parameters:
             allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t)
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
-                if variable in output_vars and len(allowed_vars) > 1:
-                    variable = random.choice(allowed_vars)
-                else:
-                    variable = __create_variable(t)
             else:
                 variable = __create_variable(t)
             output_vars.append(variable)
+        result = ""
+        if len(output_vars) > 0:
+            result = ", ".join(output_vars)
+            result = f"{result} = "
 
-        # TODO: check output_vars is not empty and assign the func call
-        # TODO: adjust mutability
+        params_attrs = ("one", "two", "three", "four", "five")
+        input_values = []
+        for input_type, attr in zip(func_obj.input_parameters, params_attrs):
+            self.type_stack.append(input_type)
+            input_values.append(self.visit_typed_expression(getattr(func_call.params, attr), input_type))
+            self.type_stack.pop()
+
+        result = f"{self.TAB * self._block_level_count}{result}{func_obj.render_call(input_values)}"
+        if self._mutability_level < func_obj.mutability:
+            self._mutability_level = func_obj.mutability
+
+        return result
 
     def _visit_block(self, block):
         result = ""

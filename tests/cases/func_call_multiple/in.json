@@ -1,0 +1,56 @@
+{
+  "decls": [
+    {
+      "i": {}
+    },
+    {
+      "barr": {
+        "max_len": 382
+      }
+    },
+    {
+      "barr": {
+        "max_len": 382
+      }
+    }
+  ],
+  "functions": [
+    {
+      "inputParams": [
+        {
+          "i": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+          }
+        ]
+      }
+    },
+    {
+      "inputParams": [
+        {
+          "i": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "func_call": {
+              "func_num": 0,
+              "params": {
+                "one": {},
+                "two": {
+                  "intExp": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

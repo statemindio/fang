@@ -14,12 +14,14 @@ class Function:
 
     def __init__(
             self,
+            _id: int,
             name: str,
             mutability: int,
             visibility: str,
             input_parameters: Sequence[BaseType],
             output_parameters: Sequence[BaseType]
     ):
+        self.id = _id
         self._name = name
         self.mutability = mutability
         self.visibility = visibility
@@ -87,9 +89,9 @@ class FuncTracker:
             input_parameters,
             output_parameters
     ):
-        func = Function(name, mutability, visibility, input_parameters, output_parameters)
+        self._id += 1
+        func = Function(self._id, name, mutability, visibility, input_parameters, output_parameters)
         self._functions.append(func)
-        self._id = len(self._functions) - 1
 
     def find_functions_by_output(self, output_parameter: BaseType):
         functions = []
