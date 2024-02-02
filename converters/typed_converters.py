@@ -107,7 +107,7 @@ class TypedConverter:
         self._function_call_map = defaultdict(list)
         self._excluded_call_map = defaultdict(list)
         self._current_func = None
-        self.func_stack = []
+        self._root_func_id = None
         self.func_handled = []
         self.func_flag = True
 
@@ -153,7 +153,7 @@ class TypedConverter:
                 self.visit_func(_func_obj, function_def)
             else:
                 for func_id_internal in self._function_call_map[_func_id]:
-                    if func_id_internal in self.func_stack:
+                    if func_id_internal == self._root_func_id:
                         self._excluded_call_map[_func_id].append(func_id_internal)
                         self._function_call_map[_func_id].remove(func_id_internal)
                         __convert_func(_func_id, function_def)
@@ -163,7 +163,7 @@ class TypedConverter:
         self._var_tracker.reset_function_variables()
         for func_obj, func in zip(self._func_tracker, self.contract.functions):
             input_params, input_types, names = self._visit_input_parameters(func.input_params)
-            self.func_stack = [func_obj.id]
+            self._root_func_id = func_obj.id
             __convert_func(func_obj.id, func)
 
         for func_obj, names in zip(self._func_tracker, input_names):
@@ -596,7 +596,7 @@ class TypedConverter:
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
             func_num = statement.func_call.func_num % len(self._func_tracker)
-            if not self.func_flag or func_num not in self._excluded_call_map[self.func_stack[0]]:
+            if not self.func_flag or func_num not in self._excluded_call_map[self._root_func_id]:
                 return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
 
