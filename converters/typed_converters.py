@@ -139,12 +139,10 @@ class TypedConverter:
             output_types = self._visit_output_parameters(func.output_params)
             self._func_tracker.register_function(function_name, func.mut, func.vis, input_types, output_types)
 
-        self.func_flag = False
-
         for func_obj, func in zip(self._func_tracker, self.contract.functions):
             self.visit_func(func_obj, func)
 
-        self.func_flag = True
+        self.func_flag = False
 
         def __convert_func(_func_id, function_def):
             if len(self._function_call_map[_func_id]) == 0:
@@ -596,7 +594,7 @@ class TypedConverter:
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
             func_num = statement.func_call.func_num % len(self._func_tracker)
-            if not self.func_flag or func_num not in self._excluded_call_map[self._root_func_id]:
+            if self.func_flag or func_num not in self._excluded_call_map[self._root_func_id]:
                 return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
 
@@ -610,8 +608,7 @@ class TypedConverter:
         def __find_function(_func_num):
             if self._func_tracker[func_num].id == self._current_func.id:
                 _func_num = (_func_num + 1) % len(self._func_tracker)
-            # else:
-            if not self.func_flag:
+            if self.func_flag:
                 self._function_call_map[self._current_func.id].append(self._func_tracker[_func_num].id)
             return self._func_tracker[_func_num]
 
