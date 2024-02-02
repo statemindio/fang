@@ -293,7 +293,7 @@ class TypedConverter:
         result = f"{result} = {value}"
 
         self.type_stack.pop()
-        result = f"{self.TAB * self._block_level_count}{result}"
+        result = f"{self.code_offset}{result}"
         return result
 
     def __var_decl_global(self, variable):
@@ -498,9 +498,9 @@ class TypedConverter:
 
     def _visit_for_stmt(self, for_stmt):
         if for_stmt.HasField("variable"):
-            for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_variable(for_stmt.variable)
+            for_statement = self.code_offset + self._visit_for_stmt_variable(for_stmt.variable)
         else:
-            for_statement = self.TAB * self._block_level_count + self._visit_for_stmt_ranged(for_stmt.ranged)
+            for_statement = self.code_offset + self._visit_for_stmt_ranged(for_stmt.ranged)
 
         self._for_block_count += 1
         self._block_level_count += 1
@@ -515,12 +515,12 @@ class TypedConverter:
         return result
 
     def _visit_if_cases(self, expr):
-        result = f"{self.TAB * self._block_level_count}if"
+        result = f"{self.code_offset}if"
         if len(expr) == 0:
             result = f"{result} False:\n{self.TAB * (self._block_level_count + 1)}pass"
             return result
         for i, case in enumerate(expr):
-            prefix = "" if i == 0 else f"{self.TAB * self._block_level_count}elif"
+            prefix = "" if i == 0 else f"{self.code_offset}elif"
             self.type_stack.append(Bool())
             condition = self._visit_bool_expression(case.cond)
             self.type_stack.pop()
@@ -533,7 +533,7 @@ class TypedConverter:
         return result
 
     def _visit_else_case(self, expr):
-        result = f"{self.TAB * self._block_level_count}else:"
+        result = f"{self.code_offset}else:"
         self._block_level_count += 1
         else_block = self._visit_block(expr)
         self._var_tracker.remove_function_level(self._block_level_count, True)
@@ -555,14 +555,14 @@ class TypedConverter:
         self.type_stack.append(Address())
         to_parameter = self.visit_address_expression(selfd.to)
         self.type_stack.pop()
-        return f"{self.TAB * self._block_level_count}selfdestruct({to_parameter})"
+        return f"{self.code_offset}selfdestruct({to_parameter})"
 
     def _visit_raise_statement(self, expr):
         self.type_stack.append(String(100))
         error_value = self._visit_string_expression(expr.errval)
         self.type_stack.pop()
 
-        result = f"{self.TAB * self._block_level_count}raise"
+        result = f"{self.code_offset}raise"
         if len(error_value) > 2:
             result = f"{result} {error_value}"
         return result
@@ -575,7 +575,7 @@ class TypedConverter:
             result = self.__var_decl(assignment.expr, current_type)
             return result
         expression_result = self.visit_typed_expression(assignment.expr, current_type)
-        result = f"{self.TAB * self._block_level_count}{result} = {expression_result}"
+        result = f"{self.code_offset}{result} = {expression_result}"
         self.type_stack.pop()
         return result
 
@@ -625,9 +625,9 @@ class TypedConverter:
                 variable = random.choice(allowed_vars)
             else:
                 variable = __create_variable(t)
-                result = f"{result}{self.TAB * self._block_level_count}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
+                result = f"{result}{self.code_offset}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
-        result += f"{self.TAB * self._block_level_count}"
+        result += f"{self.code_offset}"
         if len(output_vars) > 0:
             result += f'{", ".join(output_vars)} = '
 
@@ -686,7 +686,7 @@ class TypedConverter:
             self.type_stack.pop()
             result += f"{expression_result},"
 
-        result = f"{self.TAB * self._block_level_count}{result[:-1]}"
+        result = f"{self.code_offset}{result[:-1]}"
 
         return result
 
@@ -925,13 +925,13 @@ class TypedConverter:
         return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
-        return f"{self.TAB * self._block_level_count}continue"
+        return f"{self.code_offset}continue"
 
     def _visit_break_statement(self):
-        return f"{self.TAB * self._block_level_count}break"
+        return f"{self.code_offset}break"
 
     def _visit_assert_stmt(self, assert_stmt):
-        result = f"{self.TAB * self._block_level_count}assert"
+        result = f"{self.code_offset}assert"
 
         self.type_stack.append(Bool())  # not sure
         condition = self._visit_bool_expression(assert_stmt.cond)
@@ -946,3 +946,7 @@ class TypedConverter:
             result = f"{result}, {value}"
 
         return result
+
+    @property
+    def code_offset(self):
+        return self.TAB * self._block_level_count
