@@ -201,22 +201,9 @@ class TypedConverter:
         list_size = 1
 
         self.type_stack.append(base_type)
-
-        """
-        # TODO: ugly
-        is_list = isinstance(base_type, FixedList)
-        if is_list:
-            value = handler(list.rexp, base_type)
-        else:
-        """ 
         value = handler(list.rexp)
 
         for i, expr in enumerate(list.exp):
-            """
-            if is_list:
-                expr_val = handler(expr, base_type)
-            else:
-            """
             expr_val = handler(expr)
 
             list_size += 1
@@ -225,7 +212,6 @@ class TypedConverter:
             if list_size == MAX_LIST_SIZE or \
                (isinstance(current_type, DynArray) and list_size == current_type.size):
                 break
-
         self.type_stack.pop()
 
         current_type.adjust_size(list_size)
@@ -294,6 +280,7 @@ class TypedConverter:
         var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
         result = var_name + " : "
 
+        # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == 0:
             result += current_type.vyper_type
             self._var_tracker.register_global_variable(var_name, current_type)
@@ -898,6 +885,7 @@ class TypedConverter:
 
     # is skipping bad?
     def _visit_append_stmt(self, stmt):
+        dyn_var = DynArray()
         pass
     
     def _visit_pop_stmt(self, stmt):

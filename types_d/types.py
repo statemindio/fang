@@ -171,9 +171,9 @@ class FixedList(BaseType):
         #return "FL" + self._base_type.name
     
 class DynArray(FixedList):
-    def __init__(self, size, base_type: BaseType):
+    def __init__(self, size, base_type: BaseType, cur_size = 0):
         self._base_type = base_type
-        self._size = 0
+        self._size = cur_size
         self._max_size = size
 
     def adjust_max_size(self, size):
