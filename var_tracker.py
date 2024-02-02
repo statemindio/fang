@@ -230,6 +230,7 @@ class VarTracker:
         # NOTE: uses max size for dynamic array -> compiles but likely wont run
         self._lists[key][base_type.vyper_type][level].append((name, var_type.size))
 
+    # TODO: dynArray must include .pop as list item
     def _get_list_items(self, level: int, var_type: BaseType, mutable: bool):
         """
         Returns list elements according to saved data upto `level`

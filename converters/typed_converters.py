@@ -885,8 +885,24 @@ class TypedConverter:
 
     # is skipping bad?
     def _visit_append_stmt(self, stmt):
-        dyn_var = DynArray()
-        pass
-    
+        # None type as key for all available dynamic arrays
+        current_type = DynArray(MAX_LIST_SIZE, None)
+
+        self.type_stack.append(current_type)
+        result = self._visit_var_ref(stmt.varRef, self._block_level_count, True)
+        if result is None:
+            return
+        # var_ref has to return type for TypedExpression
+
     def _visit_pop_stmt(self, stmt):
-        pass
+        current_type = DynArray(MAX_LIST_SIZE, None)
+        self.type_stack.append(current_type)
+
+        result = self._visit_var_ref(stmt.varRef, self._block_level_count, True)
+        if result is None:
+            return
+        self.type_stack.pop()
+
+        result = f"{self.TAB * self._block_level_count}{result}.pop()"
+
+        return result
