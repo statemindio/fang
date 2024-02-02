@@ -7,6 +7,7 @@ from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedLis
 from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
+from vyperProtoNew_pb2 import Func
 
 PURE = 0
 VIEW = 1
@@ -151,7 +152,8 @@ class TypedConverter:
                 self.visit_func(_func_obj, function_def)
             else:
                 for func_id_internal in self._function_call_map[_func_id]:
-                    if func_id_internal == self._root_func_id:
+                    if (func_id_internal == self._root_func_id or
+                            self._func_tracker[func_id_internal].visibility == Func.Visibility.EXTERNAL):
                         self._excluded_call_map[_func_id].append(func_id_internal)
                         self._function_call_map[_func_id].remove(func_id_internal)
                         __convert_func(_func_id, function_def)

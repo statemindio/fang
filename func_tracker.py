@@ -33,9 +33,7 @@ class Function:
 
     @property
     def name(self) -> str:
-        if Func.Visibility.EXTERNAL == self.visibility:
-            return f"self.{self._name}"
-        return self._name
+        return f"self.{self._name}"
 
     def render_call(self, input_parameters: Sequence[str]):
         return f"{self.name}({', '.join(input_parameters)})"

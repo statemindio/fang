@@ -2,7 +2,7 @@ x_INT_0 : uint8
 x_BYTES_0 : Bytes[382]
 x_BYTES_1 : Bytes[382]
 
-@external
+@internal
 @nonpayable
 def func_0(x_INT_1: uint8) -> (uint8, decimal):
     self.x_INT_0 = 0

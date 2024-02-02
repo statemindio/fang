@@ -16,6 +16,7 @@
   ],
   "functions": [
     {
+      "vis": "INTERNAL",
       "inputParams": [
         {
           "i": {}

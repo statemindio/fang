@@ -8,7 +8,7 @@ def func_0(x_INT_1: uint8):
     self.func_1(0)
 
 
-@external
+@internal
 @nonpayable
 def func_1(x_INT_2: uint8):
     self.x_INT_0 = 0
