@@ -396,7 +396,8 @@ full_cases = [
     "list_element_assignment",
     "dynamic_array_constant_assignment",
    # "dynamic_array_element_assignment",
-    "dynamic_array_assignment"
+    "dynamic_array_assignment",
+    "dynamic_array_statements"
 ]
 
 

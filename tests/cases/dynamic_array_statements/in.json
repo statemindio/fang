@@ -1,0 +1,35 @@
+{
+  "decls": [
+    {
+      "dyn": {
+        "list": {
+          "n":1
+        },
+        "n": 3
+      }
+    }
+  ],
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "append_stmt": {
+              "varRef": {},
+              "expr": {
+                "lintDyn": {
+                  "rexp": {}
+                }
+              }
+            }
+          },
+          {
+            "pop_stmt": {
+              "varRef" : {}
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

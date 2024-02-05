@@ -21,7 +21,7 @@ class Bytes(BaseType):
         return isinstance(other, self.__class__) and self._m == other.m
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.vyper_type)
 
     @property
     def m(self):
@@ -64,7 +64,7 @@ class Int(BaseType):
         return isinstance(other, Int) and self._n == other.n and self._signed == other.signed
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.vyper_type)
 
     @property
     def n(self):

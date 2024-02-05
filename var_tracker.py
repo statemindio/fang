@@ -141,6 +141,25 @@ class VarTracker:
 
         return allowed_vars
 
+    # can use set as container?
+    def get_dyn_array_base_type(self, name, level: int, mutable: bool):
+        key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
+
+        if name[:5] == "self.":
+            name = name[5:]
+            for t in self._dyns[self.GLOBAL_KEY]:
+                for s in self._dyns[self.GLOBAL_KEY][t]:
+                    if name in self._dyns[self.GLOBAL_KEY][t][s]:
+                        return t
+
+        for t in self._dyns[key]:
+            for l in self._dyns[key][t]:
+                if l > level:
+                    continue
+                for s in self._dyns[key][t][l]:
+                    if name in self._dyns[key][t][l][s]:
+                        return t
+
     def next_id(self, var_type) -> int:
         """
 

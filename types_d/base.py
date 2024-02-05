@@ -6,7 +6,7 @@ class BaseType:
         return self.vyper_type
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.vyper_type)
 
     @property
     def vyper_type(self):

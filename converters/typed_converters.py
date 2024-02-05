@@ -574,10 +574,14 @@ class TypedConverter:
             return self._visit_if_stmt(statement.if_stmt)
         if statement.HasField("assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
-        #if statement.HasField("append_stmt"):
-        #    return self._visit_append_stmt(statement.append_stmt)
-        #if statement.HasField("pop_stmt"):
-        #    return self._visit_pop_stmt(statement.pop_stmt)
+        if statement.HasField("append_stmt"):
+            append_st = self._visit_append_stmt(statement.append_stmt)
+            if append_st is not None:
+                return append_st
+        if statement.HasField("pop_stmt"):
+            pop_st = self._visit_pop_stmt(statement.pop_stmt)
+            if pop_st is not None:
+                return pop_st
         return self._visit_assignment(statement.assignment)
 
     def _visit_block(self, block):
@@ -889,10 +893,18 @@ class TypedConverter:
         current_type = DynArray(MAX_LIST_SIZE, None)
 
         self.type_stack.append(current_type)
-        result = self._visit_var_ref(stmt.varRef, self._block_level_count, True)
-        if result is None:
+        variable_name = self._visit_var_ref(stmt.varRef, self._block_level_count, True)
+        self.type_stack.pop()
+
+        if variable_name is None:
             return
-        # var_ref has to return type for TypedExpression
+
+        variable_type = self._var_tracker.get_dyn_array_base_type(variable_name, self._block_level_count, True)
+        self.type_stack.append(variable_type)
+        expression_result = self.visit_typed_expression(stmt.expr, variable_type)
+        self.type_stack.pop()
+
+        return f"{self.TAB * self._block_level_count}{variable_name}.append({expression_result})"
 
     def _visit_pop_stmt(self, stmt):
         current_type = DynArray(MAX_LIST_SIZE, None)
