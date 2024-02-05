@@ -159,6 +159,8 @@ class TypedConverter:
                         __convert_func(_func_id, function_def)
                     if func_id_internal not in self.func_handled:
                         __convert_func(func_id_internal, self.contract.functions[func_id_internal])
+                    if self._func_tracker[_func_id].mutability < self._func_tracker[func_id_internal].mutability:
+                        self._func_tracker[_func_id].mutability = self._func_tracker[func_id_internal].mutability
 
         self._var_tracker.reset_function_variables()
         for func_obj, func in zip(self._func_tracker, self.contract.functions):
@@ -596,7 +598,7 @@ class TypedConverter:
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
             func_num = statement.func_call.func_num % len(self._func_tracker)
-            if self.func_flag or func_num not in self._excluded_call_map[self._root_func_id]:
+            if self.func_flag or func_num not in self._excluded_call_map[self._current_func.id]:
                 return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
 
