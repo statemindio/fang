@@ -6,9 +6,6 @@ from vyper.utils import checksum_encode
 
 from utils import fill_address
 
-# fix seed for testing
-
-random.seed(1337)
 
 class BytesRandomGen:
     def generate(self, m):
