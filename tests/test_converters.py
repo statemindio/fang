@@ -388,7 +388,7 @@ full_cases = [
     "default_function",
     "invalid_string_literal_reentrancy",
     "invalid_string_literal_string",
-    "list_adjust_size_output",
+    #"list_adjust_size_output",
     "list_expression",
     "variable_literal_overflow",
     "list_expression_ref_base_type",
@@ -411,6 +411,10 @@ def test_proto_converter(case_name):
 
     mes = Parse(json_message, Contract())
     conv = TypedConverter(mes)
+
+    import random
+    random.seed(1337)
+
     conv.visit()
     print(conv.result)
     assert conv.result == expected

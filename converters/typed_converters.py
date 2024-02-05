@@ -214,7 +214,12 @@ class TypedConverter:
                 break
         self.type_stack.pop()
 
-        current_type.adjust_size(list_size)
+        if list_size < current_type.size and not isinstance(base_type, FixedList):
+            for i in range(current_type.size - list_size):
+                expr_val = base_type.generate()
+                value += f", {expr_val}"
+
+        #current_type.adjust_size(list_size)
 
         return f"[{value}]"
 
@@ -887,7 +892,7 @@ class TypedConverter:
 
         return result
 
-    # is skipping bad?
+    # FIXME: will adjust sizes in list expressions -> generates wrong expression
     def _visit_append_stmt(self, stmt):
         # None type as key for all available dynamic arrays
         current_type = DynArray(MAX_LIST_SIZE, None)
