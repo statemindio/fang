@@ -167,8 +167,8 @@ class FixedList(BaseType):
 
     @property
     def name(self):
-        return self.__class__.__name__.upper() + self._base_type.name
-        #return "FL" + self._base_type.name
+        #return self.__class__.__name__.upper() + self._base_type.name
+        return "FL_" + self._base_type.name
     
 class DynArray(FixedList):
     def __init__(self, size, base_type: BaseType, cur_size = 0):
@@ -190,4 +190,4 @@ class DynArray(FixedList):
     @property
     def name(self):
         #return self.__class__.__name__.upper() + self._base_type.name
-        return "DA" + self._base_type.name
+        return "DA_" + self._base_type.name

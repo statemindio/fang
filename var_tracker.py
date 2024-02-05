@@ -246,7 +246,7 @@ class VarTracker:
             }
         if level not in self._lists[key][base_type.vyper_type]:
             self._lists[key][base_type.vyper_type][level] = []
-        # NOTE: uses max size for dynamic array -> compiles but likely wont run
+
         self._lists[key][base_type.vyper_type][level].append((name, var_type.size))
 
     # TODO: dynArray must include .pop as list item
