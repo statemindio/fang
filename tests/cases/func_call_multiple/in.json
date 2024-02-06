@@ -1,0 +1,69 @@
+{
+  "decls": [
+    {
+      "mut": "IMMUTABLE",
+      "d": {}
+    },
+    {
+      "i": {}
+    },
+    {
+      "barr": {
+        "max_len": 382
+      }
+    },
+    {
+      "barr": {
+        "max_len": 382
+      }
+    }
+  ],
+  "functions": [
+    {
+      "vis": "INTERNAL",
+      "inputParams": [
+        {
+          "i": {}
+        }
+      ],
+      "outputParams": [
+        {
+          "i": {}
+        },
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+          }
+        ]
+      }
+    },
+    {
+      "inputParams": [
+        {
+          "i": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "func_call": {
+              "func_num": 0,
+              "params": {
+                "one": {},
+                "two": {
+                  "intExp": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

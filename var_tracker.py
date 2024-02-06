@@ -1,3 +1,5 @@
+import copy
+
 from types_d.base import BaseType
 from types_d.types import FixedList, DynArray
 
@@ -12,6 +14,7 @@ class VarTracker:
     def __init__(self):
         self._var_id = -1
         self._var_id_map = {}
+        self._global_var_id_map = {}
         self._vars = {
             self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {},
@@ -229,6 +232,7 @@ class VarTracker:
         self._vars[self.GLOBAL_KEY][var_type.vyper_type].append(name)
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
+        self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
     def _register_list_items(self, name, level, var_type: FixedList, key):
         """
@@ -321,6 +325,16 @@ class VarTracker:
 
         self._remove_function_dyn_array_level(level, key)
         self._remove_list_items(level, key)
+
+    def reset_function_variables(self):
+        self._vars[self.FUNCTION_KEY] = {}
+        for vyper_type, level_vars in self._vars[self.READONLY_KEY].items():
+            for level, variables in level_vars.items():
+                if level == 0:
+                    continue
+                self._vars[self.READONLY_KEY][vyper_type][level] = []
+        # self._vars[self.READONLY_KEY] = {}
+        self._var_id_map = copy.copy(self._global_var_id_map)
 
     def get_readonly_variables(self, level: int, var_type: BaseType):
         """
