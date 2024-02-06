@@ -641,8 +641,6 @@ class TypedConverter:
             self.type_stack.pop()
 
         result = f"{result}{func_obj.render_call(input_values)}"
-        if self._mutability_level < func_obj.mutability:
-            self._mutability_level = func_obj.mutability
 
         return result
 
