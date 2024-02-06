@@ -989,7 +989,7 @@ class TypedConverter:
         expression_result = self.visit_typed_expression(stmt.expr, variable_type)
         self.type_stack.pop()
 
-        return f"{self.TAB * self._block_level_count}{variable_name}.append({expression_result})"
+        return f"{self.code_offset}{variable_name}.append({expression_result})"
 
     def _visit_pop_stmt(self, stmt):
         current_type = DynArray(MAX_LIST_SIZE, None)
@@ -1000,7 +1000,7 @@ class TypedConverter:
             return
         self.type_stack.pop()
 
-        result = f"{self.TAB * self._block_level_count}{result}.pop()"
+        result = f"{self.code_offset}{result}.pop()"
 
         return result
 
