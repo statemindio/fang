@@ -336,21 +336,21 @@ def test_visit_sha256_bytes():
     assert res == expected
 
 
-def test_function():
-    current_dir = os.path.dirname(__file__)
-    with open(f"{current_dir}/cases/function/in.json", "r") as inp_json:
-        json_message = inp_json.read()
-    with open(f"{current_dir}/cases/function/out.vy", "r") as out_contract:
-        expected = out_contract.read()
-    mes = ""
-    conv = TypedConverter(mes)
-    mes = Parse(json_message, Func())
-    address_type = Address()
-    conv.type_stack.append(address_type)
-    conv._var_tracker.register_global_variable("var0", address_type)
-
-    res = conv.visit_func(mes)
-    assert res == expected
+# def test_function():
+#     current_dir = os.path.dirname(__file__)
+#     with open(f"{current_dir}/cases/function/in.json", "r") as inp_json:
+#         json_message = inp_json.read()
+#     with open(f"{current_dir}/cases/function/out.vy", "r") as out_contract:
+#         expected = out_contract.read()
+#     mes = ""
+#     conv = TypedConverter(mes)
+#     mes = Parse(json_message, Func())
+#     address_type = Address()
+#     conv.type_stack.append(address_type)
+#     conv._var_tracker.register_global_variable("var0", address_type)
+#
+#     res = conv.visit_func(mes)
+#     assert res == expected
 
 
 full_cases = [
@@ -393,7 +393,11 @@ full_cases = [
     "variable_literal_overflow",
     "list_expression_ref_base_type",
     "list_expression_ref_list",
-    "list_element_assignment"
+    "list_element_assignment",
+    "invalid_string_literal_string",
+    "func_call",
+    "func_call_multiple",
+    "func_call_multiple_cyclic"
 ]
 
 

@@ -1,0 +1,20 @@
+{
+  "functions": [
+    {
+      "inputParams": [
+        {
+          "i": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "func_call": {
+              "func_num": 3
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
