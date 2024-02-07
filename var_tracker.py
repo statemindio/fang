@@ -68,6 +68,8 @@ class VarTracker:
         self._vars[key][var_type.vyper_type][level].append(name)
         self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
+        if not mutable and level == 0:
+            self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
         if isinstance(var_type, FixedList):
             self._register_list_items(name, level, var_type, mutable)
