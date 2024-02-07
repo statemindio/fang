@@ -133,16 +133,15 @@ class TypedConverter:
             self.result += "\n"
 
         input_names = []
-        for i, func in enumerate(self.contract.functions):
-            if i >= MAX_FUNCTIONS:
-                break
-            function_name = self._generate_function_name()
+
+        func_conv = FunctionConverter(self._func_tracker, self._params_converter)
+        func_conv.setup_order(self.contract.functions)
+        self._function_call_map = func_conv._call_tree
+
+        self._var_tracker.reset_function_variables()
+        for func_obj, func in zip(self._func_tracker, self.contract.functions):
             input_params, input_types, names = self._visit_input_parameters(func.input_params)
             input_names.append(names)
-            output_types = self._visit_output_parameters(func.output_params)
-            self._func_tracker.register_function(function_name, func.mut, func.vis, input_types, output_types)
-
-        for func_obj, func in zip(self._func_tracker, self.contract.functions):
             self.visit_func(func_obj, func)
 
         self.func_flag = False
@@ -573,7 +572,7 @@ class TypedConverter:
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
             func_num = statement.func_call.func_num % len(self._func_tracker)
-            if self.func_flag or func_num not in self._excluded_call_map[self._current_func.id]:
+            if func_num not in self._excluded_call_map[self._current_func.id]:
                 return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
 
@@ -587,8 +586,6 @@ class TypedConverter:
         def __find_function(_func_num):
             if self._func_tracker[func_num].id == self._current_func.id:
                 _func_num = (_func_num + 1) % len(self._func_tracker)
-            if self.func_flag:
-                self._function_call_map[self._current_func.id].append(self._func_tracker[_func_num].id)
             return self._func_tracker[_func_num]
 
         func_num = func_call.func_num % len(self._func_tracker)
