@@ -8,6 +8,7 @@ from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
 from vyperProtoNew_pb2 import Func
+from .function_converter import FunctionConverter, ParametersConverter
 
 PURE = 0
 VIEW = 1
@@ -111,6 +112,7 @@ class TypedConverter:
         self._root_func_id = None
         self.func_handled = []
         self.func_flag = True
+        self._params_converter = ParametersConverter(self._var_tracker, self.visit_type)
 
     def visit(self):
         """
@@ -334,37 +336,10 @@ class TypedConverter:
         return self.__var_decl(variable.expr, current_type)
 
     def _visit_input_parameters(self, input_params):
-        result = ""
-        input_types = []
-        names = []
-        for i, input_param in enumerate(input_params):
-            param_type = self.visit_type(input_param)
-            input_types.append(param_type)
-            idx = self._var_tracker.next_id(param_type)
-            name = f"x_{param_type.name}_{idx}"
-            names.append(name)
-
-            # self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
-            self._var_tracker.register_function_variable(name, 1, param_type, False)
-
-            if i > 0:
-                result = f"{result}, "
-            result = f"{result}{name}: {param_type.vyper_type}"
-
-            if i + 1 == MAX_FUNCTION_INPUT:
-                break
-
-        return result, input_types, names
+        return self._params_converter.visit_input_parameters(input_params)
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
-        output_types = []
-        for i, output_param in enumerate(output_params):
-            param_type = self.visit_type(output_param)
-            output_types.append(param_type)
-
-            if i + 1 == MAX_FUNCTION_OUTPUT:
-                break
-        return output_types
+        return self._params_converter.visit_output_parameters(output_params)
 
     def _generate_function_name(self):
         _id = self._func_tracker.next_id
