@@ -57,8 +57,7 @@ class FunctionConverter:
         if len(fields) == 0:
             return
         for field in fields:
-            # TODO: this test can be replaced with checking `field[0].label == field[0].LABEL_REPEATED`
-            if isinstance(field[1], RepeatedCompositeContainer):
+            if field[0].label == field[0].LABEL_REPEATED:
                 for f in field[1]:
                     self._find_func_call(i, f)
                 continue
