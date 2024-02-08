@@ -21,7 +21,7 @@ class Bytes(BaseType):
         return isinstance(other, self.__class__) and self._m == other.m
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.vyper_type)
 
     @property
     def m(self):
@@ -64,7 +64,7 @@ class Int(BaseType):
         return isinstance(other, Int) and self._n == other.n and self._signed == other.signed
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.vyper_type)
 
     @property
     def n(self):
@@ -167,4 +167,27 @@ class FixedList(BaseType):
 
     @property
     def name(self):
-        return self.__class__.__name__.upper() + self._base_type.name
+        #return self.__class__.__name__.upper() + self._base_type.name
+        return "FL_" + self._base_type.name
+    
+class DynArray(FixedList):
+    def __init__(self, size, base_type: BaseType, cur_size = 0):
+        self._base_type = base_type
+        self._size = cur_size
+        self._max_size = size
+
+    def adjust_max_size(self, size):
+        self._max_size = size
+
+    @property
+    def max_size(self):
+        return self._max_size
+
+    @property
+    def vyper_type(self):
+        return f"DynArray[{self._base_type.vyper_type},{self._max_size}]"
+
+    @property
+    def name(self):
+        #return self.__class__.__name__.upper() + self._base_type.name
+        return "DA_" + self._base_type.name

@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT, MAX_LIST_SIZE
 from func_tracker import FuncTracker
-from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList
+from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
@@ -59,6 +59,13 @@ def get_bin_op(op, op_set):
     return op_set[op]
 
 
+def _has_field(instance, field):
+    try:
+        return instance.HasField(field)
+    except ValueError:
+        return False
+
+
 class TypedConverter:
     """
     The Converter class to convert Protobuf messages `Contract` into Vyper source code
@@ -91,11 +98,23 @@ class TypedConverter:
             "DECIMAL": (self._visit_decimal_expression, "decExpression"),
             "STRING": (self._visit_string_expression, "strExp"),
             "ADDRESS": (self.visit_address_expression, "addrExp"),
-            "FIXEDLISTINT": (self._visit_list_expression, "intList"),
-            "FIXEDLISTBYTESM": (self._visit_list_expression, "bmList"),
-            "FIXEDLISTBOOL": (self._visit_list_expression, "boolList"),
-            "FIXEDLISTDECIMAL": (self._visit_list_expression, "decList"),
-            "FIXEDLISTADDRESS": (self._visit_list_expression, "addrList")
+            "FL_INT": (self._visit_list_expression, "intList"),
+            "FL_BYTESM": (self._visit_list_expression, "bmList"),
+            "FL_BOOL": (self._visit_list_expression, "boolList"),
+            "FL_DECIMAL": (self._visit_list_expression, "decList"),
+            "FL_ADDRESS": (self._visit_list_expression, "addrList"),
+            "DA_INT": (self._visit_list_expression, "intDyn"),
+            "DA_BYTESM": (self._visit_list_expression, "bmDyn"),
+            "DA_BOOL": (self._visit_list_expression, "boolDyn"),
+            "DA_DECIMAL": (self._visit_list_expression, "decDyn"),
+            "DA_ADDRESS": (self._visit_list_expression, "addrDyn"),
+            "DA_BYTES": (self._visit_list_expression, "bytesDyn"),
+            "DA_STRING": (self._visit_list_expression, "strDyn"),
+            "DA_FL_INT": (self._visit_list_expression, "lintDyn"),
+            "DA_FL_BYTESM": (self._visit_list_expression, "lbmDyn"),
+            "DA_FL_BOOL": (self._visit_list_expression, "lboolByn"),
+            "DA_FL_DECIMAL": (self._visit_list_expression, "ldecDyn"),
+            "DA_FL_ADDRESS": (self._visit_list_expression, "ladrDyn"),
         }
         self.result = ""
         self._var_tracker = VarTracker()
@@ -184,21 +203,26 @@ class TypedConverter:
         elif instance.HasField("bM"):
             m = instance.bM.m % 32 + 1
             current_type = BytesM(m)
-        elif instance.HasField("s"):
+        elif _has_field(instance, "s"):
             max_len = 1 if instance.s.max_len == 0 else instance.s.max_len
             current_type = String(max_len)
         elif instance.HasField("adr"):
             current_type = Address()
-        elif instance.HasField("barr"):
+        elif _has_field(instance, "barr"):
             max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
             current_type = Bytes(max_len)
-        elif instance.HasField("list"):
-            # TODO: compiler struggles with large inputs(?), perhaps should limit max
+        elif _has_field(instance, "list"):
+            # TODO: handle size in class?
             list_len = 1 if instance.list.n == 0 else instance.list.n
             list_len = list_len if instance.list.n < MAX_LIST_SIZE else MAX_LIST_SIZE
 
-            current_type = self.visit_list_type(instance.list)
+            current_type = self.visit_type(instance.list)
             current_type = FixedList(list_len, current_type)
+        elif _has_field(instance, "dyn"):
+            list_len = 1 if instance.dyn.n == 0 else instance.dyn.n
+            list_len = list_len if instance.dyn.n < MAX_LIST_SIZE else MAX_LIST_SIZE
+            current_type = self.visit_type(instance.dyn)
+            current_type = DynArray(list_len, current_type)
         else:
             n = instance.i.n % 256 + 1
             n = get_nearest_multiple(n, 8)
@@ -206,31 +230,14 @@ class TypedConverter:
 
         return current_type
 
-    # TODO: perhaps can be refactored to regular visit_type
-    def visit_list_type(self, instance):
-        if instance.HasField("b"):
-            current_type = Bool()
-        elif instance.HasField("d"):
-            current_type = Decimal()
-        elif instance.HasField("bM"):
-            m = instance.bM.m % 32 + 1
-            current_type = BytesM(m)
-        elif instance.HasField("adr"):
-            current_type = Address()
-        else:
-            n = instance.i.n % 256 + 1
-            n = get_nearest_multiple(n, 8)
-            current_type = Int(n, instance.i.sign)
-
-        return current_type
-
-    def _visit_list_expression(self, list, current_type):
+    def _visit_list_expression(self, list):
 
         if list.HasField("varRef"):
             result = self._visit_var_ref(list.varRef, self._block_level_count)
             if result is not None:
                 return result
 
+        current_type = current_type = self.type_stack[len(self.type_stack) - 1]
         base_type = current_type.base_type
 
         handler, _ = self._expression_handlers[base_type.name]
@@ -240,13 +247,22 @@ class TypedConverter:
         value = handler(list.rexp)
 
         for i, expr in enumerate(list.exp):
+            expr_val = handler(expr)
+
             list_size += 1
-            value += f", {handler(expr)}"
-            if list_size == MAX_LIST_SIZE:
+            value += f", {expr_val}"
+            # TODO: move size handling to type class
+            if list_size == MAX_LIST_SIZE or \
+                    (isinstance(current_type, DynArray) and list_size == current_type.size):
                 break
         self.type_stack.pop()
 
-        current_type.adjust_size(list_size)
+        if list_size < current_type.size and not isinstance(base_type, FixedList):
+            for i in range(current_type.size - list_size):
+                expr_val = base_type.generate()
+                value += f", {expr_val}"
+
+        # current_type.adjust_size(list_size)
 
         return f"[{value}]"
 
@@ -277,8 +293,8 @@ class TypedConverter:
     def visit_typed_expression(self, expr, current_type):
         handler, attr = self._expression_handlers[current_type.name]
         # let handler adjust list size
-        if isinstance(current_type, FixedList):
-            return handler(getattr(expr, attr), current_type)
+        # if isinstance(current_type, FixedList):
+        #    return handler(getattr(expr, attr), current_type)
         return handler(getattr(expr, attr))
 
     def __var_decl(self, expr, current_type):
@@ -312,6 +328,7 @@ class TypedConverter:
         var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
         result = var_name + " : "
 
+        # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == 0:
             result += current_type.vyper_type
             self._var_tracker.register_global_variable(var_name, current_type)
@@ -600,6 +617,14 @@ class TypedConverter:
             func_num = statement.func_call.func_num % len(self._func_tracker)
             if self.func_flag or func_num not in self._excluded_call_map[self._current_func.id]:
                 return self._visit_func_call(statement.func_call)
+        if statement.HasField("append_stmt"):
+            append_st = self._visit_append_stmt(statement.append_stmt)
+            if append_st is not None:
+                return append_st
+        if statement.HasField("pop_stmt"):
+            pop_st = self._visit_pop_stmt(statement.pop_stmt)
+            if pop_st is not None:
+                return pop_st
         return self._visit_assignment(statement.assignment)
 
     def _visit_func_call(self, func_call):
@@ -944,6 +969,38 @@ class TypedConverter:
 
         if len(value) > 2:
             result = f"{result}, {value}"
+
+        return result
+
+    # FIXME: will adjust sizes in list expressions -> generates wrong expression
+    def _visit_append_stmt(self, stmt):
+        # None type as key for all available dynamic arrays
+        current_type = DynArray(MAX_LIST_SIZE, None)
+
+        self.type_stack.append(current_type)
+        variable_name = self._visit_var_ref(stmt.varRef, self._block_level_count, True)
+        self.type_stack.pop()
+
+        if variable_name is None:
+            return
+
+        variable_type = self._var_tracker.get_dyn_array_base_type(variable_name, self._block_level_count, True)
+        self.type_stack.append(variable_type)
+        expression_result = self.visit_typed_expression(stmt.expr, variable_type)
+        self.type_stack.pop()
+
+        return f"{self.code_offset}{variable_name}.append({expression_result})"
+
+    def _visit_pop_stmt(self, stmt):
+        current_type = DynArray(MAX_LIST_SIZE, None)
+        self.type_stack.append(current_type)
+
+        result = self._visit_var_ref(stmt.varRef, self._block_level_count, True)
+        if result is None:
+            return
+        self.type_stack.pop()
+
+        result = f"{self.code_offset}{result}.pop()"
 
         return result
 

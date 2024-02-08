@@ -1,0 +1,43 @@
+{
+  "decls": [
+    {
+      "dyn": {
+        "list":{
+          "adr": {},
+          "n": 2
+        }
+      }
+    }
+  ],
+  "functions": [
+    {
+      "inputParams": [
+        {
+          "list":{
+            "adr": {},
+            "n": 2
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "ref_id": {
+                  "list":{
+                    "adr": {},
+                    "n": 2
+                  }
+              },
+              "expr": {
+                "addrList": {
+                  "varRef": {}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -32,6 +32,7 @@ message VarRef {
     Address adr = 6;
     ByteArray barr = 7;
     FixedList list = 9;
+    DynArray dyn = 10;
   }
   Int i = 1;
   uint32 varnum = 8;
@@ -203,6 +204,18 @@ message TypedExpression {
   FixedListBytesM bmList = 11;
   FixedListInt intList = 12;
   FixedListDecimal decList = 13;
+  DynArrayAddress addrDyn = 14;
+  DynArrayBool boolDyn = 15;
+  DynArrayBytesM bmDyn = 16; 
+  DynArrayInt intDyn = 17;
+  DynArrayDecimal decDyn = 18;
+  DynArrayString strDyn = 19;
+  DynArrayByteArray bytesDyn = 20;
+  DynArrayListAddress ladrDyn = 21;
+  DynArrayListDecimal ldecDyn = 22;
+  DynArrayListBool lboolByn = 23;
+  DynArrayListBytesM lbmDyn = 24;
+  DynArrayListInt lintDyn = 25;
 }
 
 
@@ -248,6 +261,101 @@ message FixedListDecimal{
   repeated DecimalExpression exp = 2;
 }
 
+message DynArrayAddress{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  AddressExpression rexp = 1;
+  repeated AddressExpression exp = 2;
+}
+
+message DynArrayBool{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BoolExpression rexp = 1;
+  repeated BoolExpression exp = 2;
+}
+
+message DynArrayBytesM{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BytesMExpression rexp = 1;
+  repeated BytesMExpression exp = 2;
+}
+
+message DynArrayInt{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  IntExpression rexp = 1;
+  repeated IntExpression exp = 2;
+}
+
+message DynArrayDecimal{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  DecimalExpression rexp = 1;
+  repeated DecimalExpression exp = 2;
+}
+
+message DynArrayString{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  StringExpression rexp = 1;
+  repeated StringExpression exp = 2;
+}
+
+message DynArrayByteArray{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BytesExpression rexp = 1;
+  repeated BytesExpression exp = 2;
+}
+
+message DynArrayListAddress{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListAddress rexp = 1;
+  repeated FixedListAddress exp = 2;
+}
+
+message DynArrayListDecimal{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListDecimal rexp = 1;
+  repeated FixedListDecimal exp = 2;
+}
+
+message DynArrayListBool{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListBool rexp = 1;
+  repeated FixedListBool exp = 2;
+}
+
+message DynArrayListBytesM{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListBytesM rexp = 1;
+  repeated FixedListBytesM exp = 2;
+}
+
+message DynArrayListInt{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListInt rexp = 1;
+  repeated FixedListInt exp = 2;
+}
 
 message Literal {
   bool boolval = 2;
@@ -361,6 +469,7 @@ message VarDecl {
     Address adr = 6;
     ByteArray barr = 7;
     FixedList list = 10;
+    DynArray dyn = 11;
   }
   Int i = 1;
   TypedExpression expr = 8;
@@ -387,6 +496,8 @@ message Statement {
     ContinueStatement cont_stmt = 8;
     BreakStatement break_stmt = 9;
     AssertStatement assert_stmt = 10;
+    AppendArray append_stmt = 11;
+    PopArray pop_stmt = 12;
   }
   AssignmentStatement assignment = 2;
 }
@@ -411,6 +522,21 @@ message FixedList{
   uint32 n = 6;
 }
 
+// ENUM aswell
+message DynArray{
+  oneof type {
+    Bool b = 2;
+    Decimal d = 3;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+    FixedList list = 9;
+  }
+  Int i = 1;
+  uint32 n = 10;
+}
+
 message FuncParam {
   oneof type {
     Bool b = 2;
@@ -420,6 +546,7 @@ message FuncParam {
     Address adr = 6;
     ByteArray barr = 7;
     FixedList list = 8;
+    DynArray dyn = 9;
   }
   Int i = 1;
 }
@@ -541,4 +668,13 @@ message ContinueStatement {}
 message AssertStatement {
   BoolExpression cond = 1;
   StringExpression reason = 2;
+}
+
+message AppendArray {
+  VarRef varRef = 1;
+  TypedExpression expr = 2;
+}
+
+message PopArray {
+  VarRef varRef = 1;
 }
