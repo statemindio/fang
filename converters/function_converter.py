@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-from google._upb._message import RepeatedCompositeContainer
-
 from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 
 
