@@ -60,7 +60,9 @@ class FunctionConverter:
                     self._find_func_call(i, f)
                 continue
             if field[0].name == "func_call":
-                self._call_tree[i].append(statement.func_call.func_num % self._func_amount)
+                func_index = statement.func_call.func_num % self._func_amount
+                if func_index not in self._call_tree[i]:
+                    self._call_tree[i].append(func_index)
             else:
                 self._find_func_call(i, field[1])
 
