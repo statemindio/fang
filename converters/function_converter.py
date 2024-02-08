@@ -2,6 +2,7 @@ import copy
 from collections import defaultdict
 
 from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
+from vyperProtoNew_pb2 import Func
 
 
 class ParametersConverter:
@@ -63,7 +64,8 @@ class FunctionConverter:
                 continue
             if field[0].name == "func_call":
                 func_index = statement.func_call.func_num % self._func_amount
-                if func_index not in self._call_tree[i]:
+                if (func_index not in self._call_tree[i] or
+                        self._func_tracker[func_index].visibility == Func.Visibility.EXTERNAL):
                     self._call_tree[i].append(func_index)
             else:
                 self._find_func_call(i, field[1])

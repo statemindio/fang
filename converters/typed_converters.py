@@ -151,15 +151,12 @@ class TypedConverter:
                 self.func_handled.append(_func_id)
                 _func_obj = self._func_tracker[_func_id]
                 self.visit_func(_func_obj, function_def)
-            else:
-                for func_id_internal in self._function_call_map[_func_id]:
-                    if self._func_tracker[func_id_internal].visibility == Func.Visibility.EXTERNAL:
-                        self._function_call_map[_func_id].remove(func_id_internal)
-                        __convert_func(_func_id, function_def)
-                    if func_id_internal not in self.func_handled:
-                        __convert_func(func_id_internal, self.contract.functions[func_id_internal])
-                    if self._func_tracker[_func_id].mutability < self._func_tracker[func_id_internal].mutability:
-                        self._func_tracker[_func_id].mutability = self._func_tracker[func_id_internal].mutability
+                return
+            for func_id_internal in self._function_call_map[_func_id]:
+                if func_id_internal not in self.func_handled:
+                    __convert_func(func_id_internal, self.contract.functions[func_id_internal])
+                if self._func_tracker[_func_id].mutability < self._func_tracker[func_id_internal].mutability:
+                    self._func_tracker[_func_id].mutability = self._func_tracker[func_id_internal].mutability
 
         self._var_tracker.reset_function_variables()
         for func_obj, func in zip(self._func_tracker, self.contract.functions):
