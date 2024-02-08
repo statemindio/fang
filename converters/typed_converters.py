@@ -147,11 +147,6 @@ class TypedConverter:
         self.func_flag = False
 
         def __convert_func(_func_id, function_def):
-            if len(self._function_call_map[_func_id]) == 0:
-                self.func_handled.append(_func_id)
-                _func_obj = self._func_tracker[_func_id]
-                self.visit_func(_func_obj, function_def)
-                return
             for func_id_internal in self._function_call_map[_func_id]:
                 if func_id_internal not in self.func_handled:
                     __convert_func(func_id_internal, self.contract.functions[func_id_internal])
