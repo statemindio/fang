@@ -1,3 +1,4 @@
+import copy
 from collections import defaultdict
 
 from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
@@ -44,6 +45,7 @@ class ParametersConverter:
 class FunctionConverter:
     def __init__(self, func_tracker, params_converter):
         self._call_tree = defaultdict(list)
+        self._sanitized_tree = defaultdict(list)
         self._func_amount = 0
         self._func_tracker = func_tracker
         self._params_converter = params_converter
@@ -66,6 +68,20 @@ class FunctionConverter:
             else:
                 self._find_func_call(i, field[1])
 
+    def _resolve_cyclic_dependencies(self):
+        def _find_cyclic_calls(_id, call_stack):
+            for called_id in self._call_tree[_id]:
+                if called_id in call_stack:
+                    self._sanitized_tree[_id].remove(called_id)
+                    continue
+                call_stack.append(called_id)
+                _find_cyclic_calls(called_id, copy.copy(call_stack))
+
+        self._sanitized_tree = copy.deepcopy(self._call_tree)
+        for func in self._func_tracker:
+            _find_cyclic_calls(func.id, [func.id])
+            self._call_tree = copy.deepcopy(self._sanitized_tree)
+
     def setup_order(self, functions):
         self._func_amount = len(functions)
         input_names = []
@@ -81,6 +97,7 @@ class FunctionConverter:
 
             for statement in function.block.statements:
                 self._find_func_call(i, statement)
+        self._resolve_cyclic_dependencies()
 
     def _generate_function_name(self):
         _id = self._func_tracker.next_id

@@ -17,4 +17,4 @@ def test__find_func():
     func_conv = FunctionConverter(typed_converter._func_tracker, typed_converter._params_converter)
     func_conv.setup_order(mes.functions)
 
-    assert func_conv._call_tree == {0: [1], 1: [0], 2: [1]}
+    assert func_conv._call_tree == {0: [1], 1: [], 2: [1]}

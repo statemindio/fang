@@ -153,9 +153,7 @@ class TypedConverter:
                 self.visit_func(_func_obj, function_def)
             else:
                 for func_id_internal in self._function_call_map[_func_id]:
-                    if (func_id_internal == self._root_func_id or
-                            self._func_tracker[func_id_internal].visibility == Func.Visibility.EXTERNAL):
-                        self._excluded_call_map[_func_id].append(func_id_internal)
+                    if self._func_tracker[func_id_internal].visibility == Func.Visibility.EXTERNAL:
                         self._function_call_map[_func_id].remove(func_id_internal)
                         __convert_func(_func_id, function_def)
                     if func_id_internal not in self.func_handled:
@@ -572,7 +570,7 @@ class TypedConverter:
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
             func_num = statement.func_call.func_num % len(self._func_tracker)
-            if func_num not in self._excluded_call_map[self._current_func.id]:
+            if func_num in self._function_call_map[self._current_func.id]:
                 return self._visit_func_call(statement.func_call)
         return self._visit_assignment(statement.assignment)
 
