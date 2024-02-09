@@ -573,13 +573,8 @@ class TypedConverter:
             self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
             return name
 
-        def __find_function(_func_num):
-            if self._func_tracker[func_num].id == self._current_func.id:
-                _func_num = (_func_num + 1) % len(self._func_tracker)
-            return self._func_tracker[_func_num]
-
         func_num = func_call.func_num % len(self._func_tracker)
-        func_obj = __find_function(func_num)
+        func_obj = self._func_tracker[func_num]
 
         output_vars = []
         result = ""
