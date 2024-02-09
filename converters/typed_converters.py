@@ -627,14 +627,17 @@ class TypedConverter:
                 return pop_st
         if statement.HasField("send_stmt"):
             return self._visit_send_stmt(statement.send_stmt)
+        if statement.HasField("raw_call"):
+            return self._visit_raw_call(statement.raw_call)
         return self._visit_assignment(statement.assignment)
 
-    def _visit_func_call(self, func_call):
-        def __create_variable(var_type):
+    def __create_variable(self, var_type):
             idx = self._var_tracker.next_id(var_type)
             name = f"x_{var_type.name}_{idx}"
             self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
             return name
+
+    def _visit_func_call(self, func_call):
 
         def __find_function(_func_num):
             if self._func_tracker[func_num].id == self._current_func.id:
@@ -653,7 +656,7 @@ class TypedConverter:
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
             else:
-                variable = __create_variable(t)
+                variable = self.__create_variable(t)
                 result = f"{result}{self.code_offset}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
         result += f"{self.code_offset}"
@@ -1022,7 +1025,9 @@ class TypedConverter:
         if self._mutability_level < NON_PAYABLE:
             self._mutability_level = NON_PAYABLE
 
+        self.type_stack.append(Address())
         target = self.visit_address_expression(stmt.to)
+        self.type_stack.pop()
         result = f"send({target}"
 
         self.type_stack.append(Int(256))
@@ -1059,6 +1064,87 @@ class TypedConverter:
         self.type_stack.pop()
 
         return f"ecrecover({hash_v}, {vv}, {rr}, {ss})"
+
+    def _visit_raw_call(self, rc):
+        self.type_stack.append(Address())
+        to = self.visit_address_expression(rc.to)
+        self.type_stack.pop()
+        result = f"raw_call({to},"
+
+        # FIXME: arbitrary size for bytes & strings
+        self.type_stack.append(Bytes(100))
+        data = self._visit_bytes_expression(rc.data)
+        self.type_stack.pop()
+        result += f"{data}"
+
+        bytes_decl = ""
+        self.type_stack.append(Int(256))
+        max_out = self.create_literal(rc.max_out)
+
+        # FIXME: must take bigger vars
+        if max_out != 0:
+            max_out = 100 if max_out > 100 else max_out
+            result += f", max_outsize={max_out}"
+
+            req_type = Bytes(max_out)
+            self.type_stack.append(req_type)
+            response = self._visit_var_ref(None, self._block_level_count, True)
+            self.type_stack.pop()
+
+            if response is None:
+                response = self.__create_variable(req_type)
+                bytes_decl += f"{self.code_offset}{response} :{req_type.vyper_type}"
+
+        if rc.HasField("gas"):
+            gas = self._visit_int_expression(rc.gas)
+            result += f", gas={gas}"
+        if rc.HasField("value"):
+            value = self._visit_int_expression(rc.value)
+            result += f", value={value}"
+        self.type_stack.pop()
+
+        req_type = Bool()
+        self.type_stack.append(req_type)
+        delegate = self.create_literal(rc.delegate)
+        static = self.create_literal(rc.static)
+
+        if static:
+            result += f", is_static_call={static}"
+        elif delegate:
+            result += f", is_delegate_call={delegate}"
+
+        revert = self.create_literal(rc.revert)
+
+        bool_decl = ""
+        if revert == True:
+            result += f", revert_on_failure={revert}"
+            status = self._visit_var_ref(None, self._block_level_count, True)
+            if status is None:
+                status = self.__create_variable(req_type)
+                bool_decl += f"{self.code_offset}{status} : {req_type.vyper_type}"
+        self.type_stack.pop()
+
+        result += ")"
+
+        if max_out != 0 and revert:
+            if len(bytes_decl) > 0:
+                bytes_decl += "b\"\"\n"
+            if len(bool_decl) > 0:
+                bool_decl += "False\n"
+            result = f"{bytes_decl}{bool_decl}{self.code_offset}{status},{response} = {result}"
+        elif max_out != 0:
+            result = f"{bytes_decl if len(bytes_decl) > 0 else response} = {result}"
+        elif revert:
+            result = f"{bool_decl if len(bool_decl) > 0 else status} = {result}"
+        else:
+            result = f"{self.code_offset}{result}"
+
+        if static and self._mutability_level < VIEW:
+            self._mutability_level = VIEW
+        elif self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
+        return result
 
     @property
     def code_offset(self):

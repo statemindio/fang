@@ -502,6 +502,7 @@ message Statement {
     AppendArray append_stmt = 11;
     PopArray pop_stmt = 12;
     SendStatement send_stmt = 13;
+    RawCall raw_call = 14;
   }
   AssignmentStatement assignment = 2;
 }
@@ -712,4 +713,15 @@ message AppendArray {
 
 message PopArray {
   VarRef varRef = 1;
+}
+
+message RawCall {
+  AddressExpression to = 1;
+  BytesExpression data = 2;
+  Literal max_out = 3;
+  optional IntExpression gas = 4;
+  optional IntExpression value = 5;
+  Literal delegate = 6;
+  Literal static = 7;
+  Literal revert = 8;
 }
