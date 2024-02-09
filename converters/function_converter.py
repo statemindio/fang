@@ -51,6 +51,10 @@ class FunctionConverter:
         self._func_tracker = func_tracker
         self._params_converter = params_converter
 
+    @property
+    def call_tree(self):
+        return self._call_tree
+
     def _find_func_call(self, i, statement):
         if isinstance(statement, (int, bool, str, bytes)):
             return
@@ -84,6 +88,19 @@ class FunctionConverter:
             _find_cyclic_calls(func.id, [func.id])
             self._call_tree = copy.deepcopy(self._sanitized_tree)
 
+    def _define_order(self):
+        order = []
+
+        def _find_next_id(_id):
+            for called_id in self._call_tree[_id]:
+                _find_next_id(called_id)
+            if _id not in order:
+                order.append(_id)
+
+        for func in self._func_tracker:
+            _find_next_id(func.id)
+        return order
+
     def setup_order(self, functions):
         self._func_amount = len(functions)
         input_names = []
@@ -100,6 +117,7 @@ class FunctionConverter:
             for statement in function.block.statements:
                 self._find_func_call(i, statement)
         self._resolve_cyclic_dependencies()
+        return self._define_order()
 
     def _generate_function_name(self):
         _id = self._func_tracker.next_id

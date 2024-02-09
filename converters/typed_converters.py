@@ -107,12 +107,9 @@ class TypedConverter:
         self._for_block_count = 0
         self._immutable_exp = []
         self._function_call_map = defaultdict(list)
-        self._excluded_call_map = defaultdict(list)
         self._current_func = None
-        self._root_func_id = None
-        self.func_handled = []
-        self.func_flag = True
         self._params_converter = ParametersConverter(self._var_tracker, self.visit_type)
+        self._func_converter = FunctionConverter(self._func_tracker, self._params_converter)
 
     def visit(self):
         """
@@ -134,30 +131,18 @@ class TypedConverter:
 
         input_names = []
 
-        func_conv = FunctionConverter(self._func_tracker, self._params_converter)
-        func_conv.setup_order(self.contract.functions)
-        self._function_call_map = func_conv._call_tree
+        func_order = self._func_converter.setup_order(self.contract.functions)
+        self._function_call_map = self._func_converter.call_tree
 
         self._var_tracker.reset_function_variables()
-        for func_obj, func in zip(self._func_tracker, self.contract.functions):
-            input_params, input_types, names = self._visit_input_parameters(func.input_params)
+        for func_id in func_order:
+            func_obj = self._func_tracker[func_id]
+            func = self.contract.functions[func_id]
+            _, _, names = self._visit_input_parameters(func.input_params)
             input_names.append(names)
             self.visit_func(func_obj, func)
 
-        self.func_flag = False
-
-        def __convert_func(_func_id, function_def):
-            for func_id_internal in self._function_call_map[_func_id]:
-                if func_id_internal not in self.func_handled:
-                    __convert_func(func_id_internal, self.contract.functions[func_id_internal])
-                if self._func_tracker[_func_id].mutability < self._func_tracker[func_id_internal].mutability:
-                    self._func_tracker[_func_id].mutability = self._func_tracker[func_id_internal].mutability
-
         self._var_tracker.reset_function_variables()
-        for func_obj, func in zip(self._func_tracker, self.contract.functions):
-            input_params, input_types, names = self._visit_input_parameters(func.input_params)
-            self._root_func_id = func_obj.id
-            __convert_func(func_obj.id, func)
 
         for func_obj, names in zip(self._func_tracker, input_names):
             self.result += func_obj.render_definition(names)
@@ -575,6 +560,9 @@ class TypedConverter:
 
         func_num = func_call.func_num % len(self._func_tracker)
         func_obj = self._func_tracker[func_num]
+
+        if self._mutability_level < func_obj.mutability:
+            self._mutability_level = func_obj.mutability
 
         output_vars = []
         result = ""
