@@ -625,6 +625,8 @@ class TypedConverter:
             pop_st = self._visit_pop_stmt(statement.pop_stmt)
             if pop_st is not None:
                 return pop_st
+        if statement.HasField("send_stmt"):
+            return self._visit_send_stmt(statement.send_stmt)
         return self._visit_assignment(statement.assignment)
 
     def _visit_func_call(self, func_call):
@@ -720,9 +722,15 @@ class TypedConverter:
         #     result = self._visit_convert(expr.convert)
         #     return result
         if expr.HasField("cmp"):
-            return self.visit_create_min_proxy(expr.cmp)
+            name = "create_minimal_proxy_to"
+            return self.visit_create_min_proxy_or_copy_of(expr.cmp, name)
         if expr.HasField("cfb"):
             return self.visit_create_from_blueprint(expr.cfb)
+        if expr.HasField("cco"):
+            name = "create_copy_of"
+            return self.visit_create_min_proxy_or_copy_of(expr.cco, name)
+        if expr.HasField("ecRec"):
+            return self.visit_ecrecover(expr.ecRec)
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
@@ -730,12 +738,12 @@ class TypedConverter:
                 return result
         return self.create_literal(expr.lit)
 
-    def visit_create_min_proxy(self, cmp):
+    def visit_create_min_proxy_or_copy_of(self, cmp, name):
         if self._mutability_level < NON_PAYABLE:
             self._mutability_level = NON_PAYABLE
 
         target = self.visit_address_expression(cmp.target)
-        result = f"create_minimal_proxy_to({target}"
+        result = f"{name}({target}"
         if cmp.HasField("value"):
             self.type_stack.append(Int(256))
             value = self._visit_int_expression(cmp.value)
@@ -873,7 +881,12 @@ class TypedConverter:
         #     return result
         if expr.HasField("sha"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
-            return self._visit_sha256(expr.sha)
+            name = "sha256"
+            return self._visit_hash256(expr.sha, name)
+        if expr.HasField("keccak"):
+            # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
+            name = "keccak256"
+            return self._visit_hash256(expr.sha, name)
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
@@ -881,14 +894,15 @@ class TypedConverter:
                 return result
         return self.create_literal(expr.lit)
 
-    def _visit_sha256(self, expr):
-        result = "sha256("
+    def _visit_hash256(self, expr, name):
+        result = f"{name}("
         if expr.HasField("strVal"):
             self.type_stack.append(String(100))
             value = self._visit_string_expression(expr.strVal)
             self.type_stack.pop()
             return f"{result}{value})"
         if expr.HasField("bVal"):
+            # TODO: Bytes length can be arbitrary, almost same as DynArray assign
             self.type_stack.append(Bytes(100))
             value = self._visit_bytes_expression(expr.bVal)
             self.type_stack.pop()
@@ -1003,6 +1017,48 @@ class TypedConverter:
         result = f"{self.code_offset}{result}.pop()"
 
         return result
+
+    def _visit_send_stmt(self, stmt):
+        if self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
+        target = self.visit_address_expression(stmt.to)
+        result = f"send({target}"
+
+        self.type_stack.append(Int(256))
+        value = self._visit_int_expression(stmt.amount)
+        result = f"{result}, {value}"
+
+        if stmt.HasField("gas"):
+            salt = self._visit_int_expression(stmt.gas)
+            result = f"{result}, gas = {salt}"
+        self.type_stack.pop()
+
+        result = f"{result})"
+        return result
+
+    def visit_ecrecover(self, ec):
+        self.type_stack.append(BytesM(32))
+
+        hash_v = self._visit_bytes_m_expression(ec.hash)
+
+        vv, rr, ss = None, None, None
+        if ec.HasField("vb"):
+            vv = self._visit_bytes_m_expression(ec.vb)
+        if ec.HasField("rb"):
+            rr = self._visit_bytes_m_expression(ec.rb)
+        if ec.HasField("sb"):
+            ss = self._visit_bytes_m_expression(ec.sb)
+
+        self.type_stack.pop()
+
+        self.type_stack.append(Int(256))
+        vv = self._visit_int_expression(ec.vi) if vv is None else vv
+        rr = self._visit_int_expression(ec.ri) if rr is None else rr
+        ss = self._visit_int_expression(ec.si) if ss is None else ss
+        self.type_stack.pop()
+
+        return f"ecrecover({hash_v}, {vv}, {rr}, {ss})"
 
     @property
     def code_offset(self):
