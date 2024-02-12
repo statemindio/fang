@@ -419,7 +419,8 @@ full_cases = [
     "dynamic_array_assignment",
     "dynamic_array_statements",
     "send",
-    "ecrecover"
+    "ecrecover",
+    "raw_call"
 ]
 
 

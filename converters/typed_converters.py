@@ -1077,11 +1077,11 @@ class TypedConverter:
         self.type_stack.append(Bytes(100))
         data = self._visit_bytes_expression(rc.data)
         self.type_stack.pop()
-        result += f"{data}"
+        result += f" {data}"
 
         bytes_decl = ""
         self.type_stack.append(Int(256))
-        max_out = self.create_literal(rc.max_out)
+        max_out = int(self.create_literal(rc.max_out))
 
         # FIXME: must take bigger vars
         if max_out != 0:
@@ -1095,7 +1095,7 @@ class TypedConverter:
 
             if response is None:
                 response = self.__create_variable(req_type)
-                bytes_decl += f"{self.code_offset}{response} :{req_type.vyper_type}"
+                bytes_decl += f"{self.code_offset}{response}: {req_type.vyper_type}"
 
         if rc.HasField("gas"):
             gas = self._visit_int_expression(rc.gas)
@@ -1110,38 +1110,38 @@ class TypedConverter:
         delegate = self.create_literal(rc.delegate)
         static = self.create_literal(rc.static)
 
-        if static:
+        if static == "True":
             result += f", is_static_call={static}"
-        elif delegate:
+        elif delegate == "True":
             result += f", is_delegate_call={delegate}"
 
         revert = self.create_literal(rc.revert)
 
         bool_decl = ""
-        if revert == True:
+        if revert == "False":
             result += f", revert_on_failure={revert}"
             status = self._visit_var_ref(None, self._block_level_count, True)
             if status is None:
                 status = self.__create_variable(req_type)
-                bool_decl += f"{self.code_offset}{status} : {req_type.vyper_type}"
+                bool_decl += f"{self.code_offset}{status}: {req_type.vyper_type}"
         self.type_stack.pop()
 
         result += ")"
 
-        if max_out != 0 and revert:
+        if max_out != 0 and revert == "False":
             if len(bytes_decl) > 0:
-                bytes_decl += "b\"\"\n"
+                bytes_decl += " = b\"\"\n"
             if len(bool_decl) > 0:
-                bool_decl += "False\n"
-            result = f"{bytes_decl}{bool_decl}{self.code_offset}{status},{response} = {result}"
+                bool_decl += " = False\n"
+            result = f"{bool_decl}{bytes_decl}{self.code_offset}{status}, {response} = {result}"
         elif max_out != 0:
             result = f"{bytes_decl if len(bytes_decl) > 0 else response} = {result}"
-        elif revert:
+        elif revert == "False":
             result = f"{bool_decl if len(bool_decl) > 0 else status} = {result}"
         else:
             result = f"{self.code_offset}{result}"
 
-        if static and self._mutability_level < VIEW:
+        if static == "True" and self._mutability_level < VIEW:
             self._mutability_level = VIEW
         elif self._mutability_level < NON_PAYABLE:
             self._mutability_level = NON_PAYABLE
