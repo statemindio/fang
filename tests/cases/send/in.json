@@ -1,0 +1,35 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "adr": {}
+        },
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "send_stmt": {
+              "to": {
+                "varRef": {}
+              },
+              "amount": {
+                "varRef": {}
+              },
+              "gas": {
+                "lit": {
+                  "intval": 1337
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

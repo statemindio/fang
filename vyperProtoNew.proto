@@ -163,7 +163,7 @@ message BytesMExpression {
   oneof expr {
     Sha256 sha = 1;
     VarRef varRef = 4;
-    Keccak256 keccak = 5;
+    Keccak256 keccak = 2;
     //    Convert convert = 5;
   }
 }
@@ -633,7 +633,7 @@ message CreateCopyOf {
 // ecrecover(hash: bytes32, v: uint256 | uint8, r: uint256 | bytes32, s: uint256 | bytes32)
 message EcRecover {
   BytesMExpression hash = 1;
-  optional BytesMExpression vb = 2;
+  optional IntExpression v8 = 2;
   IntExpression vi = 3;
   optional BytesMExpression rb = 4;
   IntExpression ri = 5;

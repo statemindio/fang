@@ -889,7 +889,7 @@ class TypedConverter:
         if expr.HasField("keccak"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             name = "keccak256"
-            return self._visit_hash256(expr.sha, name)
+            return self._visit_hash256(expr.keccak, name)
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
@@ -1028,7 +1028,7 @@ class TypedConverter:
         self.type_stack.append(Address())
         target = self.visit_address_expression(stmt.to)
         self.type_stack.pop()
-        result = f"send({target}"
+        result = f"{self.code_offset}send({target}"
 
         self.type_stack.append(Int(256))
         value = self._visit_int_expression(stmt.amount)
@@ -1036,7 +1036,7 @@ class TypedConverter:
 
         if stmt.HasField("gas"):
             salt = self._visit_int_expression(stmt.gas)
-            result = f"{result}, gas = {salt}"
+            result = f"{result}, gas={salt}"
         self.type_stack.pop()
 
         result = f"{result})"
@@ -1048,8 +1048,10 @@ class TypedConverter:
         hash_v = self._visit_bytes_m_expression(ec.hash)
 
         vv, rr, ss = None, None, None
-        if ec.HasField("vb"):
-            vv = self._visit_bytes_m_expression(ec.vb)
+        if ec.HasField("v8"):
+            self.type_stack.append(Int(8))
+            vv = self._visit_int_expression(ec.v8)
+            self.type_stack.pop()
         if ec.HasField("rb"):
             rr = self._visit_bytes_m_expression(ec.rb)
         if ec.HasField("sb"):
