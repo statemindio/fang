@@ -89,6 +89,7 @@ message BoolExpression {
     IntBoolBinOp intBoolBinOp = 3;
     DecimalBoolBinOp decBoolBinOp = 4;
     VarRef varRef = 6;
+    RawCall raw_call = 7;
     //    Convert convert = 7;
   }
   Literal lit = 5;
@@ -171,6 +172,7 @@ message BytesMExpression {
 message BytesExpression {
   oneof expr {
     VarRef varRef = 1;
+    RawCall raw_call = 2;
     //    Convert convert = 2;
   }
   Literal lit = 3;

@@ -1,0 +1,59 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "adr": {}
+        },
+        {
+          "barr": {
+            "max_len": 100
+          }
+        },
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "assert_stmt": {
+              "cond": {
+                "raw_call": {
+                  "to": {
+                    "varRef": {}
+                  },
+                  "data": {
+                    "varRef": {}
+                  },
+                  "max_out": {
+                    "intval": 32
+                  },
+                  "gas": {
+                    "lit":{
+                      "intval": 1337
+                    }
+                  },
+                  "value": {
+                    "varRef": {}
+                  },
+                  "static": {
+                    "boolval": true
+                  },
+                  "delegate": {
+                    "boolval": true
+                  },
+                  "revert": {
+                    "boolval": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

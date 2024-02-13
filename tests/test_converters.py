@@ -420,7 +420,9 @@ full_cases = [
     "dynamic_array_statements",
     "send",
     "ecrecover",
-    "raw_call"
+    "raw_call",
+    "raw_call_bytes_expression",
+    "raw_call_bool_expression"
 ]
 
 
