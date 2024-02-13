@@ -56,7 +56,7 @@ class Function:
     def render_definition(self, input_parameters: Sequence[str]):
         mutability = self.MUTABILITY_MAPPING[self.mutability]
         signature = self.render_signature(input_parameters)
-        body = self.body.format(f.render_call(input_parameters) for f in self._function_calls)
+        body = self.body
         if self.visibility == Func.Visibility.EXTERNAL:
             visibility = "@external"
         else:
