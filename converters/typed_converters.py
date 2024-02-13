@@ -8,6 +8,7 @@ from types_d.base import BaseType
 from utils import get_nearest_multiple, VALID_CHARS
 from var_tracker import VarTracker
 from vyperProtoNew_pb2 import Func
+from .function_converter import FunctionConverter, ParametersConverter
 
 PURE = 0
 VIEW = 1
@@ -125,11 +126,9 @@ class TypedConverter:
         self._for_block_count = 0
         self._immutable_exp = []
         self._function_call_map = defaultdict(list)
-        self._excluded_call_map = defaultdict(list)
         self._current_func = None
-        self._root_func_id = None
-        self.func_handled = []
-        self.func_flag = True
+        self._params_converter = ParametersConverter(self._var_tracker, self.visit_type)
+        self._func_converter = FunctionConverter(self._func_tracker, self._params_converter)
 
     def visit(self):
         """
@@ -150,42 +149,19 @@ class TypedConverter:
             self.result += "\n"
 
         input_names = []
-        for i, func in enumerate(self.contract.functions):
-            if i >= MAX_FUNCTIONS:
-                break
-            function_name = self._generate_function_name()
-            input_params, input_types, names = self._visit_input_parameters(func.input_params)
-            input_names.append(names)
-            output_types = self._visit_output_parameters(func.output_params)
-            self._func_tracker.register_function(function_name, func.mut, func.vis, input_types, output_types)
 
-        for func_obj, func in zip(self._func_tracker, self.contract.functions):
-            self.visit_func(func_obj, func)
-
-        self.func_flag = False
-
-        def __convert_func(_func_id, function_def):
-            if len(self._function_call_map[_func_id]) == 0:
-                self.func_handled.append(_func_id)
-                _func_obj = self._func_tracker[_func_id]
-                self.visit_func(_func_obj, function_def)
-            else:
-                for func_id_internal in self._function_call_map[_func_id]:
-                    if (func_id_internal == self._root_func_id or
-                            self._func_tracker[func_id_internal].visibility == Func.Visibility.EXTERNAL):
-                        self._excluded_call_map[_func_id].append(func_id_internal)
-                        self._function_call_map[_func_id].remove(func_id_internal)
-                        __convert_func(_func_id, function_def)
-                    if func_id_internal not in self.func_handled:
-                        __convert_func(func_id_internal, self.contract.functions[func_id_internal])
-                    if self._func_tracker[_func_id].mutability < self._func_tracker[func_id_internal].mutability:
-                        self._func_tracker[_func_id].mutability = self._func_tracker[func_id_internal].mutability
+        func_order = self._func_converter.setup_order(self.contract.functions)
+        self._function_call_map = self._func_converter.call_tree
 
         self._var_tracker.reset_function_variables()
-        for func_obj, func in zip(self._func_tracker, self.contract.functions):
-            input_params, input_types, names = self._visit_input_parameters(func.input_params)
-            self._root_func_id = func_obj.id
-            __convert_func(func_obj.id, func)
+        for func_id in func_order:
+            func_obj = self._func_tracker[func_id]
+            func = self.contract.functions[func_id]
+            _, _, names = self._visit_input_parameters(func.input_params)
+            input_names.append(names)
+            self.visit_func(func_obj, func)
+
+        self._var_tracker.reset_function_variables()
 
         for func_obj, names in zip(self._func_tracker, input_names):
             self.result += func_obj.render_definition(names)
@@ -351,37 +327,10 @@ class TypedConverter:
         return self.__var_decl(variable.expr, current_type)
 
     def _visit_input_parameters(self, input_params):
-        result = ""
-        input_types = []
-        names = []
-        for i, input_param in enumerate(input_params):
-            param_type = self.visit_type(input_param)
-            input_types.append(param_type)
-            idx = self._var_tracker.next_id(param_type)
-            name = f"x_{param_type.name}_{idx}"
-            names.append(name)
-
-            # self._var_tracker.register_function_variable(name, self._block_level_count, param_type)
-            self._var_tracker.register_function_variable(name, 1, param_type, False)
-
-            if i > 0:
-                result = f"{result}, "
-            result = f"{result}{name}: {param_type.vyper_type}"
-
-            if i + 1 == MAX_FUNCTION_INPUT:
-                break
-
-        return result, input_types, names
+        return self._params_converter.visit_input_parameters(input_params)
 
     def _visit_output_parameters(self, output_params) -> [BaseType]:
-        output_types = []
-        for i, output_param in enumerate(output_params):
-            param_type = self.visit_type(output_param)
-            output_types.append(param_type)
-
-            if i + 1 == MAX_FUNCTION_OUTPUT:
-                break
-        return output_types
+        return self._params_converter.visit_output_parameters(output_params)
 
     def _generate_function_name(self):
         _id = self._func_tracker.next_id
@@ -615,7 +564,7 @@ class TypedConverter:
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
             func_num = statement.func_call.func_num % len(self._func_tracker)
-            if self.func_flag or func_num not in self._excluded_call_map[self._current_func.id]:
+            if func_num in self._function_call_map[self._current_func.id]:
                 return self._visit_func_call(statement.func_call)
         if statement.HasField("append_stmt"):
             append_st = self._visit_append_stmt(statement.append_stmt)
@@ -634,15 +583,11 @@ class TypedConverter:
             self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
             return name
 
-        def __find_function(_func_num):
-            if self._func_tracker[func_num].id == self._current_func.id:
-                _func_num = (_func_num + 1) % len(self._func_tracker)
-            if self.func_flag:
-                self._function_call_map[self._current_func.id].append(self._func_tracker[_func_num].id)
-            return self._func_tracker[_func_num]
-
         func_num = func_call.func_num % len(self._func_tracker)
-        func_obj = __find_function(func_num)
+        func_obj = self._func_tracker[func_num]
+
+        if self._mutability_level < func_obj.mutability:
+            self._mutability_level = func_obj.mutability
 
         output_vars = []
         result = ""
