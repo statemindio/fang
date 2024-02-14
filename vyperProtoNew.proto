@@ -196,7 +196,7 @@ message DecimalExpression {
   Literal lit = 3;
 }
 
-// FIXME: must have raw_call
+
 message TypedExpression {
   AddressExpression addrExp = 1;
   BoolExpression boolExp = 2;

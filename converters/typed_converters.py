@@ -1063,22 +1063,22 @@ class TypedConverter:
         static = self.create_literal(rc.static)
 
         if static == "True":
-            result += f", is_static_call={static}"
+            result += ", is_static_call=True"
         elif delegate == "True":
-            result += f", is_delegate_call={delegate}"
+            result += f", is_delegate_call=True"
             static = "False"
 
         revert = self.create_literal(rc.revert)
 
         bool_decl = ""
         if revert == "False" and expr_size == 0 and not expr_bool:
-            result += f", revert_on_failure={revert}"
+            result += ", revert_on_failure=False"
             status = self._visit_var_ref(None, self._block_level_count, True)
             if status is None:
                 status = self.__create_variable(req_type)
                 bool_decl += f"{self.code_offset}{status}: {req_type.vyper_type}"
         elif expr_bool:
-            result += f", revert_on_failure={False}"
+            result += ", revert_on_failure=False"
         self.type_stack.pop()
 
         result += ")"
