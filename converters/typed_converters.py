@@ -574,14 +574,19 @@ class TypedConverter:
             pop_st = self._visit_pop_stmt(statement.pop_stmt)
             if pop_st is not None:
                 return pop_st
+        if statement.HasField("send_stmt"):
+            return self._visit_send_stmt(statement.send_stmt)
+        if statement.HasField("raw_call"):
+            return self._visit_raw_call(statement.raw_call)
         return self._visit_assignment(statement.assignment)
 
-    def _visit_func_call(self, func_call):
-        def __create_variable(var_type):
+    def __create_variable(self, var_type):
             idx = self._var_tracker.next_id(var_type)
             name = f"x_{var_type.name}_{idx}"
             self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
             return name
+
+    def _visit_func_call(self, func_call):
 
         func_num = func_call.func_num % len(self._func_tracker)
         func_obj = self._func_tracker[func_num]
@@ -596,7 +601,7 @@ class TypedConverter:
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
             else:
-                variable = __create_variable(t)
+                variable = self.__create_variable(t)
                 result = f"{result}{self.code_offset}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
         result += f"{self.code_offset}"
@@ -665,9 +670,15 @@ class TypedConverter:
         #     result = self._visit_convert(expr.convert)
         #     return result
         if expr.HasField("cmp"):
-            return self.visit_create_min_proxy(expr.cmp)
+            name = "create_minimal_proxy_to"
+            return self.visit_create_min_proxy_or_copy_of(expr.cmp, name)
         if expr.HasField("cfb"):
             return self.visit_create_from_blueprint(expr.cfb)
+        if expr.HasField("cco"):
+            name = "create_copy_of"
+            return self.visit_create_min_proxy_or_copy_of(expr.cco, name)
+        if expr.HasField("ecRec"):
+            return self.visit_ecrecover(expr.ecRec)
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
@@ -675,12 +686,12 @@ class TypedConverter:
                 return result
         return self.create_literal(expr.lit)
 
-    def visit_create_min_proxy(self, cmp):
+    def visit_create_min_proxy_or_copy_of(self, cmp, name):
         if self._mutability_level < NON_PAYABLE:
             self._mutability_level = NON_PAYABLE
 
         target = self.visit_address_expression(cmp.target)
-        result = f"create_minimal_proxy_to({target}"
+        result = f"{name}({target}"
         if cmp.HasField("value"):
             self.type_stack.append(Int(256))
             value = self._visit_int_expression(cmp.value)
@@ -781,6 +792,8 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        if expr.HasField("raw_call"):
+            return self._visit_raw_call(expr.raw_call, expr_bool=True)
         return self.create_literal(expr.lit)
 
     def _visit_int_expression(self, expr):
@@ -818,7 +831,12 @@ class TypedConverter:
         #     return result
         if expr.HasField("sha"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
-            return self._visit_sha256(expr.sha)
+            name = "sha256"
+            return self._visit_hash256(expr.sha, name)
+        if expr.HasField("keccak"):
+            # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
+            name = "keccak256"
+            return self._visit_hash256(expr.keccak, name)
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
@@ -826,14 +844,15 @@ class TypedConverter:
                 return result
         return self.create_literal(expr.lit)
 
-    def _visit_sha256(self, expr):
-        result = "sha256("
+    def _visit_hash256(self, expr, name):
+        result = f"{name}("
         if expr.HasField("strVal"):
             self.type_stack.append(String(100))
             value = self._visit_string_expression(expr.strVal)
             self.type_stack.pop()
             return f"{result}{value})"
         if expr.HasField("bVal"):
+            # TODO: Bytes length can be arbitrary, almost same as DynArray assign
             self.type_stack.append(Bytes(100))
             value = self._visit_bytes_expression(expr.bVal)
             self.type_stack.pop()
@@ -881,6 +900,9 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        if expr.HasField("raw_call"):
+            byte_size = self.type_stack[len(self.type_stack) - 1].m
+            return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
@@ -946,6 +968,138 @@ class TypedConverter:
         self.type_stack.pop()
 
         result = f"{self.code_offset}{result}.pop()"
+
+        return result
+
+    def _visit_send_stmt(self, stmt):
+        if self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
+        self.type_stack.append(Address())
+        target = self.visit_address_expression(stmt.to)
+        self.type_stack.pop()
+        result = f"{self.code_offset}send({target}"
+
+        self.type_stack.append(Int(256))
+        value = self._visit_int_expression(stmt.amount)
+        result = f"{result}, {value}"
+
+        if stmt.HasField("gas"):
+            salt = self._visit_int_expression(stmt.gas)
+            result = f"{result}, gas={salt}"
+        self.type_stack.pop()
+
+        result = f"{result})"
+        return result
+
+    def visit_ecrecover(self, ec):
+        self.type_stack.append(BytesM(32))
+
+        hash_v = self._visit_bytes_m_expression(ec.hash)
+
+        vv, rr, ss = None, None, None
+        if ec.HasField("v8"):
+            self.type_stack.append(Int(8))
+            vv = self._visit_int_expression(ec.v8)
+            self.type_stack.pop()
+        if ec.HasField("rb"):
+            rr = self._visit_bytes_m_expression(ec.rb)
+        if ec.HasField("sb"):
+            ss = self._visit_bytes_m_expression(ec.sb)
+
+        self.type_stack.pop()
+
+        self.type_stack.append(Int(256))
+        vv = self._visit_int_expression(ec.vi) if vv is None else vv
+        rr = self._visit_int_expression(ec.ri) if rr is None else rr
+        ss = self._visit_int_expression(ec.si) if ss is None else ss
+        self.type_stack.pop()
+
+        return f"ecrecover({hash_v}, {vv}, {rr}, {ss})"
+
+    def _visit_raw_call(self, rc, expr_size = 0, expr_bool = False):
+        self.type_stack.append(Address())
+        to = self.visit_address_expression(rc.to)
+        self.type_stack.pop()
+        result = f"raw_call({to},"
+
+        # FIXME: arbitrary size for bytes & strings
+        self.type_stack.append(Bytes(100))
+        data = self._visit_bytes_expression(rc.data)
+        self.type_stack.pop()
+        result += f" {data}"
+
+        bytes_decl = ""
+        self.type_stack.append(Int(256))
+        max_out = int(self.create_literal(rc.max_out))
+
+        # FIXME: must take bigger vars
+        if max_out != 0 and expr_size == 0 and not expr_bool:
+            max_out = 100 if max_out > 100 else max_out
+            result += f", max_outsize={max_out}"
+
+            req_type = Bytes(max_out)
+            self.type_stack.append(req_type)
+            response = self._visit_var_ref(None, self._block_level_count, True)
+            self.type_stack.pop()
+
+            if response is None:
+                response = self.__create_variable(req_type)
+                bytes_decl += f"{self.code_offset}{response}: {req_type.vyper_type}"
+        elif expr_size != 0:
+            result += f", max_outsize={expr_size}"
+
+        if rc.HasField("gas"):
+            gas = self._visit_int_expression(rc.gas)
+            result += f", gas={gas}"
+        if rc.HasField("value"):
+            value = self._visit_int_expression(rc.value)
+            result += f", value={value}"
+        self.type_stack.pop()
+
+        req_type = Bool()
+        self.type_stack.append(req_type)
+        delegate = self.create_literal(rc.delegate)
+        static = self.create_literal(rc.static)
+
+        if static == "True":
+            result += ", is_static_call=True"
+        elif delegate == "True":
+            result += f", is_delegate_call=True"
+            static = "False"
+
+        revert = self.create_literal(rc.revert)
+
+        bool_decl = ""
+        if revert == "False" and expr_size == 0 and not expr_bool:
+            result += ", revert_on_failure=False"
+            status = self._visit_var_ref(None, self._block_level_count, True)
+            if status is None:
+                status = self.__create_variable(req_type)
+                bool_decl += f"{self.code_offset}{status}: {req_type.vyper_type}"
+        elif expr_bool:
+            result += ", revert_on_failure=False"
+        self.type_stack.pop()
+
+        result += ")"
+        if expr_size == 0 and not expr_bool:
+            if max_out != 0 and revert == "False":
+                if len(bytes_decl) > 0:
+                    bytes_decl += " = b\"\"\n"
+                if len(bool_decl) > 0:
+                    bool_decl += " = False\n"
+                result = f"{bool_decl}{bytes_decl}{self.code_offset}{status}, {response} = {result}"
+            elif max_out != 0:
+                result = f"{bytes_decl if len(bytes_decl) > 0 else response} = {result}"
+            elif revert == "False":
+                result = f"{bool_decl if len(bool_decl) > 0 else status} = {result}"
+            else:
+                result = f"{self.code_offset}{result}"
+
+        if static == "True" and self._mutability_level <= VIEW:
+            self._mutability_level = VIEW
+        elif self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
 
         return result
 

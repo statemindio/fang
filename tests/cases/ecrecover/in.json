@@ -1,0 +1,90 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 31
+          }
+        },
+        {
+          "i": {
+            "n": 7
+          }
+        }
+      ],
+      "outputParams": [
+        {
+          "adr": {}
+        }
+      ],
+      "block": {
+        "exit_d": {
+          "payload": {
+            "one":{
+              "addrExp": {
+                "ecRec": {
+                  "hash": {
+                    "varRef": {}
+                  },
+                  "v8": {
+                    "varRef": {}
+                  },
+                  "rb": {
+                    "varRef": {}
+                  },
+                  "sb": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 31
+          }
+        },
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "outputParams": [
+        {
+          "adr": {}
+        }
+      ],
+      "block": {
+        "exit_d": {
+          "payload": {
+            "one":{
+              "addrExp": {
+                "ecRec": {
+                  "hash": {
+                    "varRef": {}
+                  },
+                  "vi": {
+                    "varRef": {}
+                  },
+                  "ri": {
+                    "varRef": {}
+                  },
+                  "si": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

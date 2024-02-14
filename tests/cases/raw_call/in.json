@@ -1,0 +1,100 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "adr": {}
+        },
+        {
+          "barr": {
+            "max_len": 100
+          }
+        },
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "outputParams": [
+        {
+          "barr": {
+            "max_len": 32
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "raw_call": {
+              "to": {
+                "varRef": {}
+              },
+              "data": {
+                "varRef": {}
+              },
+              "max_out": {
+                "intval": 32
+              },
+              "gas": {
+                "lit":{
+                  "intval": 1337
+                }
+              },
+              "value": {
+                "varRef": {}
+              },
+              "static": {
+                "boolval": true
+              },
+              "delegate": {
+                "boolval": true
+              },
+              "revert": {
+                "boolval": false
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "payload": {
+            "one": {
+              "bExp": {
+                "varRef": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "input_params": [
+        {
+          "adr": {}
+        },
+        {
+          "barr": {
+            "max_len": 100
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "raw_call": {
+              "to": {
+                "varRef": {}
+              },
+              "data": {
+                "varRef": {}
+              },
+              "revert":{
+                "boolval": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
