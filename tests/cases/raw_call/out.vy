@@ -8,5 +8,7 @@ def func_0(x_ADDRESS_0: address, x_BYTES_0: Bytes[100], x_INT_0: uint256) -> Byt
 
 @external
 @nonpayable
-def func_1(x_ADDRESS_1: address, x_BYTES_1: Bytes[100]):
-    raw_call(x_ADDRESS_1, x_BYTES_1)
+def func_1(x_ADDRESS_1: address, x_BYTES_2: Bytes[100]):
+    raw_call(x_ADDRESS_1, x_BYTES_2)
+
+
