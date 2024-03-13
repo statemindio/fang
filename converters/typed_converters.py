@@ -163,7 +163,8 @@ class TypedConverter:
 
         self._var_tracker.reset_function_variables()
 
-        for func_obj, names in zip(self._func_tracker, input_names):
+        for func_obj in self._func_tracker:
+            names = input_names[func_order.index(func_obj.id)]
             self.result += func_obj.render_definition(names)
             self.result += "\n"
 
