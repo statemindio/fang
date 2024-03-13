@@ -563,9 +563,10 @@ class TypedConverter:
         if statement.HasField("assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
         if statement.HasField("func_call"):
-            func_num = statement.func_call.func_num % len(self._func_tracker)
-            if func_num in self._function_call_map[self._current_func.id]:
-                return self._visit_func_call(statement.func_call)
+            if len(self._func_tracker) > 0:
+                func_num = statement.func_call.func_num % len(self._func_tracker)
+                if func_num in self._function_call_map[self._current_func.id]:
+                    return self._visit_func_call(statement.func_call)
         if statement.HasField("append_stmt"):
             append_st = self._visit_append_stmt(statement.append_stmt)
             if append_st is not None:
@@ -581,10 +582,10 @@ class TypedConverter:
         return self._visit_assignment(statement.assignment)
 
     def __create_variable(self, var_type):
-            idx = self._var_tracker.next_id(var_type)
-            name = f"x_{var_type.name}_{idx}"
-            self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
-            return name
+        idx = self._var_tracker.next_id(var_type)
+        name = f"x_{var_type.name}_{idx}"
+        self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
+        return name
 
     def _visit_func_call(self, func_call):
 
@@ -1017,7 +1018,7 @@ class TypedConverter:
 
         return f"ecrecover({hash_v}, {vv}, {rr}, {ss})"
 
-    def _visit_raw_call(self, rc, expr_size = 0, expr_bool = False):
+    def _visit_raw_call(self, rc, expr_size=0, expr_bool=False):
         self.type_stack.append(Address())
         to = self.visit_address_expression(rc.to)
         self.type_stack.pop()
