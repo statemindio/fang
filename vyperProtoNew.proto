@@ -89,6 +89,7 @@ message BoolExpression {
     IntBoolBinOp intBoolBinOp = 3;
     DecimalBoolBinOp decBoolBinOp = 4;
     VarRef varRef = 6;
+    RawCall raw_call = 7;
     //    Convert convert = 7;
   }
   Literal lit = 5;
@@ -99,6 +100,8 @@ message AddressExpression {
     CreateMinimalProxy cmp = 1;
     CreateFromBlueprint cfb = 2;
     VarRef varRef = 4;
+    CreateCopyOf cco = 5;
+    EcRecover ecRec = 6;
     //    Convert convert = 5;
   }
   Literal lit = 3;
@@ -161,6 +164,7 @@ message BytesMExpression {
   oneof expr {
     Sha256 sha = 1;
     VarRef varRef = 4;
+    Keccak256 keccak = 2;
     //    Convert convert = 5;
   }
 }
@@ -168,6 +172,7 @@ message BytesMExpression {
 message BytesExpression {
   oneof expr {
     VarRef varRef = 1;
+    RawCall raw_call = 2;
     //    Convert convert = 2;
   }
   Literal lit = 3;
@@ -190,6 +195,7 @@ message DecimalExpression {
   }
   Literal lit = 3;
 }
+
 
 message TypedExpression {
   AddressExpression addrExp = 1;
@@ -498,6 +504,8 @@ message Statement {
     AssertStatement assert_stmt = 10;
     AppendArray append_stmt = 11;
     PopArray pop_stmt = 12;
+    SendStatement send_stmt = 13;
+    RawCall raw_call = 14;
   }
   AssignmentStatement assignment = 2;
 }
@@ -619,6 +627,23 @@ message CreateMinimalProxy {
   optional BytesMExpression salt = 3;
 }
 
+message CreateCopyOf {
+  AddressExpression target = 1;
+  optional IntExpression value = 2;
+  optional BytesMExpression salt = 3;
+}
+
+// ecrecover(hash: bytes32, v: uint256 | uint8, r: uint256 | bytes32, s: uint256 | bytes32)
+message EcRecover {
+  BytesMExpression hash = 1;
+  optional IntExpression v8 = 2;
+  IntExpression vi = 3;
+  optional BytesMExpression rb = 4;
+  IntExpression ri = 5;
+  optional BytesMExpression sb = 6;
+  IntExpression si = 7;
+}
+
 message CreateFromBlueprint {
   AddressExpression target = 1;
   //  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
@@ -628,11 +653,25 @@ message CreateFromBlueprint {
   optional BytesMExpression salt = 6;
 }
 
+message SendStatement {
+  AddressExpression to = 1;
+  IntExpression amount = 2;
+  optional IntExpression gas = 3;
+}
+
 message Selfdestruct {
   AddressExpression to = 1;
 }
 
 message Sha256 {
+  oneof typed_value {
+    StringExpression strVal = 1;
+    BytesExpression bVal = 2;
+  }
+  BytesMExpression bmVal = 3;
+}
+
+message Keccak256 {
   oneof typed_value {
     StringExpression strVal = 1;
     BytesExpression bVal = 2;
@@ -677,4 +716,15 @@ message AppendArray {
 
 message PopArray {
   VarRef varRef = 1;
+}
+
+message RawCall {
+  AddressExpression to = 1;
+  BytesExpression data = 2;
+  Literal max_out = 3;
+  optional IntExpression gas = 4;
+  optional IntExpression value = 5;
+  Literal delegate = 6;
+  Literal static = 7;
+  Literal revert = 8;
 }

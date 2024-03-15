@@ -1,9 +1,4 @@
 {
-  "decls": [
-    {
-      "bM": {}
-    }
-  ],
   "functions": [
     {
       "block": {
@@ -16,6 +11,33 @@
               "expr": {
                 "bmExp": {
                   "sha": {
+                    "bmVal": {
+                      "lit": {
+                        "bMval" : "0101"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m" : 31
+              },
+              "expr": {
+                "bmExp": {
+                  "keccak": {
                     "bmVal": {
                       "lit": {
                         "bMval" : "0101"

@@ -5,7 +5,7 @@ from google.protobuf.json_format import Parse
 
 from converters.typed_converters import TypedConverter
 from types_d import Address, BytesM, String
-from vyperProtoNew_pb2 import Contract, CreateMinimalProxy, Sha256, Func
+from vyperProtoNew_pb2 import Contract, CreateMinimalProxy, CreateCopyOf, Sha256, Keccak256, Func
 
 
 def convert_message(message: str) -> TypedConverter:
@@ -246,7 +246,7 @@ def test_var_decl_bytes_382():
     assert conv.result == expected
 
 
-def test_visit_create_min_proxy():
+def test_visit_create_min_proxy_or_copy_of():
     mes = ""
     conv = TypedConverter(mes)
     json_message = """
@@ -255,16 +255,22 @@ def test_visit_create_min_proxy():
         "varRef": {}
     }
 }"""
-    mes = Parse(json_message, CreateMinimalProxy())
+
+    methods = [(CreateMinimalProxy(), "create_minimal_proxy_to"), (CreateCopyOf(), "create_copy_of")]
+
     address_type = Address()
     conv.type_stack.append(address_type)
     conv._var_tracker.register_global_variable("var0", address_type)
-    expected = "create_minimal_proxy_to(self.var0)"
-    res = conv.visit_create_min_proxy(mes)
-    assert res == expected
 
+    for proto, name in methods:
+        mes = Parse(json_message, proto)
+        expected = f"{name}(self.var0)"
+        res = conv.visit_create_min_proxy_or_copy_of(mes, name)
+        assert res == expected
 
-def test_visit_sha256():
+hashing = [(Sha256(), "sha256"), (Keccak256(), "keccak256")]
+
+def test_visit_hash256():
     mes = ""
     conv = TypedConverter(mes)
     json_message = """
@@ -273,16 +279,20 @@ def test_visit_sha256():
             "varRef": {}
         }
     }"""
-    mes = Parse(json_message, Sha256())
+
     bytes_m_type = BytesM(32)
     conv.type_stack.append(bytes_m_type)
     conv._var_tracker.register_global_variable("var0", bytes_m_type)
-    expected = "sha256(self.var0)"
-    res = conv._visit_sha256(mes)
-    assert res == expected
+
+    for proto, name in hashing:
+        mes = Parse(json_message, proto)
+
+        expected = f"{name}(self.var0)"
+        res = conv._visit_hash256(mes, name)
+        assert res == expected
 
 
-def test_visit_sha256_string():
+def test_visit_hash256_string():
     mes = ""
     conv = TypedConverter(mes)
     json_message = """
@@ -293,13 +303,15 @@ def test_visit_sha256_string():
             }
         }
     }"""
-    mes = Parse(json_message, Sha256())
-    expected = "sha256(\"hohohaha\")"
-    res = conv._visit_sha256(mes)
-    assert res == expected
+
+    for proto, name in hashing:
+        mes = Parse(json_message, proto)
+        expected = f"{name}(\"hohohaha\")"
+        res = conv._visit_hash256(mes, name)
+        assert res == expected
 
 
-def test_visit_sha256_string_varref():
+def test_visit_hash256_string_varref():
     mes = ""
     conv = TypedConverter(mes)
     json_message = """
@@ -310,16 +322,18 @@ def test_visit_sha256_string_varref():
             }
         }
     }"""
-    mes = Parse(json_message, Sha256())
     string_type = String(100)
     conv.type_stack.append(string_type)
     conv._var_tracker.register_global_variable("var0", string_type)
-    expected = "sha256(self.var0)"
-    res = conv._visit_sha256(mes)
-    assert res == expected
+
+    for proto, name in hashing:
+        mes = Parse(json_message, proto)
+        expected = f"{name}(self.var0)"
+        res = conv._visit_hash256(mes, name)
+        assert res == expected
 
 
-def test_visit_sha256_bytes():
+def test_visit_hash256_bytes():
     mes = ""
     conv = TypedConverter(mes)
     json_message = """
@@ -330,10 +344,11 @@ def test_visit_sha256_bytes():
             }
         }
     }"""
-    mes = Parse(json_message, Sha256())
-    expected = "sha256(b\"2\")"
-    res = conv._visit_sha256(mes)
-    assert res == expected
+    for proto, name in hashing:
+        mes = Parse(json_message, proto)
+        expected = f"{name}(b\"2\")"
+        res = conv._visit_hash256(mes, name)
+        assert res == expected
 
 
 # def test_function():
@@ -402,7 +417,12 @@ full_cases = [
     "dynamic_array_constant_assignment",
     # "dynamic_array_element_assignment",
     "dynamic_array_assignment",
-    "dynamic_array_statements"
+    "dynamic_array_statements",
+    "send",
+    "ecrecover",
+    "raw_call",
+    "raw_call_bytes_expression",
+    "raw_call_bool_expression"
 ]
 
 
