@@ -102,21 +102,14 @@ class FunctionConverter:
         return order
 
     def setup_order(self, functions):
-        self._func_amount = len(functions)
-        input_names = []
-        for i, function in enumerate(functions):
-            if i >= MAX_FUNCTIONS:
-                break
-
+        self._func_amount = len(functions) if len(functions) <= MAX_FUNCTIONS else MAX_FUNCTIONS
+        for i, function in zip(range(self._func_amount), functions):
             function_name = self._generate_function_name()
             _, input_types, _ = self._params_converter.visit_input_parameters(function.input_params)
-            # input_names.append(names)
             output_types = self._params_converter.visit_output_parameters(function.output_params)
             self._func_tracker.register_function(function_name, function.mut, function.vis, input_types, output_types)
 
-        for i, function in enumerate(functions):
-            if i >= MAX_FUNCTIONS:
-                break
+        for i, function in zip(range(self._func_amount), functions):
             for statement in function.block.statements:
                 self._find_func_call(i, statement)
         self._resolve_cyclic_dependencies()
