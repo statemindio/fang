@@ -4,13 +4,13 @@ x_BYTES_1 : Bytes[382]
 
 @external
 @nonpayable
-def func_0(x_INT_1: uint8):
+def func_0(x_INT_2: uint8):
     self.func_1(0)
 
 
 @internal
 @nonpayable
-def func_1(x_INT_2: uint8):
+def func_1(x_INT_1: uint8):
     self.x_INT_0 = 0
 
 
