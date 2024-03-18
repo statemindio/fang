@@ -68,8 +68,8 @@ class FunctionConverter:
                 continue
             if field[0].name == "func_call":
                 func_index = statement.func_call.func_num % self._func_amount
-                if (func_index not in self._call_tree[i] or
-                        self._func_tracker[func_index].visibility == Func.Visibility.EXTERNAL):
+                if (func_index not in self._call_tree[i] and
+                        self._func_tracker[func_index].visibility != Func.Visibility.EXTERNAL):
                     self._call_tree[i].append(func_index)
             else:
                 self._find_func_call(i, field[1])
@@ -102,18 +102,14 @@ class FunctionConverter:
         return order
 
     def setup_order(self, functions):
-        self._func_amount = len(functions)
-        input_names = []
-        for i, function in enumerate(functions):
-            if i >= MAX_FUNCTIONS:
-                break
-
+        self._func_amount = len(functions) if len(functions) <= MAX_FUNCTIONS else MAX_FUNCTIONS
+        for i, function in zip(range(self._func_amount), functions):
             function_name = self._generate_function_name()
-            input_params, input_types, names = self._params_converter.visit_input_parameters(function.input_params)
-            input_names.append(names)
+            _, input_types, _ = self._params_converter.visit_input_parameters(function.input_params)
             output_types = self._params_converter.visit_output_parameters(function.output_params)
             self._func_tracker.register_function(function_name, function.mut, function.vis, input_types, output_types)
 
+        for i, function in zip(range(self._func_amount), functions):
             for statement in function.block.statements:
                 self._find_func_call(i, statement)
         self._resolve_cyclic_dependencies()
