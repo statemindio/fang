@@ -1,14 +1,9 @@
-# import pprint
-
 import atheris
 import atheris_libprotobuf_mutator
-import sys
 from google.protobuf.json_format import MessageToJson
 
 with atheris.instrument_imports():
     import sys
-    from vyper import compile_code
-    from vyper.exceptions import CompilerPanic
 
 import vyperProtoNew_pb2
 from converters.typed_converters import TypedConverter
@@ -47,24 +42,9 @@ def TestOneProtoInput(msg):
     })
     success += 1
     print(success)
-    # print(proto.result)
-    # print('proto:')
-    # print(MessageToJson(msg))
-    # try:
-    #     comp = compile_code(proto.result)
-    #     print(comp)
-    # except Exception as e:
-    #     errors += 1
-    # print("-------------")
 
 
 if __name__ == '__main__':
-    # try:
     atheris_libprotobuf_mutator.Setup(
         sys.argv, TestOneProtoInput, proto=vyperProtoNew_pb2.Contract)
     atheris.Fuzz()
-    # except Exception as e:
-    #     print(e)
-    # except (KeyboardInterrupt, CountExceeded):
-    #     print(success, errors)
-    # sys.exit(0)
