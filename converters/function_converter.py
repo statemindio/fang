@@ -3,12 +3,13 @@ from collections import defaultdict
 
 from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 from vyperProtoNew_pb2 import Func
+from .utils import extract_type
 
 
 class ParametersConverter:
-    def __init__(self, var_tracker, types_provider):
+    def __init__(self, var_tracker):
         self._var_tracker = var_tracker
-        self._types_provider = types_provider
+        self._types_provider = extract_type
 
     def visit_input_parameters(self, input_params):
         result = ""

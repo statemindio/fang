@@ -1,14 +1,14 @@
 import random
 from collections import defaultdict
 
-from config import MAX_STORAGE_VARIABLES, MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT, MAX_LIST_SIZE
+from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
-from utils import get_nearest_multiple, VALID_CHARS
+from utils import VALID_CHARS
 from var_tracker import VarTracker
-from vyperProtoNew_pb2 import Func
 from .function_converter import FunctionConverter, ParametersConverter
+from .utils import extract_type
 
 PURE = 0
 VIEW = 1
@@ -59,12 +59,6 @@ LITERAL_ATTR_MAP = {
 def get_bin_op(op, op_set):
     return op_set[op]
 
-
-def _has_field(instance, field):
-    try:
-        return instance.HasField(field)
-    except ValueError:
-        return False
 
 
 class TypedConverter:
@@ -127,7 +121,7 @@ class TypedConverter:
         self._immutable_exp = []
         self._function_call_map = defaultdict(list)
         self._current_func = None
-        self._params_converter = ParametersConverter(self._var_tracker, self.visit_type)
+        self._params_converter = ParametersConverter(self._var_tracker)
         self._func_converter = FunctionConverter(self._func_tracker, self._params_converter)
 
     def visit(self):
@@ -173,39 +167,7 @@ class TypedConverter:
             self.result += "\n"
 
     def visit_type(self, instance):
-        if instance.HasField("b"):
-            current_type = Bool()
-        elif instance.HasField("d"):
-            current_type = Decimal()
-        elif instance.HasField("bM"):
-            m = instance.bM.m % 32 + 1
-            current_type = BytesM(m)
-        elif _has_field(instance, "s"):
-            max_len = 1 if instance.s.max_len == 0 else instance.s.max_len
-            current_type = String(max_len)
-        elif instance.HasField("adr"):
-            current_type = Address()
-        elif _has_field(instance, "barr"):
-            max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
-            current_type = Bytes(max_len)
-        elif _has_field(instance, "list"):
-            # TODO: handle size in class?
-            list_len = 1 if instance.list.n == 0 else instance.list.n
-            list_len = list_len if instance.list.n < MAX_LIST_SIZE else MAX_LIST_SIZE
-
-            current_type = self.visit_type(instance.list)
-            current_type = FixedList(list_len, current_type)
-        elif _has_field(instance, "dyn"):
-            list_len = 1 if instance.dyn.n == 0 else instance.dyn.n
-            list_len = list_len if instance.dyn.n < MAX_LIST_SIZE else MAX_LIST_SIZE
-            current_type = self.visit_type(instance.dyn)
-            current_type = DynArray(list_len, current_type)
-        else:
-            n = instance.i.n % 256 + 1
-            n = get_nearest_multiple(n, 8)
-            current_type = Int(n, instance.i.sign)
-
-        return current_type
+        return extract_type(instance)
 
     def _visit_list_expression(self, list):
 
