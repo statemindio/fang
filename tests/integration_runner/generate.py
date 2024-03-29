@@ -41,7 +41,9 @@ def TestOneProtoInput(msg):
     queue = db_queue["test_col"]
     queue.insert_one({
         "result": proto.result,
-        "msg_json": MessageToJson(msg)
+        "msg_json": MessageToJson(msg),
+        "in_queue": False,
+        "compiled": False,
     })
     success += 1
     print(success)
