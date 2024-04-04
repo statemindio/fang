@@ -4,4 +4,6 @@ venv
 vyperProto_pb2.py
 vyperProtoNew_pb2.py
 
+docker/llvm-project
+
 .idea
