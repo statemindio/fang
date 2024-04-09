@@ -1,13 +1,18 @@
 import json
+import os
 
 import pika
 from vyper import compile_code
+
 from db import get_mongo_client
 
 db_ = get_mongo_client()
 compilation_results = db_["compilation_results"]
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port=5672))
+connection = pika.BlockingConnection(pika.ConnectionParameters(
+    host=os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
+    port=int(os.environ.get('QUEUE_BROKER_PORT', 5672))
+))
 channel = connection.channel()
 
 queue_name = 'to_compile'
