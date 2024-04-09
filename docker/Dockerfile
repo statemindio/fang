@@ -1,4 +1,4 @@
-FROM fuzzer/llvm:v0.0.1
+FROM fuzzer/llvm:v0.0.3
 
 ARG DEBIAN_FRONTEND=noninteractive
 
