@@ -1,7 +1,7 @@
 import json
 import os
 
-import pika
+import pika.exceptions
 from vyper import compile_code
 
 from db import get_mongo_client
@@ -35,5 +35,9 @@ def callback(ch, method, properties, body):
     compilation_results.insert_one(gen)
 
 
-channel.basic_consume(queue_name, on_message_callback=callback, auto_ack=True)
-channel.start_consuming()
+while True:
+    try:
+        channel.basic_consume(queue_name, on_message_callback=callback, auto_ack=True)
+        channel.start_consuming()
+    except pika.exceptions.StreamLostError:
+        pass
