@@ -30,6 +30,6 @@ while True:
         queue.update_one({"_id": doc["_id"]}, {"$set": {"in_queue": True}})
         counter += 1
 
-    print("\n\t[ * ] Handled {} messages".format(counter))
+    print("[ * ] Handled {} messages\n".format(counter))
 
     time.sleep(5)
