@@ -12,6 +12,8 @@ services:
       - db
     ports:
       - "27017:27017"
+    volumes:
+      - db:/data/db
   generator:
     image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
     command:
@@ -65,3 +67,6 @@ networks:
     driver: bridge
   db:
     driver: bridge
+
+volumes:
+  db:
