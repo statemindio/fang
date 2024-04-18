@@ -13,7 +13,7 @@ services:
     ports:
       - "27017:27017"
   generator:
-    image: fuzzer/generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
     command:
       - python3.10
       - tests/integration_runner/generate.py
@@ -26,7 +26,7 @@ services:
     depends_on:
       - mongodb
   queue_producer:
-    image: fuzzer/generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
     networks:
       - db
       - queue
@@ -43,7 +43,7 @@ services:
       - mongodb
       - rabbit
   compiler:
-    image: fuzzer/generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
     networks:
       - db
       - queue
