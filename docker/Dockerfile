@@ -18,10 +18,11 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
 RUN mkdir -p /app
 WORKDIR /app
 
+COPY requirements.txt .
 RUN apt install -y git
-
-COPY ../ .
-
 RUN pip3.10 install -r requirements.txt
+
+COPY . .
+
 
 #CMD PYTHONPATH=/app python tests/integration_runner/generate.py

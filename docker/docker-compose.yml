@@ -12,8 +12,10 @@ services:
       - db
     ports:
       - "27017:27017"
+    volumes:
+      - db:/data/db
   generator:
-    image: fuzzer/generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
     command:
       - python3.10
       - tests/integration_runner/generate.py
@@ -26,7 +28,7 @@ services:
     depends_on:
       - mongodb
   queue_producer:
-    image: fuzzer/generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
     networks:
       - db
       - queue
@@ -43,7 +45,7 @@ services:
       - mongodb
       - rabbit
   compiler:
-    image: fuzzer/generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
     networks:
       - db
       - queue
@@ -65,3 +67,6 @@ networks:
     driver: bridge
   db:
     driver: bridge
+
+volumes:
+  db:
