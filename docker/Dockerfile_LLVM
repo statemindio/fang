@@ -1,0 +1,30 @@
+FROM ubuntu:20.04
+
+RUN apt update
+RUN apt upgrade -y
+RUN apt install -y build-essential libssl-dev
+
+RUN apt install -y wget
+
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0.tar.gz
+RUN tar -zxvf cmake-3.20.0.tar.gz
+WORKDIR /cmake-3.20.0
+
+RUN ./bootstrap
+RUN make
+RUN make install
+
+COPY ./docker/llvm-project /llvm-project
+
+WORKDIR /llvm-project
+
+RUN apt install -y python3
+
+RUN cmake -DLLVM_ENABLE_PROJECTS='clang;compiler-rt' -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" -S llvm -B build
+RUN cmake --build build --parallel 1
+
+FROM ubuntu:20.04
+
+COPY --from=0 /llvm-project/build/bin/clang /llvm-project/build/bin/clang
+
+ENV CLANG_BIN=/llvm-project/build/bin/clang

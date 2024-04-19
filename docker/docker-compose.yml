@@ -1,0 +1,72 @@
+version: '3'
+services:
+  rabbit:
+    image: rabbitmq
+    networks:
+      - queue
+    ports:
+      - "5672:5672"
+  mongodb:
+    image: mongo
+    networks:
+      - db
+    ports:
+      - "27017:27017"
+    volumes:
+      - db:/data/db
+  generator:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
+    command:
+      - python3.10
+      - tests/integration_runner/generate.py
+    networks:
+      - db
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+    depends_on:
+      - mongodb
+  queue_producer:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
+    networks:
+      - db
+      - queue
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      QUEUE_BROKER_HOST: rabbit
+      QUEUE_BROKER_PORT: 5672
+    command:
+      - python3.10
+      - tests/integration_runner/queue_producer.py
+    depends_on:
+      - mongodb
+      - rabbit
+  compiler:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
+    networks:
+      - db
+      - queue
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      QUEUE_BROKER_HOST: rabbit
+      QUEUE_BROKER_PORT: 5672
+    command:
+      - python3.10
+      - tests/integration_runner/compile.py
+    depends_on:
+      - mongodb
+      - rabbit
+
+networks:
+  queue:
+    driver: bridge
+  db:
+    driver: bridge
+
+volumes:
+  db:
