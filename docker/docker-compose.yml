@@ -15,7 +15,7 @@ services:
     volumes:
       - db:/data/db
   generator:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
     command:
       - python3.10
       - tests/integration_runner/generate.py
@@ -28,7 +28,7 @@ services:
     depends_on:
       - mongodb
   queue_producer:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
     networks:
       - db
       - queue
@@ -45,7 +45,7 @@ services:
       - mongodb
       - rabbit
   compiler:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.3
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.5
     networks:
       - db
       - queue
