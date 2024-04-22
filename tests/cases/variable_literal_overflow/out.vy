@@ -1,2 +1,2 @@
-C_INT_0 : constant(uint8) = 91
+C_INT_0: constant(uint8) = 91
 

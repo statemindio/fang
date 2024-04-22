@@ -1,4 +1,4 @@
-x_FL_ADDRESS_0 : address[1]
+x_FL_ADDRESS_0: address[1]
 
 @external
 @nonpayable

@@ -1,4 +1,4 @@
-x_INT_0 : uint256
+x_INT_0: uint256
 
 @external
 @view

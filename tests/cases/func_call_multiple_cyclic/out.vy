@@ -1,6 +1,6 @@
-x_INT_0 : uint8
-x_BYTES_0 : Bytes[382]
-x_BYTES_1 : Bytes[382]
+x_INT_0: uint8
+x_BYTES_0: Bytes[382]
+x_BYTES_1: Bytes[382]
 
 @external
 @nonpayable

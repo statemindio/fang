@@ -1,4 +1,4 @@
-x_INT_0 : uint8
+x_INT_0: uint8
 
 @external
 @pure

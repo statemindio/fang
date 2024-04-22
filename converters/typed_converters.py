@@ -281,7 +281,7 @@ class TypedConverter:
         value = self.visit_typed_expression(expr, current_type)
 
         var_name = f"x_{current_type.name}_{str(idx)}"
-        result = var_name + " : " + current_type.vyper_type
+        result = var_name + ": " + current_type.vyper_type
 
         self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type, True)
         result = f"{result} = {value}"
@@ -302,7 +302,7 @@ class TypedConverter:
         }
 
         var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
-        result = var_name + " : "
+        result = var_name + ": "
 
         # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == 0:
@@ -602,7 +602,7 @@ class TypedConverter:
                 variable = random.choice(allowed_vars)
             else:
                 variable = self.__create_variable(t)
-                result = f"{result}{self.code_offset}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
+                result = f"{result}{self.code_offset}{variable}: {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
         result += f"{self.code_offset}"
         if len(output_vars) > 0:

@@ -5,11 +5,11 @@
         "statements": [
           {
             "decl": {
-              "b" : {},
-              "expr" : {
-                "boolExp" : {
-                  "lit" : {
-                    "boolval" : true
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "lit": {
+                    "boolval": true
                   }
                 }
               }
@@ -33,7 +33,7 @@
                       "boolUnOp": {
                         "expr": {
                             "lit":{
-                              "boolval" : true
+                              "boolval": true
                           }
                         }
                       }
