@@ -422,7 +422,8 @@ full_cases = [
     "ecrecover",
     "raw_call",
     "raw_call_bytes_expression",
-    "raw_call_bool_expression"
+    "raw_call_bool_expression",
+    "uint_negation"
 ]
 
 

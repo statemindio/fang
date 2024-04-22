@@ -95,6 +95,26 @@
           }
         ]
       }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "rawCall": {
+              "gas": {
+                "unOp": {
+                  "expr": {
+                    "lit": {
+                      "intval": "288230376151711744"
+                    }
+                  }
+                }
+              },
+              "delegate": {}
+            }
+          }
+        ]
+      }
     }
   ]
 }

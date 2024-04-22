@@ -800,6 +800,7 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        is_signed = self.type_stack[len(self.type_stack) - 1].signed
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
@@ -813,10 +814,11 @@ class TypedConverter:
         if expr.HasField("unOp"):
             self.op_stack.append("unMinus")
             result = self._visit_int_expression(expr.unOp.expr)
-            result = f"-{result}"
-            self.op_stack.pop()
-            if len(self.op_stack) > 0:
-                result = f"({result})"
+            if is_signed:
+                result = f"-{result}"
+                self.op_stack.pop()
+                if len(self.op_stack) > 0:
+                    result = f"({result})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed

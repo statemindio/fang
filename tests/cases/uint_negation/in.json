@@ -1,0 +1,48 @@
+{
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {},
+              "expr": {
+                "intExp": {
+                  "unOp": {
+                    "expr": {
+                      "unOp": {
+                        "expr": {
+                          "lit": {
+                            "intval": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {},
+              "expr": {
+                "intExp": {
+                  "unOp": {
+                    "expr": {
+                      "unOp": {
+                        "expr": {
+                          "varRef": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
