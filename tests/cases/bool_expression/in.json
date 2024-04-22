@@ -42,11 +42,74 @@
                 }
               }
             }
+          },
+          {
+            "assignment": {
+              "ref_id": {
+                "b": {}
+              },
+              "expr": {
+                "boolExp": {
+                  "boolUnOp": {
+                    "expr": {
+                      "boolBinOp":{
+                        "op": "AND",
+                        "left": {
+                          "lit": {
+                            "boolval": true
+                          }
+                        },
+                        "right": {
+                          "lit": {
+                            "boolval": false
+                          }
+                        }
+                      }
+                    }
+                  }   
+                }
+              }
+            }
           }
         ],
         "exit_d": {
           "flag": true
         }
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "assert_stmt": {
+              "cond": {
+                "boolBinOp": {
+                  "op": "INEQ",
+                  "right": {
+                    "boolBinOp": {
+                      "op": "INEQ",
+                      "right": {
+                        "lit": {
+                          "boolval": true
+                        }
+                      },
+                      "left": {
+                        "lit": {
+                          "boolval": false
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "lit": {
+                      "boolval": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   ]

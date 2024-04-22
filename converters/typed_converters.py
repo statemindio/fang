@@ -761,14 +761,22 @@ class TypedConverter:
         #     result = self._visit_convert(expr.convert)
         #     return result
         if expr.HasField("boolBinOp"):
+            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_bool_expression(expr.boolBinOp.left)
             right = self._visit_bool_expression(expr.boolBinOp.right)
-            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
             result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("boolUnOp"):
+            self.op_stack.append("unNot")
             operand = self._visit_bool_expression(expr.boolUnOp.expr)
             result = f"not {operand}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("intBoolBinOp"):
             # TODO: here probably must be different kinds of Int
