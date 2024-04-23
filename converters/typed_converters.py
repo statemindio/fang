@@ -244,7 +244,7 @@ class TypedConverter:
         value = self.visit_typed_expression(expr, current_type)
 
         var_name = f"x_{current_type.name}_{str(idx)}"
-        result = var_name + " : " + current_type.vyper_type
+        result = var_name + ": " + current_type.vyper_type
 
         self._var_tracker.register_function_variable(var_name, self._block_level_count, current_type, True)
         result = f"{result} = {value}"
@@ -265,7 +265,7 @@ class TypedConverter:
         }
 
         var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
-        result = var_name + " : "
+        result = var_name + ": "
 
         # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == 0:
@@ -566,7 +566,7 @@ class TypedConverter:
                 variable = random.choice(allowed_vars)
             else:
                 variable = self.__create_variable(t)
-                result = f"{result}{self.code_offset}{variable} : {t.vyper_type} = empty({t.vyper_type})\n"
+                result = f"{result}{self.code_offset}{variable}: {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
         result += f"{self.code_offset}"
         if len(output_vars) > 0:
@@ -725,14 +725,22 @@ class TypedConverter:
         #     result = self._visit_convert(expr.convert)
         #     return result
         if expr.HasField("boolBinOp"):
+            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_bool_expression(expr.boolBinOp.left)
             right = self._visit_bool_expression(expr.boolBinOp.right)
-            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
             result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("boolUnOp"):
+            self.op_stack.append("unNot")
             operand = self._visit_bool_expression(expr.boolUnOp.expr)
             result = f"not {operand}"
+            self.op_stack.pop()
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("intBoolBinOp"):
             # TODO: here probably must be different kinds of Int
@@ -764,6 +772,7 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        is_signed = self.type_stack[len(self.type_stack) - 1].signed
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
@@ -777,10 +786,11 @@ class TypedConverter:
         if expr.HasField("unOp"):
             self.op_stack.append("unMinus")
             result = self._visit_int_expression(expr.unOp.expr)
-            result = f"-{result}"
-            self.op_stack.pop()
-            if len(self.op_stack) > 0:
-                result = f"({result})"
+            if is_signed:
+                result = f"-{result}"
+                self.op_stack.pop()
+                if len(self.op_stack) > 0:
+                    result = f"({result})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed

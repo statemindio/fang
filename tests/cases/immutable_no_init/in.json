@@ -6,7 +6,7 @@
     },
     {
       "i": {
-        "sign" : true
+        "sign": true
       },
       "mut": "IMMUTABLE",
       "expr": {

@@ -4,7 +4,7 @@
       "input_params": [
         {
           "bM": {
-            "m" : 31
+            "m": 31
           }
         }
       ],
@@ -46,8 +46,8 @@
             "one": {
               "addrExp": {
                 "varRef": {
-                  "adr" : {},
-                  "varnum" : 0
+                  "adr": {},
+                  "varnum": 0
                 }
               }
             }

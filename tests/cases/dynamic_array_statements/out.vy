@@ -1,4 +1,4 @@
-x_DA_FL_INT_0 : DynArray[uint8[2],3]
+x_DA_FL_INT_0: DynArray[uint8[2],3]
 
 @external
 @nonpayable

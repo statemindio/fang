@@ -2,7 +2,7 @@
   "decls": [
     {
       "i":{
-        "sign" : true
+        "sign": true
       }
     }
   ],
@@ -14,7 +14,7 @@
             "assignment": {
               "ref_id": {
                 "i": {
-                  "sign" : true
+                  "sign": true
                 },
                 "varnum": 0
               },

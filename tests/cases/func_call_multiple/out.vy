@@ -1,7 +1,7 @@
-IM_DECIMAL_0 : immutable(decimal)
-x_INT_0 : uint8
-x_BYTES_0 : Bytes[382]
-x_BYTES_1 : Bytes[382]
+IM_DECIMAL_0: immutable(decimal)
+x_INT_0: uint8
+x_BYTES_0: Bytes[382]
+x_BYTES_1: Bytes[382]
 
 @external
 def __init__():
@@ -17,7 +17,7 @@ def func_0(x_INT_1: uint8) -> (uint8, decimal):
 @external
 @nonpayable
 def func_1(x_INT_2: uint8):
-    x_DECIMAL_1 : decimal = empty(decimal)
+    x_DECIMAL_1: decimal = empty(decimal)
     self.x_INT_0, x_DECIMAL_1 = self.func_0(0)
 
 
