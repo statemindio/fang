@@ -1,4 +1,4 @@
-x_BOOL_0 : bool
+x_BOOL_0: bool
 
 @external
 @nonpayable

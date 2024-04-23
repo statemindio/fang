@@ -1,4 +1,4 @@
-x_ADDRESS_0 : address
+x_ADDRESS_0: address
 
 @external
 @pure

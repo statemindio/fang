@@ -23,7 +23,7 @@ def test_var_decl_empty():
   ]
 }
     """
-    expected = """x_INT_0 : uint8
+    expected = """x_INT_0: uint8
 
 """
     conv = convert_message(json_message)
@@ -40,7 +40,7 @@ def test_var_decl_int_empty():
   ]
 }
     """
-    expected = """x_INT_0 : uint8
+    expected = """x_INT_0: uint8
 
 """
     conv = convert_message(json_message)
@@ -60,7 +60,7 @@ def test_var_decl_uint_256():
   ]
 }
     """
-    expected = """x_INT_0 : uint256
+    expected = """x_INT_0: uint256
 
 """
     conv = convert_message(json_message)
@@ -80,7 +80,7 @@ def test_var_decl_int_256():
   ]
 }
     """
-    expected = """x_INT_0 : int256
+    expected = """x_INT_0: int256
 
 """
     conv = convert_message(json_message)
@@ -97,7 +97,7 @@ def test_var_decl_address():
   ]
 }
     """
-    expected = """x_ADDRESS_0 : address
+    expected = """x_ADDRESS_0: address
 
 """
     conv = convert_message(json_message)
@@ -114,7 +114,7 @@ def test_var_decl_bool():
   ]
 }
     """
-    expected = """x_BOOL_0 : bool
+    expected = """x_BOOL_0: bool
 
 """
     conv = convert_message(json_message)
@@ -131,7 +131,7 @@ def test_var_decl_decimal():
   ]
 }
     """
-    expected = """x_DECIMAL_0 : decimal
+    expected = """x_DECIMAL_0: decimal
 
 """
     conv = convert_message(json_message)
@@ -148,7 +148,7 @@ def test_var_decl_bytes_m_empty():
   ]
 }
     """
-    expected = """x_BYTESM_0 : bytes1
+    expected = """x_BYTESM_0: bytes1
 
 """
     conv = convert_message(json_message)
@@ -167,7 +167,7 @@ def test_var_decl_bytes_m_32():
   ]
 }
     """
-    expected = """x_BYTESM_0 : bytes32
+    expected = """x_BYTESM_0: bytes32
 
 """
     conv = convert_message(json_message)
@@ -184,7 +184,7 @@ def test_var_decl_string_empty():
   ]
 }
     """
-    expected = """x_STRING_0 : String[1]
+    expected = """x_STRING_0: String[1]
 
 """
     conv = convert_message(json_message)
@@ -203,7 +203,7 @@ def test_var_decl_string_382():
   ]
 }
     """
-    expected = """x_STRING_0 : String[382]
+    expected = """x_STRING_0: String[382]
 
 """
     conv = convert_message(json_message)
@@ -220,7 +220,7 @@ def test_var_decl_bytes_empty():
   ]
 }
     """
-    expected = """x_BYTES_0 : Bytes[1]
+    expected = """x_BYTES_0: Bytes[1]
 
 """
     conv = convert_message(json_message)
@@ -239,7 +239,7 @@ def test_var_decl_bytes_382():
   ]
 }
     """
-    expected = """x_BYTES_0 : Bytes[382]
+    expected = """x_BYTES_0: Bytes[382]
 
 """
     conv = convert_message(json_message)
@@ -299,7 +299,7 @@ def test_visit_hash256_string():
     {
         "strVal": {
             "lit": {
-                "strval" : "hohohaha"
+                "strval": "hohohaha"
             }
         }
     }"""
@@ -318,7 +318,7 @@ def test_visit_hash256_string_varref():
     {
         "strVal": {
             "varRef": {
-                "s" : {}
+                "s": {}
             }
         }
     }"""
@@ -340,7 +340,7 @@ def test_visit_hash256_bytes():
     {
         "bVal": {
             "lit": {
-                "barrval" : 2
+                "barrval": 2
             }
         }
     }"""
@@ -422,7 +422,8 @@ full_cases = [
     "ecrecover",
     "raw_call",
     "raw_call_bytes_expression",
-    "raw_call_bool_expression"
+    "raw_call_bool_expression",
+    "uint_negation"
 ]
 
 

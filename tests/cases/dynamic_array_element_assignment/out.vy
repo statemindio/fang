@@ -1,4 +1,4 @@
-x_DA_FL_ADDRESS_0 : DynArray[address[2],1]
+x_DA_FL_ADDRESS_0: DynArray[address[2],1]
 
 @external
 @nonpayable

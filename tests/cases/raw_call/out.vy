@@ -12,3 +12,9 @@ def func_1(x_ADDRESS_1: address, x_BYTES_2: Bytes[100]):
     raw_call(x_ADDRESS_1, x_BYTES_2)
 
 
+@external
+@nonpayable
+def func_2():
+    x_BOOL_1: bool = raw_call(0x0000000000000000000000000000000000000000, b"0", gas=288230376151711744, revert_on_failure=False)
+
+

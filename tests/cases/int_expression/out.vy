@@ -1,4 +1,4 @@
-x_INT_0 : int8
+x_INT_0: int8
 
 @external
 @nonpayable

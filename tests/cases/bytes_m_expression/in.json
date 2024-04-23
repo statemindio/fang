@@ -6,14 +6,14 @@
           {
             "decl": {
               "bM": {
-                "m" : 31
+                "m": 31
               },
               "expr": {
                 "bmExp": {
                   "sha": {
                     "bmVal": {
                       "lit": {
-                        "bMval" : "0101"
+                        "bMval": "0101"
                       }
                     }
                   }
@@ -33,14 +33,14 @@
           {
             "decl": {
               "bM": {
-                "m" : 31
+                "m": 31
               },
               "expr": {
                 "bmExp": {
                   "keccak": {
                     "bmVal": {
                       "lit": {
-                        "bMval" : "0101"
+                        "bMval": "0101"
                       }
                     }
                   }
