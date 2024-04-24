@@ -1,10 +1,11 @@
 version: '3'
 services:
   generator:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.6
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.7
     command:
       - python3.10
       - run.py
+      - /corpus
     networks:
       - db
     environment:
@@ -13,6 +14,8 @@ services:
       DB_PORT: 27017
     depends_on:
       - mongodb
+    volumes:
+      - corpus:/corpus
   mongodb:
     image: mongo
     networks:
@@ -28,3 +31,4 @@ networks:
 
 volumes:
   db:
+  corpus:
