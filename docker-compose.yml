@@ -1,0 +1,30 @@
+version: '3'
+services:
+  generator:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.6
+    command:
+      - python3.10
+      - run.py
+    networks:
+      - db
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo
+    networks:
+      - db
+    ports:
+      - "27017:27017"
+    volumes:
+      - db:/data/db
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db:
