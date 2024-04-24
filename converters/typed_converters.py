@@ -688,9 +688,15 @@ class TypedConverter:
 
         if cfb.HasField("rawArgs"):
             self.type_stack.append(Bool())
-            raw_args = self._visit_bool_expression(cfb.rawArgs)
-            result = f"{result}, raw_args = {raw_args}"
+            raw_flag = self.create_literal(cfb.rawArgs.flag)
             self.type_stack.pop()
+
+            if raw_flag == "True":
+                self.type_stack.append(Bytes(100))
+                value = self._visit_bytes_expression(cfb.rawArgs.arg)
+                self.type_stack.pop()
+                result = f"{result}, {value}"
+            result = f"{result}, raw_args = {raw_flag}"
         if cfb.HasField("value"):
             self.type_stack.append(Int(256))
             value = self._visit_int_expression(cfb.value)

@@ -27,8 +27,73 @@
                       }
                     },
                     "rawArgs": {
-                      "lit": {
+                      "arg": {},
+                      "flag": {
                         "boolval": false
+                      }
+                    },
+                    "value": {
+                      "lit": {}
+                    },
+                    "code_offset": {
+                      "lit": {}
+                    },
+                    "salt": {
+                      "varRef": {
+                        "bM": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true,
+          "payload": {
+            "one": {
+              "addrExp": {
+                "varRef": {
+                  "adr": {},
+                  "varnum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 31
+          }
+        }
+      ],
+      "output_params": [
+        {
+          "adr": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "cfb": {
+                    "target": {
+                      "lit": {
+                        "addval": 4919
+                      }
+                    },
+                    "rawArgs": {
+                      "arg": {},
+                      "flag": {
+                        "boolval": true
                       }
                     },
                     "value": {

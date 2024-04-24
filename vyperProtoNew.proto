@@ -645,9 +645,13 @@ message EcRecover {
 }
 
 message CreateFromBlueprint {
+  message RawArgs {
+    BytesExpression arg = 1;
+    Literal flag = 2;
+  }
   AddressExpression target = 1;
   //  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
-  optional BoolExpression rawArgs = 3;
+  optional RawArgs rawArgs = 3;
   optional IntExpression value = 4;
   optional IntExpression code_offset = 5;
   optional BytesMExpression salt = 6;
