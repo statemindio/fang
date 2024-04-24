@@ -19,6 +19,18 @@
           "selfd": {}
         }
       }
+    },
+    {
+      "ret": {
+        "key": "123tes1t2"
+      },
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "selfd": {}
+        }
+      }
     }
   ]
 }

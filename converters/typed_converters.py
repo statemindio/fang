@@ -5,7 +5,7 @@ from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
-from utils import VALID_CHARS
+from utils import VALID_CHARS, INVALID_PREFIX
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
 from .utils import extract_type
@@ -303,9 +303,16 @@ class TypedConverter:
         # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/nodes.py#L878
         # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/identifiers.py#L8
         result = ""
+        valid_prefix = False
         for c in ret.key:
             if c not in VALID_CHARS:
                 continue
+            
+            if c in INVALID_PREFIX and not valid_prefix:
+                continue
+            elif c not in INVALID_PREFIX:
+                valid_prefix = True
+            
             result += c
 
         return f'@nonreentrant("{result}")\n' if result else ""
