@@ -30,6 +30,21 @@
           }
         ]
       }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "assertStmt": {
+              "reason": {
+                "lit": {
+                  "strval": "\u0000\u0000\u0000\u0000"
+                }
+              }
+            }
+          }
+        ]
+      }
     }
   ]
 }
