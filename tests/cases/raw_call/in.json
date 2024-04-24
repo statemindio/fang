@@ -115,6 +115,43 @@
           }
         ]
       }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "rawCall": {
+              "data": {},
+              "static": {}
+            }
+          },
+          {
+            "rawCall": {
+              "static": {}
+            }
+          },
+          {
+            "rawCall": {
+              "max_out": {
+                "intval": 20
+              },
+              "revert": {
+                "boolval": true
+              }
+            }
+          },
+          {
+            "rawCall": {
+              "max_out": {
+                "intval": 20
+              },
+              "revert": {
+                "boolval": true
+              }
+            }
+          }
+        ]
+      }
     }
   ]
 }

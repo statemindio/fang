@@ -1077,9 +1077,9 @@ class TypedConverter:
                     bool_decl += " = False\n"
                 result = f"{bool_decl}{bytes_decl}{self.code_offset}{status}, {response} = {result}"
             elif max_out != 0:
-                result = f"{bytes_decl if len(bytes_decl) > 0 else response} = {result}"
+                result = f"{bytes_decl if len(bytes_decl) > 0 else self.code_offset + response} = {result}"
             elif revert == "False":
-                result = f"{bool_decl if len(bool_decl) > 0 else status} = {result}"
+                result = f"{bool_decl if len(bool_decl) > 0 else self.code_offset + status} = {result}"
             else:
                 result = f"{self.code_offset}{result}"
 
