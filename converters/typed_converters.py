@@ -571,6 +571,9 @@ class TypedConverter:
             allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t)
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
+                global_vars = self._var_tracker.get_global_vars(t)
+                if variable in global_vars and self._mutability_level < NON_PAYABLE:
+                    self._mutability_level = NON_PAYABLE
             else:
                 variable = self.__create_variable(t)
                 result = f"{result}{self.code_offset}{variable}: {t.vyper_type} = empty({t.vyper_type})\n"

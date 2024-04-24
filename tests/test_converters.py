@@ -423,7 +423,8 @@ full_cases = [
     "raw_call",
     "raw_call_bytes_expression",
     "raw_call_bool_expression",
-    "uint_negation"
+    "uint_negation",
+    "func_call_var_mutability"
 ]
 
 
