@@ -2,15 +2,14 @@ import atheris
 import atheris_libprotobuf_mutator
 from google.protobuf.json_format import MessageToJson
 
+import vyperProtoNew_pb2
 from db import get_mongo_client
 
 with atheris.instrument_imports():
     import sys
     import vyper
+    from converters.typed_converters import TypedConverter
     from vyper.exceptions import CompilerPanic, StaticAssertionException
-
-import vyperProtoNew_pb2
-from converters.typed_converters import TypedConverter
 
 db_client = get_mongo_client()
 
