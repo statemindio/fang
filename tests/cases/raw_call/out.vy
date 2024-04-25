@@ -18,3 +18,12 @@ def func_2():
     x_BOOL_1: bool = raw_call(0x0000000000000000000000000000000000000000, b"0", gas=288230376151711744, revert_on_failure=False)
 
 
+@external
+@nonpayable
+def func_3():
+    x_BOOL_2: bool = raw_call(0x0000000000000000000000000000000000000000, b"0", revert_on_failure=False)
+    x_BOOL_2 = raw_call(0x0000000000000000000000000000000000000000, b"0", revert_on_failure=False)
+    x_BYTES_3: Bytes[20] = raw_call(0x0000000000000000000000000000000000000000, b"0", max_outsize=20)
+    x_BYTES_3 = raw_call(0x0000000000000000000000000000000000000000, b"0", max_outsize=20)
+
+

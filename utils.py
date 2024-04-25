@@ -12,6 +12,7 @@ from data_types import Int, Bytes, Address, Decimal, String, Bool
 
 BASE_TAB = "    "  # 4 spaces
 VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+INVALID_PREFIX = "123456789"
 
 def get_spaces(nesting_level):
     return BASE_TAB * nesting_level

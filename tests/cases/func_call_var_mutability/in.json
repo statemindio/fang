@@ -1,0 +1,27 @@
+
+{
+  "decls": [
+    {}
+  ],
+  "functions": [
+    {
+      "vis": "INTERNAL",
+      "outputParams": [
+        {}
+      ]
+    },
+    {
+      "vis": "INTERNAL",
+      "block": {
+        "statements": [
+          {
+            "funcCall": {}
+          }
+        ],
+        "exitD": {
+          "flag": true
+        }
+      }
+    }
+  ]
+}

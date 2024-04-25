@@ -5,7 +5,7 @@ from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
-from utils import VALID_CHARS
+from utils import VALID_CHARS, INVALID_PREFIX
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
 from .utils import extract_type
@@ -303,9 +303,16 @@ class TypedConverter:
         # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/nodes.py#L878
         # https://github.com/vyperlang/vyper/blob/55e18f6d128b2da8986adbbcccf1cd59a4b9ad6f/vyper/ast/identifiers.py#L8
         result = ""
+        valid_prefix = False
         for c in ret.key:
             if c not in VALID_CHARS:
                 continue
+            
+            if c in INVALID_PREFIX and not valid_prefix:
+                continue
+            elif c not in INVALID_PREFIX:
+                valid_prefix = True
+            
             result += c
 
         return f'@nonreentrant("{result}")\n' if result else ""
@@ -564,6 +571,9 @@ class TypedConverter:
             allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t)
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
+                global_vars = self._var_tracker.get_global_vars(t)
+                if variable in global_vars and self._mutability_level < NON_PAYABLE:
+                    self._mutability_level = NON_PAYABLE
             else:
                 variable = self.__create_variable(t)
                 result = f"{result}{self.code_offset}{variable}: {t.vyper_type} = empty({t.vyper_type})\n"
@@ -681,9 +691,15 @@ class TypedConverter:
 
         if cfb.HasField("rawArgs"):
             self.type_stack.append(Bool())
-            raw_args = self._visit_bool_expression(cfb.rawArgs)
-            result = f"{result}, raw_args = {raw_args}"
+            raw_flag = self.create_literal(cfb.rawArgs.flag)
             self.type_stack.pop()
+
+            if raw_flag == "True":
+                self.type_stack.append(Bytes(100))
+                value = self._visit_bytes_expression(cfb.rawArgs.arg)
+                self.type_stack.pop()
+                result = f"{result}, {value}"
+            result = f"{result}, raw_args = {raw_flag}"
         if cfb.HasField("value"):
             self.type_stack.append(Int(256))
             value = self._visit_int_expression(cfb.value)
@@ -1064,9 +1080,9 @@ class TypedConverter:
                     bool_decl += " = False\n"
                 result = f"{bool_decl}{bytes_decl}{self.code_offset}{status}, {response} = {result}"
             elif max_out != 0:
-                result = f"{bytes_decl if len(bytes_decl) > 0 else response} = {result}"
+                result = f"{bytes_decl if len(bytes_decl) > 0 else self.code_offset + response} = {result}"
             elif revert == "False":
-                result = f"{bool_decl if len(bool_decl) > 0 else status} = {result}"
+                result = f"{bool_decl if len(bool_decl) > 0 else self.code_offset + status} = {result}"
             else:
                 result = f"{self.code_offset}{result}"
 

@@ -47,7 +47,7 @@ class StringRandomGen:
         l = random.randint(0, 2 ** 8 - 1)  # EXPLAINED: randomly generate len of string
         if l > m:
             l = m
-        s = ''.join(random.choices(string.ascii_letters + string.digits, k=l))
+        s = ''.join(random.choices(string.ascii_letters + string.digits, k=l)) # TODO: i think can use more chars
         return f'"{s}"'
 
 

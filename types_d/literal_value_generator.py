@@ -62,7 +62,7 @@ class StringLiteralGen:
     def generate(self, m, value):
         result = ""
         for c in value:
-            if ord(c) >= 256:
+            if ord(c) >= 256 or ord(c) == 0:
                 continue
             result += c
             
