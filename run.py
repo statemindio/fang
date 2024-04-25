@@ -1,33 +1,43 @@
 import atheris
 import atheris_libprotobuf_mutator
-import sys
 from google.protobuf.json_format import MessageToJson
+
+import vyperProtoNew_pb2
+from db import get_mongo_client
 
 with atheris.instrument_imports():
     import sys
-    from vyper import compile_code
+    import vyper
+    from converters.typed_converters import TypedConverter
     from vyper.exceptions import CompilerPanic, StaticAssertionException
 
-import vyperProtoNew_pb2
-from converters.typed_converters import TypedConverter
+db_client = get_mongo_client()
 
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
+    data = {
+        "json_msg": MessageToJson(msg),
+        "generation_result": None,
+        "compilation_result": None,
+        "error_type": None,
+        "error_message": None
+    }
+    c_log = db_client["compilation_log"]
     proto = TypedConverter(msg)
     proto.visit()
-    print(proto.result)
-    print('proto:')
-    print(MessageToJson(msg))
-    print('compiler:')
+    data["generation_result"] = proto.result
     try:
-        print(compile_code(proto.result))
-    except StaticAssertionException:
-        print("StaticAssertionException")
-    print("-------------")
+        c_result = vyper.compile_code(proto.result)
+        data["compilation_result"] = c_result
+    except Exception as e:
+        data["error_type"] = type(e).__name__
+        data["error_message"] = str(e)
+
+    c_log.insert_one(data)
 
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(
-        [sys.argv[0]], TestOneProtoInput, proto=vyperProtoNew_pb2.Contract)
+        sys.argv, TestOneProtoInput, proto=vyperProtoNew_pb2.Contract)
     atheris.Fuzz()

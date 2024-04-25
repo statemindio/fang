@@ -24,5 +24,6 @@ RUN pip3.10 install -r requirements.txt
 
 COPY . .
 
+RUN mkdir -p /corpus
 
 #CMD PYTHONPATH=/app python tests/integration_runner/generate.py
