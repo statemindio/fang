@@ -1,4 +1,4 @@
-from config import MAX_LIST_SIZE
+from config import MAX_LIST_SIZE, MAX_BYTESTRING_SIZE
 from types_d import Bool, Decimal, BytesM, String, Address, Bytes, FixedList, DynArray, Int
 from utils import get_nearest_multiple
 
@@ -20,11 +20,13 @@ def extract_type(instance):
         current_type = BytesM(m)
     elif _has_field(instance, "s"):
         max_len = 1 if instance.s.max_len == 0 else instance.s.max_len
+        max_len = max_len if max_len < MAX_BYTESTRING_SIZE else MAX_BYTESTRING_SIZE
         current_type = String(max_len)
     elif instance.HasField("adr"):
         current_type = Address()
     elif _has_field(instance, "barr"):
         max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len
+        max_len = max_len if max_len < MAX_BYTESTRING_SIZE else MAX_BYTESTRING_SIZE
         current_type = Bytes(max_len)
     elif _has_field(instance, "list"):
         # TODO: handle size in class?

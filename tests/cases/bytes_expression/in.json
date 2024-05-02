@@ -24,6 +24,28 @@
           "flag": true
         }
       }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "barr": {
+                "max_len": 65536
+              },
+              "expr": {
+                "bExp": {
+                  "lit": {
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "exit_d": {
+          "flag": true
+        }
+      }
     }
   ]
 }

@@ -5,7 +5,7 @@ from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
-from utils import VALID_CHARS, INVALID_PREFIX
+from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
 from .utils import extract_type
@@ -315,7 +315,7 @@ class TypedConverter:
             
             result += c
 
-        return f'@nonreentrant("{result}")\n' if result else ""
+        return f'@nonreentrant("{result}")\n' if result and result.lower() not in RESERVED_KEYWORDS else ""
 
     def __get_mutability(self, mut):
         return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
