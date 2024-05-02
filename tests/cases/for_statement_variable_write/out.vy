@@ -6,3 +6,11 @@ def func_0():
 
 
 
+@external
+@pure
+def func_1():
+    for i_2 in range(1):
+        x_INT_3: uint256 = 5
+
+
+

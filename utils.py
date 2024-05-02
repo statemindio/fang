@@ -12,7 +12,7 @@ from data_types import Int, Bytes, Address, Decimal, String, Bool
 
 BASE_TAB = "    "  # 4 spaces
 VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-INVALID_PREFIX = "123456789"
+INVALID_PREFIX = "0123456789"
 
 _PYTHON_RESERVED_KEYWORDS = {
     "False",
