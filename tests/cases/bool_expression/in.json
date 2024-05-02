@@ -111,6 +111,92 @@
           }
         ]
       }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "refId": {
+                "varnum": 2152
+              }
+            },
+            "assertStmt": {
+              "cond": {
+                "boolBinOp": {
+                  "op": "EQ",
+                  "right": {
+                    "decBoolBinOp": {
+                      "op": "LESS",
+                      "right": {
+                        "unOp": {
+                          "expr": {
+                            "unOp": {
+                              "expr": {
+                                "binOp": {
+                                  "right": {
+                                    "varRef": {
+                                      "varnum": 4096
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "lit": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "refId": {
+                "varnum": 2152
+              }
+            },
+            "assertStmt": {
+              "cond": {
+                "boolBinOp": {
+                  "op": "EQ",
+                  "right": {
+                    "intBoolBinOp": {
+                      "op": "LESS",
+                      "right": {
+                        "unOp": {
+                          "expr": {
+                            "unOp": {
+                              "expr": {
+                                "binOp": {
+                                  "right": {
+                                    "varRef": {
+                                      "varnum": 4096
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "lit": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     }
   ]
 }

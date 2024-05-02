@@ -761,19 +761,29 @@ class TypedConverter:
         if expr.HasField("intBoolBinOp"):
             # TODO: here probably must be different kinds of Int
             self.type_stack.append(Int(256))
+            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.intBoolBinOp.left)
             right = self._visit_int_expression(expr.intBoolBinOp.right)
-            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
-            result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
             self.type_stack.pop()
+            
+            result = f"{left} {bin_op} {right}"
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("decBoolBinOp"):
             self.type_stack.append(Decimal())
+            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.decBoolBinOp.left)
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
-            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
-            result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
             self.type_stack.pop()
+            
+            result = f"{left} {bin_op} {right}"
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
@@ -802,9 +812,9 @@ class TypedConverter:
         if expr.HasField("unOp"):
             self.op_stack.append("unMinus")
             result = self._visit_int_expression(expr.unOp.expr)
+            self.op_stack.pop()
             if is_signed:
                 result = f"-{result}"
-                self.op_stack.pop()
                 if len(self.op_stack) > 0:
                     result = f"({result})"
             return result
