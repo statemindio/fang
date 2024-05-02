@@ -13,6 +13,8 @@ with atheris.instrument_imports():
 
 db_client = get_mongo_client()
 
+__version__ = "0.0.8"  # same version as images' one
+
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -21,7 +23,8 @@ def TestOneProtoInput(msg):
         "generation_result": None,
         "compilation_result": None,
         "error_type": None,
-        "error_message": None
+        "error_message": None,
+        "generator_version": __version__,
     }
     c_log = db_client["compilation_log"]
     proto = TypedConverter(msg)
