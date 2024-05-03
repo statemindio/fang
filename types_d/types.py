@@ -84,13 +84,12 @@ class Int(BaseType):
 
     def generate_literal(self, value):
         return self._literal_generator.generate(self._n, self._signed, value)
-    
+
     def check_literal_bounds(self, value):
         try:
             e_val = eval(value)
             low, up = self._literal_generator._get_value_boundaries(self._n, self._signed)
             if low > e_val or e_val > up:
-                print(low, e_val, up)
                 return self._literal_generator.generate(self._n, self._signed, e_val)
         except:
             pass

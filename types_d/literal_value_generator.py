@@ -65,6 +65,6 @@ class StringLiteralGen:
             if ord(c) >= 256 or ord(c) == 0:
                 continue
             result += c
-            
+
         result = result if len(result) <= m * 2 else result[:m * 2]
         return result
