@@ -12,3 +12,15 @@ def func_1():
     assert False != (False != True)
 
 
+@external
+@pure
+def func_2():
+    assert False == (0.0 < (-(-(0.0 + 0.0))))
+
+
+@external
+@pure
+def func_3():
+    assert False == (0 < (0 + 0))
+
+

@@ -31,6 +31,42 @@
           "selfd": {}
         }
       }
+    },
+    {
+      "ret": {
+        "key": "return"
+      },
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "selfd": {}
+        }
+      }
+    },
+    {
+      "ret": {
+        "key": "123return"
+      },
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "selfd": {}
+        }
+      }
+    },
+    {
+      "ret": {
+        "key": "return123"
+      },
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "selfd": {}
+        }
+      }
     }
   ]
 }

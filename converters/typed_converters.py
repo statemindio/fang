@@ -5,7 +5,7 @@ from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
-from utils import VALID_CHARS, INVALID_PREFIX
+from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
 from .utils import extract_type
@@ -315,7 +315,7 @@ class TypedConverter:
             
             result += c
 
-        return f'@nonreentrant("{result}")\n' if result else ""
+        return f'@nonreentrant("{result}")\n' if result and result.lower() not in RESERVED_KEYWORDS else ""
 
     def __get_mutability(self, mut):
         return self.MUTABILITY_MAPPING[max(self._mutability_level, mut)]
@@ -424,7 +424,7 @@ class TypedConverter:
             self.type_stack.pop()
         length = for_stmt_variable.length
         if length == 0:
-            length += 1
+            length = 1
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
@@ -761,19 +761,29 @@ class TypedConverter:
         if expr.HasField("intBoolBinOp"):
             # TODO: here probably must be different kinds of Int
             self.type_stack.append(Int(256))
+            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.intBoolBinOp.left)
             right = self._visit_int_expression(expr.intBoolBinOp.right)
-            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
-            result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
             self.type_stack.pop()
+            
+            result = f"{left} {bin_op} {right}"
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("decBoolBinOp"):
             self.type_stack.append(Decimal())
+            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.decBoolBinOp.left)
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
-            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
-            result = f"{left} {bin_op} {right}"
+            self.op_stack.pop()
             self.type_stack.pop()
+            
+            result = f"{left} {bin_op} {right}"
+            if len(self.op_stack) > 0:
+                result = f"({result})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
@@ -802,9 +812,9 @@ class TypedConverter:
         if expr.HasField("unOp"):
             self.op_stack.append("unMinus")
             result = self._visit_int_expression(expr.unOp.expr)
+            self.op_stack.pop()
             if is_signed:
                 result = f"-{result}"
-                self.op_stack.pop()
                 if len(self.op_stack) > 0:
                     result = f"({result})"
             return result

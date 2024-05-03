@@ -39,6 +39,44 @@
           }
         ]
       }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "for_stmt": {
+              "variable": {
+                "ref_id": {
+                  "i": {}
+                },
+                "length": 0
+              },
+              "body": {
+                "statements": [
+                {
+                  "assignment": {
+                      "ref_id": {
+                        "i": {
+                          "n": 511,
+                          "sign": false
+                        },
+                        "varnum": 0
+                      },
+                      "expr": {
+                      "intExp": {
+                        "lit": {
+                          "intval": 5
+                        }
+                      }
+                    }
+                  }
+                }
+               ]
+              }
+            }
+          }
+        ]
+      }
     }
   ]
 }

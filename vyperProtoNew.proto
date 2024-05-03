@@ -449,7 +449,7 @@ message ForStmtRanged {
 // ref_id for range(x, x + N)
 message ForStmtVariable {
   optional VarRef ref_id = 1;
-  int32 length = 2;
+  uint32 length = 2;
 }
 
 message ForStmt {
