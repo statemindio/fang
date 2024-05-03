@@ -423,7 +423,7 @@ class TypedConverter:
             variable = self._visit_var_ref(for_stmt_variable.ref_id, self._block_level_count)
             self.type_stack.pop()
         length = for_stmt_variable.length
-        if length <= 0:
+        if length == 0:
             length = 1
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
