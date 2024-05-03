@@ -798,13 +798,16 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
-        is_signed = self.type_stack[len(self.type_stack) - 1].signed
+        current_type = self.type_stack[len(self.type_stack) - 1]
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.binOp.left)
             right = self._visit_int_expression(expr.binOp.right)
             result = f"{left} {bin_op} {right}"
+
+            result = current_type.check_literal_bounds(result)
+
             self.op_stack.pop()
             if len(self.op_stack) > 0:
                 result = f"({result})"
@@ -813,8 +816,9 @@ class TypedConverter:
             self.op_stack.append("unMinus")
             result = self._visit_int_expression(expr.unOp.expr)
             self.op_stack.pop()
-            if is_signed:
+            if current_type.signed:
                 result = f"-{result}"
+                result = current_type.check_literal_bounds(result)
                 if len(self.op_stack) > 0:
                     result = f"({result})"
             return result
