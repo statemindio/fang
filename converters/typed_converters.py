@@ -856,7 +856,7 @@ class TypedConverter:
         result = f"{name}("
         if expr.HasField("strVal"):
             self.type_stack.append(String(100))
-            value = self._visit_string_expression(expr.strVal)
+            value = self._visit_string_expression(expr.strVal) # can be empty?
             self.type_stack.pop()
             return f"{result}{value})"
         if expr.HasField("bVal"):
