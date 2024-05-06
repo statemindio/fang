@@ -186,14 +186,13 @@ class TypedConverter:
         value = handler(list.rexp)
 
         for i, expr in enumerate(list.exp):
-            expr_val = handler(expr)
+            # TODO: move size handling to type class
+            if list_size == MAX_LIST_SIZE or list_size == current_type.size:
+                break
 
+            expr_val = handler(expr)
             list_size += 1
             value += f", {expr_val}"
-            # TODO: move size handling to type class
-            if list_size == MAX_LIST_SIZE or \
-                    (isinstance(current_type, DynArray) and list_size == current_type.size):
-                break
         self.type_stack.pop()
 
         if list_size < current_type.size and not isinstance(base_type, FixedList):
@@ -829,14 +828,23 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        # TODO: perhaps with added convert might be removed
+        current_type = self.type_stack[len(self.type_stack) - 1]
         if expr.HasField("sha"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             name = "sha256"
-            return self._visit_hash256(expr.sha, name)
+            result = self._visit_hash256(expr.sha, name)
+
+            if current_type.m != 32:
+                result = f"convert({result}, bytes{current_type.m})"
+            return result
         if expr.HasField("keccak"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             name = "keccak256"
-            return self._visit_hash256(expr.keccak, name)
+            result = self._visit_hash256(expr.keccak, name)
+            if current_type.m != 32:
+                result = f"convert({result}, bytes{current_type.m})"
+            return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
