@@ -60,11 +60,14 @@ class DecimalLiteralGen:
 
 class StringLiteralGen:
     def generate(self, m, value):
+        # 32 - space cant exist alone
+        invalid_symbols = [0, 9, 10, 11, 12, 13, 28, 29, 30, 31, 34, 92, 133, 160]
+
         result = ""
         for c in value:
-            if ord(c) >= 256 or ord(c) == 0:
+            if ord(c) >= 256 or ord(c) in invalid_symbols:
                 continue
             result += c
-            
+
         result = result if len(result) <= m * 2 else result[:m * 2]
         return result
