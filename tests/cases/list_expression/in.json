@@ -18,6 +18,25 @@
           ]
         }
       }
+    },
+    {
+      "i": {
+        "n": 2560,
+        "sign": true
+      },
+      "expr": {
+        "intList": {
+          "exp": [
+            {
+              "binOp": {
+                "op": "BIT_XOR"
+              }
+            }
+          ]
+        }
+      },
+      "mut": "CONSTANT",
+      "list": {}
     }
   ]
 }

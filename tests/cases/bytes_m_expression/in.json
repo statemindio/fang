@@ -53,6 +53,42 @@
           "flag": true
         }
       }
+    },
+    {
+      "outputParams": [
+        {
+          "bM": {}
+        },
+        {
+          "i": {
+            "n": 2097152000
+          }
+        },
+        {
+          "i": {
+            "sign": true
+          }
+        }
+      ],
+      "block": {
+        "exitD": {
+          "payload": {
+            "one": {
+              "bmExp": {
+                "keccak": {
+                  "bmVal": {
+                    "varRef": {
+                      "i": {
+                        "sign": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

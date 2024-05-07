@@ -336,6 +336,14 @@ class VarTracker:
                     continue
                 self._vars[self.READONLY_KEY][vyper_type][level] = []
         # self._vars[self.READONLY_KEY] = {}
+
+        self._lists[self.FUNCTION_KEY] = {}
+        for vyper_type, level_vars in self._lists[self.READONLY_KEY].items():
+            for level, variables in level_vars.items():
+                if level == 0:
+                    continue
+                self._lists[self.READONLY_KEY][vyper_type][level] = []
+
         self._var_id_map = copy.copy(self._global_var_id_map)
 
     def get_readonly_variables(self, level: int, var_type: BaseType):
