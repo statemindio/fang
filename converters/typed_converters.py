@@ -836,14 +836,14 @@ class TypedConverter:
             result = self._visit_hash256(expr.sha, name)
 
             if current_type.m != 32:
-                result = f"convert({result}, bytes{current_type.m})"
+                result = f"convert({result}, {current_type.vyper_type})"
             return result
         if expr.HasField("keccak"):
             # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             name = "keccak256"
             result = self._visit_hash256(expr.keccak, name)
             if current_type.m != 32:
-                result = f"convert({result}, bytes{current_type.m})"
+                result = f"convert({result}, {current_type.vyper_type})"
             return result
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
