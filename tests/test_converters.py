@@ -425,6 +425,7 @@ full_cases = [
     "raw_call_bool_expression",
     "uint_negation",
     "func_call_var_mutability",
+    "literal_expression_folding",
     "input_variable_tracker"
 ]
 

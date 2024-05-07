@@ -1,0 +1,111 @@
+{
+    "functions": [
+      {
+        "ret": {},
+        "block": {
+          "exitD": {
+            "selfd": {
+              "to": {
+                "cfb": {
+                  "target": {
+                    "cfb": {
+                      "target": {
+                        "cfb": {
+                          "codeOffset": {
+                            "binOp": {
+                              "op": "SUB",
+                              "right": {
+                                "binOp": {
+                                  "op": "EXP",
+                                  "right": {}
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "codeOffset": {
+                        "binOp": {
+                          "op": "EXP",
+                          "right": {
+                            "binOp": {
+                              "op": "EXP",
+                              "left": {
+                                "lit": {
+                                  "intval": "648518346341351423"
+                                }
+                              },
+                              "right": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "lit": {
+                  "bMval": "////////////////////////////////////////////////////////////////",
+                  "strval": "\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f\u007f"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "block": {
+            "statements": [ 
+                {
+                    "decl": {
+                        "i": {
+                            "sign": true
+                        },
+                        "expr": {
+                            "intExp": {
+                                "unOp": {
+                                    "expr": {
+                                        "lit": {
+                                            "intval": 256
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "decl": {
+                        "expr": {
+                            "intExp": {
+                                "binOp": {
+                                    "op": "ADD",
+                                    "left": {
+                                        "binOp": {
+                                            "op": "MUL",
+                                            "left": {
+                                                "lit": {
+                                                    "intval": 255
+                                                }
+                                            },
+                                            "right": {
+                                                "lit": {
+                                                    "intval": 2
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "right": {
+                                        "lit": {
+                                            "intval": 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+      }
+    ]
+  }
