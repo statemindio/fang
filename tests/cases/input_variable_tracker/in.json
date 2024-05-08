@@ -1,0 +1,67 @@
+{
+  "functions": [
+    {
+      "ret": {
+        "key": "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+      },
+      "block": {
+        "statements": [
+          {
+            "assignment": {
+              "refId": {
+                "varnum": 4194304
+              }
+            },
+            "assertStmt": {
+              "cond": {
+                "boolUnOp": {
+                  "expr": {
+                    "varRef": {
+                      "varnum": 4194304
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {},
+          {
+            "assertStmt": {}
+          }
+        ]
+      }
+    },
+    {
+      "ret": {
+        "key": "#"
+      },
+      "inputParams": [
+        {
+          "list": {
+            "b": {},
+            "n": 268435456
+          }
+        }
+      ]
+    },
+    {
+      "mut": "NONPAYABLE",
+      "inputParams": [
+        {},
+        {
+          "i": {}
+        }
+      ]
+    },
+    {
+      "inputParams": [
+        {
+          "i": {
+            "n": 2560
+          },
+          "b": {}
+        }
+      ]
+    }
+  ]
+}
