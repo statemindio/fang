@@ -3,6 +3,7 @@ import copy
 from types_d.base import BaseType
 from types_d.types import FixedList, DynArray
 
+
 class VarTracker:
     """
     Manages variables, tracks its ID and provides access to variables up to a certain level of block.
@@ -98,7 +99,7 @@ class VarTracker:
             for i in range(var_type.size):
                 self._register_global_list(f"{name}[{i}]", var_type.base_type)
 
-    def _get_global_dyn_arrays(self, var_type: DynArray, max_size: int):
+    def _get_global_dyn_arrays(self, var_type: DynArray, assignee=False):
         """
 
         :param var_type:
@@ -111,13 +112,13 @@ class VarTracker:
 
         for t in types:
             for s in self._dyns[self.GLOBAL_KEY].get(t, {}):
-                if s <= max_size:
+                if (s <= var_type.max_size and not assignee) or (s >= var_type.max_size and assignee):
                     allowed_vars.extend(self._dyns[self.GLOBAL_KEY][t][s])
         allowed_vars = [f"self.{v}" for v in allowed_vars]
 
         return allowed_vars
 
-    def _get_function_dyn_arrays(self, level: int, var_type: DynArray, max_size: int, mutable: bool):
+    def _get_function_dyn_arrays(self, level: int, var_type: DynArray, mutable: bool, assignee=False):
         """
 
         :param level:
@@ -139,7 +140,7 @@ class VarTracker:
                     continue
                 for s in self._dyns[key][t][l]:
                     # size
-                    if s <= max_size:
+                    if (s <= var_type.max_size and not assignee) or (s >= var_type.max_size and assignee):
                         allowed_vars.extend(self._dyns[key][t][l][s])
 
         return allowed_vars
@@ -213,7 +214,6 @@ class VarTracker:
         self._var_id_map[var_type.name] = self.next_id(var_type)
         if not mutable and level == 0:
             self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
-
 
     def register_global_variable(self, name, var_type: BaseType):
         """
@@ -356,7 +356,7 @@ class VarTracker:
         allowed_vars = []
 
         if isinstance(var_type, DynArray):
-            allowed_vars = self._get_function_dyn_arrays(level, var_type, var_type.max_size, False)
+            allowed_vars = self._get_function_dyn_arrays(level, var_type, False)
             return allowed_vars
 
         allowed_vars.extend(self._get_list_items(level, var_type, False))
@@ -364,7 +364,7 @@ class VarTracker:
             allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
         return allowed_vars
 
-    def get_all_allowed_vars(self, level: int, var_type: BaseType):
+    def get_all_allowed_vars(self, level: int, var_type: BaseType, **kwargs):
         """
 
         :param level:
@@ -375,7 +375,7 @@ class VarTracker:
         allowed_vars = self.get_global_vars(var_type)
 
         if isinstance(var_type, DynArray):
-            allowed_vars.extend(self._get_function_dyn_arrays(level, var_type, var_type.max_size, True))
+            allowed_vars.extend(self._get_function_dyn_arrays(level, var_type, True, kwargs.get("assignee", False)))
             return allowed_vars
 
         for i in range(level + 1):
@@ -385,14 +385,14 @@ class VarTracker:
 
         return allowed_vars
 
-    def get_global_vars(self, var_type: BaseType):
+    def get_global_vars(self, var_type: BaseType, **kwargs):
         """
 
         :param var_type:
         :return: list of allowed global variables
         """
         if isinstance(var_type, DynArray):
-            allowed_vars = self._get_global_dyn_arrays(var_type, var_type.max_size)
+            allowed_vars = self._get_global_dyn_arrays(var_type, kwargs.get("assignee", False))
             return allowed_vars
 
         allowed_vars = [f"self.{v}" for v in self._vars[self.GLOBAL_KEY].get(var_type.vyper_type, [])]
