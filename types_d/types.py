@@ -104,6 +104,9 @@ class Int(BaseType):
             if val_right is None and val_left is None:
                 left = "1"
 
+        if (bin_op == "<<" or bin_op == ">>") and self._n != 256:
+            bin_op = "+"
+
         if bin_op == "<<" or bin_op == ">>":
             if val_right is not None and val_right > 256:
                 right = f"{val_right % 257}"

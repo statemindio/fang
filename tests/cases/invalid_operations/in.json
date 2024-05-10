@@ -112,6 +112,30 @@
                 }
               }
             }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "RIGHT_SHIFT",
+                    "left": {
+                      "lit": {
+                        "intval": 1
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 258
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         ]
       }
