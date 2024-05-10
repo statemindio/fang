@@ -793,6 +793,35 @@ class TypedConverter:
             return self._visit_raw_call(expr.raw_call, expr_bool=True)
         return self.create_literal(expr.lit)
 
+    def check_binop_bounds(self, left, binop, right):
+        try:
+            val_left = eval(left)
+        except:
+            val_left = None  
+
+        try:
+            val_right = eval(right)
+        except:
+            val_right = None 
+
+        # not sure how exactly change affected values
+        if binop == "**":
+            if val_right is not None and val_right < 0:
+                right = f"-{right}"
+
+            if val_right is None and val_left is None:
+                left = "1"
+
+        if binop == "<<" or binop == ">>":
+            if val_right is not None and val_right > 256:
+                right = f"{val_right % 257}"
+
+        if binop == "/" or binop == "%":
+            if val_right is not None and val_right == 0:
+                right = "1"
+
+        return left, binop, right
+
     def _visit_int_expression(self, expr):
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
@@ -803,8 +832,9 @@ class TypedConverter:
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.binOp.left)
             right = self._visit_int_expression(expr.binOp.right)
-            result = f"{left} {bin_op} {right}"
 
+            left, bin_op, right = current_type.check_binop_bounds(left, bin_op, right)
+            result = f"{left} {bin_op} {right}"
             result = current_type.check_literal_bounds(result)
 
             self.op_stack.pop()

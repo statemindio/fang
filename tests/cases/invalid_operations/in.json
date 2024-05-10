@@ -1,0 +1,120 @@
+{
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "DIV",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "MOD",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "LEFT_SHIFT",
+                    "left": {
+                      "lit": {
+                        "intval": 1
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 258
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "RIGHT_SHIFT",
+                    "left": {
+                      "lit": {
+                        "intval": 1
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 258
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "EXP",
+                    "left": {
+                      "varRef": {}
+                    },
+                    "right": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

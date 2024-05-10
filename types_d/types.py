@@ -85,6 +85,35 @@ class Int(BaseType):
     def generate_literal(self, value):
         return self._literal_generator.generate(self._n, self._signed, value)
 
+    def check_binop_bounds(self, left, bin_op, right):
+        try:
+            val_left = eval(left)
+        except:
+            val_left = None  
+
+        try:
+            val_right = eval(right)
+        except:
+            val_right = None 
+
+        # not sure how exactly change affected values
+        if bin_op == "**":
+            if val_right is not None and val_right < 0:
+                right = f"-{right}"
+
+            if val_right is None and val_left is None:
+                left = "1"
+
+        if bin_op == "<<" or bin_op == ">>":
+            if val_right is not None and val_right > 256:
+                right = f"{val_right % 257}"
+
+        if bin_op == "/" or bin_op == "%":
+            if val_right is not None and val_right == 0:
+                right = "1"
+
+        return left, bin_op, right
+
     def check_literal_bounds(self, value):
         try:
             e_val = eval(value)
