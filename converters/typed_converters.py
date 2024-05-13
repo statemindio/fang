@@ -615,17 +615,31 @@ class TypedConverter:
             result = f"{result}{statement_result}\n"
 
         if (self._block_level_count == 1 or block.exit_d.flag or len(block.statements) == 0):
-            exit_result = ""
-            # can omit return statement if no outputs
-            if block.exit_d.HasField("selfd"):
-                exit_result = self._visit_selfd(block.exit_d.selfd)
-            elif block.exit_d.HasField("raise_st"):
-                exit_result = self._visit_raise_statement(block.exit_d.raise_st)
-            elif len(self._function_output) > 0 or block.exit_d.flag or len(block.statements) == 0:
-                exit_result = self._visit_return_payload(block.exit_d.payload)
-
+            exit_result = self._visit_exit_statement(block.exit_d, len(block.statements) == 0)
             result = f"{result}{exit_result}\n"
 
+        return result
+
+    def _visit_exit_statement(self, exit_st, force_return):
+        exit_result = ""
+        # can omit return statement if no outputs
+        if exit_st.HasField("selfd"):
+            exit_result = self._visit_selfd(exit_st.selfd)
+        elif exit_st.HasField("raise_st"):
+            exit_result = self._visit_raise_statement(exit_st.raise_st)
+        elif exit_st.HasField("raw_revert"):
+            exit_result = self._visit_raw_revert(exit_st.raw_revert)
+        elif len(self._function_output) > 0 or exit_st.flag or force_return:
+            exit_result = self._visit_return_payload(exit_st.payload)
+
+        return exit_result
+
+    def _visit_raw_revert(self, expr):
+        self.type_stack.append(Bytes(100))
+        data = self._visit_bytes_expression(expr.data)
+        self.type_stack.pop()
+
+        result = f"{self.code_offset}raw_revert({data})"
         return result
 
     def _visit_return_payload(self, return_p):

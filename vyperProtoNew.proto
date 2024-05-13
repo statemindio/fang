@@ -689,11 +689,16 @@ message ExitStatement {
   oneof exit_st {
     Selfdestruct selfd = 3;
     RaiseStatement raise_st = 4;
+    RawRevert raw_revert = 5;
   }
 }
 
 message RaiseStatement {
   StringExpression errval = 1;
+}
+
+message RawRevert {
+  BytesExpression data = 1;
 }
 
 message ReturnPayload {
