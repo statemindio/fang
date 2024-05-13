@@ -9,6 +9,7 @@ from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
 from .utils import extract_type
+from vyperProtoNew_pb2 import VarDecl
 
 PURE = 0
 VIEW = 1
@@ -278,18 +279,18 @@ class TypedConverter:
         result = var_name + ": "
 
         # TODO: somehow must change size, if has been written to afterwards
-        if variable.mut == 0:
+        if variable.mut == VarDecl.Mutability.REGULAR:
             result += current_type.vyper_type
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
-            if variable.mut == 1:
+            if variable.mut == VarDecl.Mutability.CONSTANT:
                 self._is_constant = True
             value = self.visit_typed_expression(variable.expr, current_type)
             self._is_constant = False
 
             self._var_tracker.register_function_variable(var_name, 0, current_type, False)
 
-            if variable.mut == 1:
+            if variable.mut == VarDecl.Mutability.CONSTANT:
                 result += f"constant({current_type.vyper_type})"
                 result = f"{result} = {value}"
             else:
