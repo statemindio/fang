@@ -1,0 +1,30 @@
+{
+  "decls": [
+    {
+      "i": {
+        "n": 2560
+      },
+      "adr": {},
+      "expr": {
+        "addrExp": {
+          "cco": {
+            "salt": {
+              "lit": {
+                "strval": "\u0000\u0000"
+              }
+            }
+          }
+        },
+        "intExp": {
+          "lit": {
+            "barrval": 3909091328
+          }
+        },
+        "addrDyn": {
+          "rexp": {}
+        }
+      },
+      "mut": "CONSTANT"
+    }
+  ]
+}

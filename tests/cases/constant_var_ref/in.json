@@ -1,0 +1,36 @@
+{
+  "decls": [
+    {
+      "i": {
+        "n": 2560
+      },
+      "adr": {}
+    },
+    {
+      "i": {
+        "n": 2560
+      },
+      "adr": {},
+      "expr": {
+        "addrExp": {
+          "cmp": {
+          }
+        }
+      },
+      "mut": "CONSTANT"
+    },
+    {
+      "i": {
+        "n": 2560
+      },
+      "adr": {},
+      "expr": {
+        "addrExp": {
+          "varRef": {
+          }
+        }
+      },
+      "mut": "CONSTANT"
+    }
+  ]
+}
