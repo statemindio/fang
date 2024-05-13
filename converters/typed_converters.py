@@ -568,8 +568,10 @@ class TypedConverter:
         result = ""
         for t in func_obj.output_parameters:
             allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t, assignee=True)
-            if len(allowed_vars) >= len(func_obj.output_parameters):
+            variable = None
+            if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
+            if variable is not None and variable not in output_vars:
                 global_vars = self._var_tracker.get_global_vars(t)
                 if variable in global_vars and self._mutability_level < NON_PAYABLE:
                     self._mutability_level = NON_PAYABLE
