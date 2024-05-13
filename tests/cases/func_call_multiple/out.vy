@@ -17,8 +17,7 @@ def func_0(x_INT_1: uint8) -> (uint8, decimal):
 @external
 @nonpayable
 def func_1(x_INT_2: uint8):
-    x_INT_3: uint8 = empty(uint8)
     x_DECIMAL_1: decimal = empty(decimal)
-    x_INT_3, x_DECIMAL_1 = self.func_0(0)
+    self.x_INT_0, x_DECIMAL_1 = self.func_0(0)
 
 
