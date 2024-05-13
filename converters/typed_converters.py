@@ -9,6 +9,7 @@ from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
 from .utils import extract_type
+from vyperProtoNew_pb2 import VarDecl
 
 PURE = 0
 VIEW = 1
@@ -123,6 +124,7 @@ class TypedConverter:
         self._current_func = None
         self._params_converter = ParametersConverter(self._var_tracker)
         self._func_converter = FunctionConverter(self._func_tracker, self._params_converter)
+        self._is_constant = False
 
     def visit(self):
         """
@@ -206,6 +208,16 @@ class TypedConverter:
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
+
+        if self._is_constant:
+            allowed_vars = self._var_tracker.get_readonly_variables(level, current_type)
+            if len(allowed_vars) == 0:
+                return None
+            variable = random.choice(allowed_vars)
+            if variable[0] != "C":
+                return None
+            return variable
+
         allowed_vars = self._var_tracker.get_global_vars(
             current_type
         ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
@@ -267,14 +279,18 @@ class TypedConverter:
         result = var_name + ": "
 
         # TODO: somehow must change size, if has been written to afterwards
-        if variable.mut == 0:
+        if variable.mut == VarDecl.Mutability.REGULAR:
             result += current_type.vyper_type
             self._var_tracker.register_global_variable(var_name, current_type)
         else:
+            if variable.mut == VarDecl.Mutability.CONSTANT:
+                self._is_constant = True
             value = self.visit_typed_expression(variable.expr, current_type)
+            self._is_constant = False
+
             self._var_tracker.register_function_variable(var_name, 0, current_type, False)
 
-            if variable.mut == 1:
+            if variable.mut == VarDecl.Mutability.CONSTANT:
                 result += f"constant({current_type.vyper_type})"
                 result = f"{result} = {value}"
             else:
@@ -642,12 +658,12 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
-        if expr.HasField("cmp"):
+        if expr.HasField("cmp") and not self._is_constant:
             name = "create_minimal_proxy_to"
             return self.visit_create_min_proxy_or_copy_of(expr.cmp, name)
-        if expr.HasField("cfb"):
+        if expr.HasField("cfb") and not self._is_constant:
             return self.visit_create_from_blueprint(expr.cfb)
-        if expr.HasField("cco"):
+        if expr.HasField("cco") and not self._is_constant:
             name = "create_copy_of"
             return self.visit_create_min_proxy_or_copy_of(expr.cco, name)
         if expr.HasField("ecRec"):
@@ -789,7 +805,7 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        if expr.HasField("raw_call"):
+        if expr.HasField("raw_call") and not self._is_constant:
             return self._visit_raw_call(expr.raw_call, expr_bool=True)
         return self.create_literal(expr.lit)
 
@@ -912,7 +928,7 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        if expr.HasField("raw_call"):
+        if expr.HasField("raw_call") and not self._is_constant:
             byte_size = self.type_stack[len(self.type_stack) - 1].m
             return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
         return self.create_literal(expr.lit)
