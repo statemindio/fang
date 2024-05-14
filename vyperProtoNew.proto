@@ -255,6 +255,7 @@ message FixedListInt{
   oneof other {
     VarRef varRef = 3;
     EcAdd ecadd = 4;
+    EcMul ecmul = 5;
   }
   IntExpression rexp = 1;
   repeated IntExpression exp = 2;
@@ -753,4 +754,9 @@ message RawCall {
 message EcAdd {
   FixedListInt x = 1;
   FixedListInt y = 2;
+}
+
+message EcMul {
+  FixedListInt point = 1;
+  IntExpression scalar = 2;
 }

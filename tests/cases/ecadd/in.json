@@ -30,7 +30,16 @@
                   "x": {
                     "ecadd": {
                       "x": {
-                        "varRef": {}
+                        "ecmul": {
+                          "point": {
+                            "varRef": {}
+                          },
+                          "scalar": {
+                            "lit": {
+                              "intval": 7
+                            }
+                          }
+                        }
                       },
                       "y": {
                         "varRef": {}

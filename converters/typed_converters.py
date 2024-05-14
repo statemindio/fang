@@ -181,8 +181,11 @@ class TypedConverter:
         current_type = self.type_stack[len(self.type_stack) - 1]
         base_type = current_type.base_type
 
-        if isinstance(base_type, Int) and base_type.n == 256 and current_type.size == 2 and list.HasField("ecadd"):
-            return self._visit_ecadd(list.ecadd)
+        if isinstance(base_type, Int) and base_type.n == 256 and current_type.size == 2:
+            if list.HasField("ecadd"):
+                return self._visit_ecadd(list.ecadd)
+            if list.HasField("ecmul"):
+                return self._visit_ecmul(list.ecmul)
 
         handler, _ = self._expression_handlers[base_type.name]
         list_size = 1
@@ -1176,6 +1179,17 @@ class TypedConverter:
         self.type_stack.pop()
 
         return f"ecadd({x}, {y})"
+
+    def _visit_ecmul(self, ecmul):
+        self.type_stack.append(FixedList(2, Int(256)))
+        point = self._visit_list_expression(ecmul.point)
+        self.type_stack.pop()
+
+        self.type_stack.append(Int(256))
+        scalar = self._visit_int_expression(ecmul.scalar)
+        self.type_stack.pop()
+
+        return f"ecmul({point}, {scalar})"
 
     @property
     def code_offset(self):
