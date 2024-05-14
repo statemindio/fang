@@ -506,8 +506,19 @@ message Statement {
     PopArray pop_stmt = 12;
     SendStatement send_stmt = 13;
     RawCall raw_call = 14;
+    RawLog raw_log = 15;
   }
   AssignmentStatement assignment = 2;
+}
+
+message RawLog {
+  FixedListBytesM topics = 1;
+  uint32 topic_amount = 2;
+
+  oneof data {
+    BytesExpression data_bs = 3;
+  }
+  BytesMExpression data_bm = 4;
 }
 
 message Block {

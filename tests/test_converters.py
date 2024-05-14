@@ -428,7 +428,8 @@ full_cases = [
     "literal_expression_folding",
     "input_variable_tracker",
     "constant_only_literal",
-    "constant_var_ref"
+    "constant_var_ref",
+    "raw_log"
 ]
 
 

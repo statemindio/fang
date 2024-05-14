@@ -564,7 +564,28 @@ class TypedConverter:
             return self._visit_send_stmt(statement.send_stmt)
         if statement.HasField("raw_call"):
             return self._visit_raw_call(statement.raw_call)
+        if statement.HasField("raw_log"):
+            return self._visit_raw_log(statement.raw_log)
         return self._visit_assignment(statement.assignment)
+
+    def _visit_raw_log(self, raw_log):
+        MAX_RAW_LOG_TOPICS = 4
+        topic_amount = (raw_log.topic_amount - 1) % MAX_RAW_LOG_TOPICS + 1
+
+        self.type_stack.append(FixedList(topic_amount, BytesM(32)))
+        topics = self._visit_list_expression(raw_log.topics)
+        self.type_stack.pop()
+
+        if raw_log.HasField("data_bs"):
+            self.type_stack.append(Bytes(100))
+            data = self._visit_bytes_expression(raw_log.data_bs)
+            self.type_stack.pop()
+        else:
+            self.type_stack.append(BytesM(32))
+            data = self._visit_bytes_m_expression(raw_log.data_bm)
+            self.type_stack.pop()
+
+        return f"{self.code_offset}raw_log({topics}, {data})"
 
     def __create_variable(self, var_type):
         idx = self._var_tracker.next_id(var_type)
