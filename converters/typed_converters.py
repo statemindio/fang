@@ -181,6 +181,9 @@ class TypedConverter:
         current_type = self.type_stack[len(self.type_stack) - 1]
         base_type = current_type.base_type
 
+        if isinstance(base_type, Int) and base_type.n == 256 and current_type.size == 2 and list.HasField("ecadd"):
+            return self._visit_ecadd(list.ecadd)
+
         handler, _ = self._expression_handlers[base_type.name]
         list_size = 1
 
@@ -204,7 +207,7 @@ class TypedConverter:
 
         # current_type.adjust_size(list_size)
 
-        return f"[{value}]"
+        return f"[{value}]"           
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
@@ -1165,6 +1168,14 @@ class TypedConverter:
             self._mutability_level = NON_PAYABLE
 
         return result
+
+    def _visit_ecadd(self, ecadd):
+        self.type_stack.append(FixedList(2, Int(256)))
+        x = self._visit_list_expression(ecadd.x)
+        y = self._visit_list_expression(ecadd.y)
+        self.type_stack.pop()
+
+        return f"ecadd({x}, {y})"
 
     @property
     def code_offset(self):

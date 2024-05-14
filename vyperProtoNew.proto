@@ -254,6 +254,7 @@ message FixedListBytesM{
 message FixedListInt{
   oneof other {
     VarRef varRef = 3;
+    EcAdd ecadd = 4;
   }
   IntExpression rexp = 1;
   repeated IntExpression exp = 2;
@@ -747,4 +748,9 @@ message RawCall {
   Literal delegate = 6;
   Literal static = 7;
   Literal revert = 8;
+}
+
+message EcAdd {
+  FixedListInt x = 1;
+  FixedListInt y = 2;
 }

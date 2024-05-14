@@ -1,0 +1,62 @@
+{
+  "functions": [
+    {
+      "inputParams": [
+        {
+          "list": {
+            "i": {
+              "n": 255
+            },
+            "n": 2
+          }
+        }
+      ],
+      "outputParams": [
+        {
+          "list": {
+            "i": {
+              "n": 255
+            },
+            "n": 2
+          }
+        }
+      ],
+      "block": {
+        "exit_d": {
+          "payload": {
+            "one": {
+              "intList": {
+                "ecadd": {
+                  "x": {
+                    "ecadd": {
+                      "x": {
+                        "varRef": {}
+                      },
+                      "y": {
+                        "varRef": {}
+                      }
+                    }
+                  },
+                  "y": {
+                    "rexp": {
+                      "lit": {
+                        "intval": 7
+                      }
+                    },
+                    "exp": [
+                      {
+                        "lit": {
+                          "intval": 7
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -429,7 +429,8 @@ full_cases = [
     "input_variable_tracker",
     "constant_only_literal",
     "constant_var_ref",
-    "raw_log"
+    "raw_log",
+    "ecadd"
 ]
 
 
