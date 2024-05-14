@@ -821,8 +821,9 @@ class TypedConverter:
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.binOp.left)
             right = self._visit_int_expression(expr.binOp.right)
-            result = f"{left} {bin_op} {right}"
 
+            left, bin_op, right = current_type.check_binop_bounds(left, bin_op, right)
+            result = f"{left} {bin_op} {right}"
             result = current_type.check_literal_bounds(result)
 
             self.op_stack.pop()

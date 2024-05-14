@@ -1,0 +1,179 @@
+{
+  "functions": [
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "DIV",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "MOD",
+                    "left": {
+                      "lit": {
+                        "intval": 2
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "LEFT_SHIFT",
+                    "left": {
+                      "lit": {
+                        "intval": 1
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 258
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "RIGHT_SHIFT",
+                    "left": {
+                      "lit": {
+                        "intval": 1
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 258
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "EXP",
+                    "left": {
+                      "varRef": {}
+                    },
+                    "right": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "RIGHT_SHIFT",
+                    "left": {
+                      "lit": {
+                        "intval": 1
+                      }
+                    },
+                    "right": {
+                      "lit": {
+                        "intval": 258
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 63,
+                "sign": true
+              },
+              "expr": {
+                "intExp": {
+                  "binOp": {
+                    "op": "EXP",
+                    "left": {
+                      "lit": {
+                        "intval": 9223372036854775810
+                      }
+                    },
+                    "right": {
+                      "binOp": {
+                        "op": "SUB",
+                        "left": {
+                          "lit": {
+                            "intval": 9223372036854775808
+                          }
+                        },
+                        "right": {
+                          "lit": {
+                            "intval": 9223372036854775809
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
