@@ -178,7 +178,7 @@ class TypedConverter:
             if result is not None:
                 return result
 
-        current_type = current_type = self.type_stack[len(self.type_stack) - 1]
+        current_type = self.type_stack[len(self.type_stack) - 1]
         base_type = current_type.base_type
 
         handler, _ = self._expression_handlers[base_type.name]
@@ -322,12 +322,12 @@ class TypedConverter:
         for c in ret.key:
             if c not in VALID_CHARS:
                 continue
-            
+
             if c in INVALID_PREFIX and not valid_prefix:
                 continue
             elif c not in INVALID_PREFIX:
                 valid_prefix = True
-            
+
             result += c
 
         return f'@nonreentrant("{result}")\n' if result and result.lower() not in RESERVED_KEYWORDS else ""
