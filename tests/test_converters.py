@@ -430,7 +430,9 @@ full_cases = [
     "constant_only_literal",
     "constant_var_ref",
     "raw_log",
-    "ecadd"
+    "ecadd",
+    "concat_string",
+    "concat_bytes"
 ]
 
 

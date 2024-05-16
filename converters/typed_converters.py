@@ -972,6 +972,8 @@ class TypedConverter:
         if expr.HasField("raw_call") and not self._is_constant:
             byte_size = self.type_stack[len(self.type_stack) - 1].m
             return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
+        if expr.HasField("concat"):
+            return self._visit_concat_bytes(expr.concat)
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
@@ -983,6 +985,8 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        if expr.HasField("concat"):
+            return self._visit_concat_string(expr.concat)
         return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
@@ -1191,6 +1195,88 @@ class TypedConverter:
 
         return f"ecmul({point}, {scalar})"
 
+    def _visit_concat_string(self, concat):
+        current_type = self.type_stack[-1]
+        max_size = current_type.m
+        a_size, b_size = concat.a.s_size, concat.b.s_size
+
+        total_size = a_size + b_size
+        if a_size + b_size > max_size:
+            a_size, b_size = a_size*max_size//total_size, b_size*max_size//total_size
+            total_size = a_size + b_size
+
+        self.type_stack.append(String(a_size))
+        a = self._visit_string_expression(concat.a.s)
+        self.type_stack.pop()
+
+        self.type_stack.append(String(b_size))
+        b = self._visit_string_expression(concat.b.s)
+        self.type_stack.pop()
+
+        result = f"concat({a}, {b}"
+
+        for i, exp in enumerate(concat.c):
+            if max_size >= total_size + exp.s_size:
+                self.type_stack.append(String(exp.s_size))
+                c = self._visit_string_expression(exp.s)
+                self.type_stack.pop()
+                result = f"{result}, {c}"
+                total_size += exp.s_size
+
+        result += ")"
+
+        return result
+
+    def _visit_concat_bytes(self, concat):
+        current_type = self.type_stack[-1]
+        max_size = current_type.m
+        a_size, b_size = concat.a.s_size, concat.b.s_size
+
+        total_size = a_size + b_size
+        if a_size + b_size > max_size:
+            a_size, b_size = a_size*max_size//total_size, b_size*max_size//total_size
+
+        if concat.a.HasField("b_bm") and a_size != 0:
+            a_size = a_size if a_size <= 32 else 32
+            self.type_stack.append(BytesM(a_size))
+            a = self._visit_bytes_m_expression(concat.a.b_bm)
+            self.type_stack.pop()
+        else:
+            self.type_stack.append(Bytes(a_size))
+            a = self._visit_bytes_expression(concat.a.b_bs)
+            self.type_stack.pop()
+
+        if concat.b.HasField("b_bm") and b_size != 0:
+            b_size = b_size if b_size <= 32 else 32
+            self.type_stack.append(BytesM(b_size))
+            b = self._visit_bytes_m_expression(concat.b.b_bm)
+            self.type_stack.pop()
+        else:
+            self.type_stack.append(Bytes(b_size))
+            b = self._visit_bytes_expression(concat.b.b_bs)
+            self.type_stack.pop()
+
+        total_size = a_size + b_size
+
+        result = f"concat({a}, {b}"
+        for i, exp in enumerate(concat.c):
+            c_size = exp.s_size
+            if max_size >= total_size + c_size:
+                if exp.HasField("b_bm") and c_size != 0:
+                    c_size = c_size if c_size <= 32 else 32
+                    self.type_stack.append(BytesM(c_size))
+                    c = self._visit_bytes_m_expression(exp.b_bm)
+                    self.type_stack.pop()
+                else:
+                    self.type_stack.append(Bytes(c_size))
+                    c = self._visit_bytes_expression(exp.b_bs)
+                    self.type_stack.pop()
+                result = f"{result}, {c}"
+                total_size += c_size
+
+        result += ")"
+
+        return result
     @property
     def code_offset(self):
         return self.TAB * self._block_level_count
