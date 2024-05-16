@@ -174,6 +174,7 @@ message BytesExpression {
     VarRef varRef = 1;
     RawCall raw_call = 2;
     //    Convert convert = 2;
+    ConcatBytes concat = 4;
   }
   Literal lit = 3;
 }
@@ -182,6 +183,7 @@ message StringExpression {
   oneof expr {
     VarRef varRef = 1;
     //    Convert convert = 2;
+    ConcatString concat = 2;
   }
   Literal lit = 3;
 }
@@ -254,6 +256,8 @@ message FixedListBytesM{
 message FixedListInt{
   oneof other {
     VarRef varRef = 3;
+    EcAdd ecadd = 4;
+    EcMul ecmul = 5;
   }
   IntExpression rexp = 1;
   repeated IntExpression exp = 2;
@@ -368,8 +372,8 @@ message Literal {
   uint64 decimalval = 3; // TO-DO: make this as int64 to enable signed variables
   bytes bMval = 4;
   string strval = 5;
-  uint32 addval = 6;
-  uint32 barrval = 7;
+  uint64 addval = 6;
+  uint64 barrval = 7;
   uint64 intval = 1; // check if we can make it just int
 }
 
@@ -506,8 +510,19 @@ message Statement {
     PopArray pop_stmt = 12;
     SendStatement send_stmt = 13;
     RawCall raw_call = 14;
+    RawLog raw_log = 15;
   }
   AssignmentStatement assignment = 2;
+}
+
+message RawLog {
+  FixedListBytesM topics = 1;
+  uint32 topic_amount = 2;
+
+  oneof data {
+    BytesExpression data_bs = 3;
+  }
+  BytesMExpression data_bm = 4;
 }
 
 message Block {
@@ -689,11 +704,16 @@ message ExitStatement {
   oneof exit_st {
     Selfdestruct selfd = 3;
     RaiseStatement raise_st = 4;
+    RawRevert raw_revert = 5;
   }
 }
 
 message RaiseStatement {
   StringExpression errval = 1;
+}
+
+message RawRevert {
+  BytesExpression data = 1;
 }
 
 message ReturnPayload {
@@ -731,4 +751,39 @@ message RawCall {
   Literal delegate = 6;
   Literal static = 7;
   Literal revert = 8;
+}
+
+message EcAdd {
+  FixedListInt x = 1;
+  FixedListInt y = 2;
+}
+
+message EcMul {
+  FixedListInt point = 1;
+  IntExpression scalar = 2;
+}
+
+message ConcatString {
+  StringTypeSize a = 1;
+  StringTypeSize b = 2;
+  repeated StringTypeSize c = 3;
+}
+
+message StringTypeSize {
+  StringExpression s = 1;
+  uint32 s_size = 2;
+}
+
+message ConcatBytes {
+  BytesTypesSize a = 1;
+  BytesTypesSize b = 2;
+  repeated BytesTypesSize c = 3;
+}
+
+message BytesTypesSize {
+  oneof bytes {
+    BytesMExpression b_bm = 1;
+  }
+  BytesExpression b_bs = 2;
+  uint32 s_size = 3;
 }

@@ -178,8 +178,14 @@ class TypedConverter:
             if result is not None:
                 return result
 
-        current_type = current_type = self.type_stack[len(self.type_stack) - 1]
+        current_type = self.type_stack[len(self.type_stack) - 1]
         base_type = current_type.base_type
+
+        if isinstance(base_type, Int) and base_type.n == 256 and current_type.size == 2:
+            if list.HasField("ecadd"):
+                return self._visit_ecadd(list.ecadd)
+            if list.HasField("ecmul"):
+                return self._visit_ecmul(list.ecmul)
 
         handler, _ = self._expression_handlers[base_type.name]
         list_size = 1
@@ -204,7 +210,7 @@ class TypedConverter:
 
         # current_type.adjust_size(list_size)
 
-        return f"[{value}]"
+        return f"[{value}]"           
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
@@ -322,12 +328,12 @@ class TypedConverter:
         for c in ret.key:
             if c not in VALID_CHARS:
                 continue
-            
+
             if c in INVALID_PREFIX and not valid_prefix:
                 continue
             elif c not in INVALID_PREFIX:
                 valid_prefix = True
-            
+
             result += c
 
         return f'@nonreentrant("{result}")\n' if result and result.lower() not in RESERVED_KEYWORDS else ""
@@ -564,7 +570,28 @@ class TypedConverter:
             return self._visit_send_stmt(statement.send_stmt)
         if statement.HasField("raw_call"):
             return self._visit_raw_call(statement.raw_call)
+        if statement.HasField("raw_log"):
+            return self._visit_raw_log(statement.raw_log)
         return self._visit_assignment(statement.assignment)
+
+    def _visit_raw_log(self, raw_log):
+        MAX_RAW_LOG_TOPICS = 4
+        topic_amount = (raw_log.topic_amount - 1) % MAX_RAW_LOG_TOPICS + 1
+
+        self.type_stack.append(FixedList(topic_amount, BytesM(32)))
+        topics = self._visit_list_expression(raw_log.topics)
+        self.type_stack.pop()
+
+        if raw_log.HasField("data_bs"):
+            self.type_stack.append(Bytes(100))
+            data = self._visit_bytes_expression(raw_log.data_bs)
+            self.type_stack.pop()
+        else:
+            self.type_stack.append(BytesM(32))
+            data = self._visit_bytes_m_expression(raw_log.data_bm)
+            self.type_stack.pop()
+
+        return f"{self.code_offset}raw_log({topics}, {data})"
 
     def __create_variable(self, var_type):
         idx = self._var_tracker.next_id(var_type)
@@ -617,17 +644,31 @@ class TypedConverter:
             result = f"{result}{statement_result}\n"
 
         if (self._block_level_count == 1 or block.exit_d.flag or len(block.statements) == 0):
-            exit_result = ""
-            # can omit return statement if no outputs
-            if block.exit_d.HasField("selfd"):
-                exit_result = self._visit_selfd(block.exit_d.selfd)
-            elif block.exit_d.HasField("raise_st"):
-                exit_result = self._visit_raise_statement(block.exit_d.raise_st)
-            elif len(self._function_output) > 0 or block.exit_d.flag or len(block.statements) == 0:
-                exit_result = self._visit_return_payload(block.exit_d.payload)
-
+            exit_result = self._visit_exit_statement(block.exit_d, len(block.statements) == 0)
             result = f"{result}{exit_result}\n"
 
+        return result
+
+    def _visit_exit_statement(self, exit_st, force_return):
+        exit_result = ""
+        # can omit return statement if no outputs
+        if exit_st.HasField("selfd"):
+            exit_result = self._visit_selfd(exit_st.selfd)
+        elif exit_st.HasField("raise_st"):
+            exit_result = self._visit_raise_statement(exit_st.raise_st)
+        elif exit_st.HasField("raw_revert"):
+            exit_result = self._visit_raw_revert(exit_st.raw_revert)
+        elif len(self._function_output) > 0 or exit_st.flag or force_return:
+            exit_result = self._visit_return_payload(exit_st.payload)
+
+        return exit_result
+
+    def _visit_raw_revert(self, expr):
+        self.type_stack.append(Bytes(100))
+        data = self._visit_bytes_expression(expr.data)
+        self.type_stack.pop()
+
+        result = f"{self.code_offset}raw_revert({data})"
         return result
 
     def _visit_return_payload(self, return_p):
@@ -934,6 +975,8 @@ class TypedConverter:
         if expr.HasField("raw_call") and not self._is_constant:
             byte_size = self.type_stack[len(self.type_stack) - 1].m
             return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
+        if expr.HasField("concat"):
+            return self._visit_concat_bytes(expr.concat)
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
@@ -945,6 +988,8 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        if expr.HasField("concat"):
+            return self._visit_concat_string(expr.concat)
         return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
@@ -1133,6 +1178,71 @@ class TypedConverter:
             self._mutability_level = NON_PAYABLE
 
         return result
+
+    def _visit_ecadd(self, ecadd):
+        self.type_stack.append(FixedList(2, Int(256)))
+        x = self._visit_list_expression(ecadd.x)
+        y = self._visit_list_expression(ecadd.y)
+        self.type_stack.pop()
+
+        return f"ecadd({x}, {y})"
+
+    def _visit_ecmul(self, ecmul):
+        self.type_stack.append(FixedList(2, Int(256)))
+        point = self._visit_list_expression(ecmul.point)
+        self.type_stack.pop()
+
+        self.type_stack.append(Int(256))
+        scalar = self._visit_int_expression(ecmul.scalar)
+        self.type_stack.pop()
+
+        return f"ecmul({point}, {scalar})"
+
+    def _visit_concat(self, concat, expr_handler):
+        current_type = self.type_stack[-1]
+        max_size = current_type.m
+        a_size, b_size = concat.a.s_size, concat.b.s_size
+
+        total_size = a_size + b_size
+        if a_size + b_size > max_size:
+            a_size, b_size = a_size*max_size//total_size, b_size*max_size//total_size
+
+        a, a_size = expr_handler(concat.a, a_size)
+        b, b_size = expr_handler(concat.b, b_size)
+        total_size = a_size + b_size
+
+        result = f"concat({a}, {b}"
+        for i, exp in enumerate(concat.c):
+            c_size = exp.s_size
+            if max_size >= total_size + c_size:
+                c, c_size = expr_handler(exp, c_size)
+                result = f"{result}, {c}"
+                total_size += c_size
+
+        result += ")"
+        return result
+
+    def _visit_concat_string(self, concat):
+        def _visit_string_type_size(message, size):
+            self.type_stack.append(String(size))
+            var = self._visit_string_expression(message.s)
+            self.type_stack.pop()
+            return var, size
+        return self._visit_concat(concat, _visit_string_type_size)
+
+    def _visit_concat_bytes(self, concat):
+        def _visit_bytes_type_size(message, size):
+            if message.HasField("b_bm") and size != 0:
+                size = size if size <= 32 else 32
+                self.type_stack.append(BytesM(size))
+                var = self._visit_bytes_m_expression(message.b_bm)
+                self.type_stack.pop()
+            else:
+                self.type_stack.append(Bytes(size))
+                var = self._visit_bytes_expression(message.b_bs)
+                self.type_stack.pop()
+            return var, size
+        return self._visit_concat(concat, _visit_bytes_type_size)
 
     @property
     def code_offset(self):

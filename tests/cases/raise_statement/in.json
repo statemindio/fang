@@ -25,6 +25,23 @@
           }
         }
       }
+    },
+    {
+      "ret": {
+        "key": "test"
+      },
+      "block": {
+        "statements": [
+        ],
+        "exit_d": {
+          "raw_revert": {
+            "data": {
+              "lit": {
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

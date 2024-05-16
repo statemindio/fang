@@ -5,7 +5,7 @@ from utils import fill_address
 class BytesLiteralGen:
     def generate(self, m, value):
         hex_val = hex(value)[2:]
-        hex_val = hex_val if len(hex_val) > m  else hex_val[:m]
+        hex_val = hex_val if m > len(hex_val) else hex_val[:m]
         #hex_val = f"{'' if len(hex_val) % 2 == 0 else '0'}{hex_val}"
         result = f"b\"{hex_val}\""
         return result
@@ -69,5 +69,5 @@ class StringLiteralGen:
                 continue
             result += c
 
-        result = result if len(result) <= m * 2 else result[:m * 2]
+        result = result if len(result) <= m else result[:m]
         return result
