@@ -157,6 +157,8 @@ message IntExpression {
     VarRef varRef = 4;
     ConvertFromInt convert_int = 5;
     DecimalExpression convert_decimal = 6;
+    BoolExpression convert_bool = 7;
+    AddressExpression convert_address = 8;
   }
 }
 

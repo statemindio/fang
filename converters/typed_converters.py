@@ -901,7 +901,20 @@ class TypedConverter:
             self.type_stack.pop()
             result = current_type.check_literal_bounds(result)
             return f"convert({result}, {current_type.vyper_type})"
-                
+        if expr.HasField("convert_bool"):
+            input_type = Bool()
+            self.type_stack.append(input_type)
+            result = self._visit_bool_expression(expr.convert_bool)
+            self.type_stack.pop()
+            return f"convert({result}, {current_type.vyper_type})"
+        if expr.HasField("convert_address"):
+            input_type = Address()
+            if not current_type.signed:
+                self.type_stack.append(input_type)
+                result = self.visit_address_expression(expr.convert_address)
+                self.type_stack.pop()
+                return f"convert({result}, {current_type.vyper_type})"
+
         return self.create_literal(expr.lit)
 
     def _visit_bytes_m_expression(self, expr):
