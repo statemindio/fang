@@ -433,7 +433,9 @@ full_cases = [
     "raw_log",
     "ecadd",
     "concat_string",
-    "concat_bytes"
+    "concat_bytes",
+    "int_int_convert",
+    "int_decimal_convert"
 ]
 
 

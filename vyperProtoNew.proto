@@ -155,9 +155,16 @@ message IntExpression {
     IntBinOp binOp = 2;
     IntUnOp unOp = 3;
     VarRef varRef = 4;
-    //    Convert convert = 5;
+    ConvertFromInt convert_int = 5;
+    DecimalExpression convert_decimal = 6;
   }
 }
+
+message ConvertFromInt {
+  IntExpression exp = 1;
+  Int i = 2;
+}
+
 
 message BytesMExpression {
   Literal lit = 3;

@@ -886,6 +886,22 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        if expr.HasField("convert_int"):
+            input_type = self.visit_type(expr.convert_int)
+            if input_type != current_type:
+                self.type_stack.append(input_type)
+                result = self._visit_int_expression(expr.convert_int.exp)
+                self.type_stack.pop()
+                result = current_type.check_literal_bounds(result)
+                return f"convert({result}, {current_type.vyper_type})"
+        if expr.HasField("convert_decimal"):
+            input_type = Decimal()
+            self.type_stack.append(input_type)
+            result = self._visit_decimal_expression(expr.convert_decimal)
+            self.type_stack.pop()
+            result = current_type.check_literal_bounds(result)
+            return f"convert({result}, {current_type.vyper_type})"
+                
         return self.create_literal(expr.lit)
 
     def _visit_bytes_m_expression(self, expr):

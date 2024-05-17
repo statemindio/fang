@@ -120,6 +120,10 @@ class Int(BaseType):
     def check_literal_bounds(self, value):
         try:
             e_val = eval(value)
+            if isinstance(e_val, float):
+                if e_val < 0 and not self.signed:
+                    return f"-{value}"
+                return value
             low, up = self._literal_generator._get_value_boundaries(self._n, self._signed)
             if low > e_val or e_val > up:
                 return self._literal_generator.generate(self._n, self._signed, e_val)
