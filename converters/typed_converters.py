@@ -838,7 +838,7 @@ class TypedConverter:
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
             self.op_stack.pop()
             self.type_stack.pop()
-            
+
             result = f"{left} {bin_op} {right}"
             if len(self.op_stack) > 0:
                 result = f"({result})"
@@ -889,33 +889,35 @@ class TypedConverter:
         if expr.HasField("convert_int"):
             input_type = self.visit_type(expr.convert_int)
             if input_type != current_type:
-                self.type_stack.append(input_type)
-                result = self._visit_int_expression(expr.convert_int.exp)
-                self.type_stack.pop()
-                result = current_type.check_literal_bounds(result)
-                return f"convert({result}, {current_type.vyper_type})"
+                return self.__visit_conversion(expr.convert_int.exp, current_type, input_type, True)
         if expr.HasField("convert_decimal"):
             input_type = Decimal()
-            self.type_stack.append(input_type)
-            result = self._visit_decimal_expression(expr.convert_decimal)
-            self.type_stack.pop()
-            result = current_type.check_literal_bounds(result)
-            return f"convert({result}, {current_type.vyper_type})"
+            return self.__visit_conversion(expr.convert_decimal, current_type, input_type, True)
         if expr.HasField("convert_bool"):
             input_type = Bool()
-            self.type_stack.append(input_type)
-            result = self._visit_bool_expression(expr.convert_bool)
-            self.type_stack.pop()
-            return f"convert({result}, {current_type.vyper_type})"
+            return self.__visit_conversion(expr.convert_bool, current_type, input_type)
         if expr.HasField("convert_address"):
             input_type = Address()
             if not current_type.signed:
-                self.type_stack.append(input_type)
-                result = self.visit_address_expression(expr.convert_address)
-                self.type_stack.pop()
-                return f"convert({result}, {current_type.vyper_type})"
-
+                return self.__visit_conversion(expr.convert_address, current_type, input_type)
+        if expr.HasField("convert_bytesm"):
+            input_type = self.visit_type(expr.convert_bytesm)
+            return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
+        if expr.HasField("convert_bytes"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            input_type = Bytes(32)
+            return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
         return self.create_literal(expr.lit)
+
+    def __visit_conversion(self, message, current_type, input_type, check_bounds = False):
+        handler, _ = self._expression_handlers[input_type.name]
+        self.type_stack.append(input_type)
+        result = handler(message)
+        self.type_stack.pop()
+
+        if check_bounds:
+            result = current_type.check_literal_bounds(result)
+        return f"convert({result}, {current_type.vyper_type})"
 
     def _visit_bytes_m_expression(self, expr):
         # if expr.HasField("convert"):

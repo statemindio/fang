@@ -437,7 +437,9 @@ full_cases = [
     "int_int_convert",
     "int_decimal_convert",
     "int_bool_convert",
-    "int_address_convert"
+    "int_address_convert",
+    "int_bytesm_convert",
+    "int_bytes_convert"
 ]
 
 

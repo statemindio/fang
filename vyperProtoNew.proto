@@ -149,6 +149,8 @@ message DecimalUnOp {
   DecimalExpression expr = 1;
 }
 
+// No enums yet
+// Enums can be converted to and from uint256 only.
 message IntExpression {
   Literal lit = 1;
   oneof expr {
@@ -159,12 +161,19 @@ message IntExpression {
     DecimalExpression convert_decimal = 6;
     BoolExpression convert_bool = 7;
     AddressExpression convert_address = 8;
+    ConvertFromBytesM convert_bytesm = 9;
+    BytesExpression convert_bytes = 10;
   }
 }
 
 message ConvertFromInt {
   IntExpression exp = 1;
   Int i = 2;
+}
+
+message ConvertFromBytesM {
+  BytesMExpression exp = 1;
+  BytesM bM = 2;
 }
 
 
