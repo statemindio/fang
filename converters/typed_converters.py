@@ -798,6 +798,7 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        current_type = self.type_stack[-1]
         if expr.HasField("boolBinOp"):
             bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
@@ -850,6 +851,26 @@ class TypedConverter:
                 return result
         if expr.HasField("raw_call") and not self._is_constant:
             return self._visit_raw_call(expr.raw_call, expr_bool=True)
+        if expr.HasField("convert_int"):
+            input_type = self.visit_type(expr.convert_int)
+            return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
+        if expr.HasField("convert_decimal"):
+            input_type = Decimal()
+            return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
+        if expr.HasField("convert_address"):
+            input_type = Address()
+            return self.__visit_conversion(expr.convert_address, current_type, input_type)
+        if expr.HasField("convert_bytesm"):
+            input_type = self.visit_type(expr.convert_bytesm)
+            return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
+        if expr.HasField("convert_bytes"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            input_type = Bytes(32)
+            return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
+        if expr.HasField("convert_string"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            input_type = String(32)
+            return self.__visit_conversion(expr.convert_string, current_type, input_type)
         return self.create_literal(expr.lit)
 
     def _visit_int_expression(self, expr):

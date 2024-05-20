@@ -1,0 +1,54 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "s": {
+            "max_len": 32
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_string": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "s": {
+            "max_len": 31
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_string": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

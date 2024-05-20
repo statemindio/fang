@@ -90,6 +90,12 @@ message BoolExpression {
     DecimalBoolBinOp decBoolBinOp = 4;
     VarRef varRef = 6;
     RawCall raw_call = 7;
+    ConvertFromInt convert_int = 8;
+    DecimalExpression convert_decimal = 9;
+    AddressExpression convert_address = 10;
+    ConvertFromBytesM convert_bytesm = 11;
+    BytesExpression convert_bytes = 12;
+    StringExpression convert_string = 13;
     //    Convert convert = 7;
   }
   Literal lit = 5;
