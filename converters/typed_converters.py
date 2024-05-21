@@ -701,6 +701,7 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        current_type = self.type_stack[-1]
         if expr.HasField("cmp") and not self._is_constant:
             name = "create_minimal_proxy_to"
             return self.visit_create_min_proxy_or_copy_of(expr.cmp, name)
@@ -716,6 +717,17 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        if expr.HasField("convert_int"):
+            input_type = self.visit_type(expr.convert_int)
+            if not input_type.signed:
+                return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
+        if expr.HasField("convert_bytesm"):
+            input_type = self.visit_type(expr.convert_bytesm)
+            return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
+        if expr.HasField("convert_bytes"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            input_type = Bytes(32)
+            return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
         return self.create_literal(expr.lit)
 
     def visit_create_min_proxy_or_copy_of(self, cmp, name):

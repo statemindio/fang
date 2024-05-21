@@ -108,6 +108,9 @@ message AddressExpression {
     VarRef varRef = 4;
     CreateCopyOf cco = 5;
     EcRecover ecRec = 6;
+    ConvertFromInt convert_int = 7;
+    ConvertFromBytesM convert_bytesm = 8;
+    BytesExpression convert_bytes = 9;
     //    Convert convert = 5;
   }
   Literal lit = 3;
