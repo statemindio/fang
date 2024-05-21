@@ -8,7 +8,7 @@ from types_d.base import BaseType
 from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
-from .utils import extract_type
+from .utils import extract_type, _has_field
 from vyperProtoNew_pb2 import VarDecl
 
 PURE = 0
@@ -717,17 +717,10 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        if expr.HasField("convert_int"):
-            input_type = self.visit_type(expr.convert_int)
-            if not input_type.signed:
-                return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
-        if expr.HasField("convert_bytesm"):
-            input_type = self.visit_type(expr.convert_bytesm)
-            return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
-        if expr.HasField("convert_bytes"):
-            # 32 is max size for int conversions; var must take all sizes below anyway
-            input_type = Bytes(32)
-            return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
         return self.create_literal(expr.lit)
 
     def visit_create_min_proxy_or_copy_of(self, cmp, name):
@@ -863,26 +856,10 @@ class TypedConverter:
                 return result
         if expr.HasField("raw_call") and not self._is_constant:
             return self._visit_raw_call(expr.raw_call, expr_bool=True)
-        if expr.HasField("convert_int"):
-            input_type = self.visit_type(expr.convert_int)
-            return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
-        if expr.HasField("convert_decimal"):
-            input_type = Decimal()
-            return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
-        if expr.HasField("convert_address"):
-            input_type = Address()
-            return self.__visit_conversion(expr.convert_address, current_type, input_type)
-        if expr.HasField("convert_bytesm"):
-            input_type = self.visit_type(expr.convert_bytesm)
-            return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
-        if expr.HasField("convert_bytes"):
-            # 32 is max size for int conversions; var must take all sizes below anyway
-            input_type = Bytes(32)
-            return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
-        if expr.HasField("convert_string"):
-            # 32 is max size for int conversions; var must take all sizes below anyway
-            input_type = String(32)
-            return self.__visit_conversion(expr.convert_string, current_type, input_type)
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
         return self.create_literal(expr.lit)
 
     def _visit_int_expression(self, expr):
@@ -919,28 +896,54 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        if expr.HasField("convert_int"):
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
+        return self.create_literal(expr.lit)
+
+    def _visit_conversion(self, expr, current_type):
+        if _has_field(expr, "convert_int"):
             input_type = self.visit_type(expr.convert_int)
-            if input_type != current_type:
+            if isinstance(current_type, Int) and input_type != current_type:
                 return self.__visit_conversion(expr.convert_int.exp, current_type, input_type, True)
-        if expr.HasField("convert_decimal"):
+
+            if isinstance(current_type, Address) and not input_type.signed or \
+                isinstance(current_type, Bool):
+                return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
+
+        if _has_field(expr, "convert_decimal"):
             input_type = Decimal()
-            return self.__visit_conversion(expr.convert_decimal, current_type, input_type, True)
-        if expr.HasField("convert_bool"):
+            if isinstance(current_type, Int):
+                return self.__visit_conversion(expr.convert_decimal, current_type, input_type, True)
+            return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
+
+        if _has_field(expr, "convert_bool"):
             input_type = Bool()
             return self.__visit_conversion(expr.convert_bool, current_type, input_type)
-        if expr.HasField("convert_address"):
+
+        if _has_field(expr, "convert_address"):
             input_type = Address()
-            if not current_type.signed:
+            if isinstance(current_type, Int) and not current_type.signed or \
+                isinstance(current_type, Bool):
                 return self.__visit_conversion(expr.convert_address, current_type, input_type)
-        if expr.HasField("convert_bytesm"):
+
+        if _has_field(expr, "convert_bytesm"):
             input_type = self.visit_type(expr.convert_bytesm)
             return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
-        if expr.HasField("convert_bytes"):
+
+        if _has_field(expr, "convert_bytes"):
             # 32 is max size for int conversions; var must take all sizes below anyway
             input_type = Bytes(32)
             return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
-        return self.create_literal(expr.lit)
+
+        if _has_field(expr, "convert_string"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            input_type = String(32)
+            return self.__visit_conversion(expr.convert_string, current_type, input_type)
+
+        return None
 
     def __visit_conversion(self, message, current_type, input_type, check_bounds = False):
         handler, _ = self._expression_handlers[input_type.name]
