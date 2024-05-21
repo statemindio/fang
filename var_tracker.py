@@ -2,6 +2,7 @@ import copy
 
 from types_d.base import BaseType
 from types_d.types import FixedList, DynArray
+from vyperProtoNew_pb2 import VarDecl
 
 
 class VarTracker:
@@ -214,6 +215,25 @@ class VarTracker:
         self._var_id_map[var_type.name] = self.next_id(var_type)
         if not mutable and level == 0:
             self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
+
+    def create_and_register_variable(
+            self, var_type: BaseType,
+            level: int = 0,
+            mutability: VarDecl.Mutability = VarDecl.Mutability.REGULAR
+    ) -> str:
+        prefixes = {
+            0: "x",
+            1: "C",
+            2: "IM"
+        }
+        idx = self.next_id(var_type)
+        name = f"{prefixes[mutability]}_{var_type.name}_{str(idx)}"
+        if level == 0 and mutability == VarDecl.Mutability.REGULAR:
+            self.register_global_variable(name, var_type)
+        else:
+            self.register_function_variable(name, level, var_type, mutability == VarDecl.Mutability.REGULAR)
+
+        return name
 
     def register_global_variable(self, name, var_type: BaseType):
         """

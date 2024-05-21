@@ -267,35 +267,26 @@ class TypedConverter:
     def __var_decl_global(self, variable):
         current_type = self.visit_type(variable)
         self.type_stack.append(current_type)
-        idx = self._var_tracker.next_id(current_type)
-
-        prefixes = {
-            0: "x",
-            1: "C",
-            2: "IM"
-        }
-
-        var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
-        result = var_name + ": "
+        result = ": "
 
         # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == VarDecl.Mutability.REGULAR:
             result += current_type.vyper_type
-            self._var_tracker.register_global_variable(var_name, current_type)
+            var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
         else:
             if variable.mut == VarDecl.Mutability.CONSTANT:
                 self._is_constant = True
             value = self.visit_typed_expression(variable.expr, current_type)
             self._is_constant = False
 
-            self._var_tracker.register_function_variable(var_name, 0, current_type, False)
-
+            var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
             if variable.mut == VarDecl.Mutability.CONSTANT:
                 result += f"constant({current_type.vyper_type})"
                 result = f"{result} = {value}"
             else:
                 result += f"immutable({current_type.vyper_type})"
                 self._immutable_exp.append((var_name, value))
+        result = f"{var_name}{result}"
 
         self.type_stack.pop()
         return result
@@ -322,12 +313,12 @@ class TypedConverter:
         for c in ret.key:
             if c not in VALID_CHARS:
                 continue
-            
+
             if c in INVALID_PREFIX and not valid_prefix:
                 continue
             elif c not in INVALID_PREFIX:
                 valid_prefix = True
-            
+
             result += c
 
         return f'@nonreentrant("{result}")\n' if result and result.lower() not in RESERVED_KEYWORDS else ""
@@ -784,7 +775,7 @@ class TypedConverter:
             right = self._visit_int_expression(expr.intBoolBinOp.right)
             self.op_stack.pop()
             self.type_stack.pop()
-            
+
             result = f"{left} {bin_op} {right}"
             if len(self.op_stack) > 0:
                 result = f"({result})"
@@ -797,7 +788,7 @@ class TypedConverter:
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
             self.op_stack.pop()
             self.type_stack.pop()
-            
+
             result = f"{left} {bin_op} {right}"
             if len(self.op_stack) > 0:
                 result = f"({result})"
