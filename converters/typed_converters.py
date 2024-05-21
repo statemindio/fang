@@ -338,7 +338,6 @@ class TypedConverter:
         self._var_tracker.remove_function_level(self._block_level_count, True)
         self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
@@ -364,7 +363,6 @@ class TypedConverter:
         self._var_tracker.remove_function_level(self._block_level_count, True)
         self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         mutability = "@payable\n" if init.mut else ""
 
@@ -384,7 +382,6 @@ class TypedConverter:
         self._var_tracker.remove_function_level(self._block_level_count, True)
         self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
         if len(self._function_output) > 1:

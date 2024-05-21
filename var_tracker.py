@@ -17,7 +17,6 @@ class VarTracker:
         self._var_id_map = {}
         self._global_var_id_map = {}
         self._vars = {
-            self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
         }
@@ -243,11 +242,11 @@ class VarTracker:
             self._register_global_dyn_array(name, var_type)
             return
 
-        if var_type.vyper_type not in self._vars[self.GLOBAL_KEY]:
-            self._vars[self.GLOBAL_KEY][var_type.vyper_type] = []
         # TODO: check if a variable already exist
-        self._vars[self.GLOBAL_KEY][var_type.vyper_type].append(name)
-        self._var_id_map[var_type.name] = self.next_id(var_type)
+        if not isinstance(var_type, FixedList):
+            self.register_function_variable(name, 0, var_type, True)
+        else:
+            self._var_id_map[var_type.name] = self.next_id(var_type)
         self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
     def _register_list_items(self, name, level, var_type: FixedList, key):
@@ -341,12 +340,16 @@ class VarTracker:
         self._remove_list_items(level, key)
 
     def reset_function_variables(self):
-        self._vars[self.FUNCTION_KEY] = {}
         for vyper_type, level_vars in self._vars[self.READONLY_KEY].items():
             for level, variables in level_vars.items():
                 if level == 0:
                     continue
                 self._vars[self.READONLY_KEY][vyper_type][level] = []
+        for vyper_type, level_vars in self._vars[self.FUNCTION_KEY].items():
+            for level, variables in level_vars.items():
+                if level == 0:
+                    continue
+                self._vars[self.FUNCTION_KEY][vyper_type][level] = []
         # self._vars[self.READONLY_KEY] = {}
 
         self._lists[self.FUNCTION_KEY] = {}
@@ -390,7 +393,7 @@ class VarTracker:
             allowed_vars.extend(self._get_function_dyn_arrays(level, var_type, True, kwargs.get("assignee", False)))
             return allowed_vars
 
-        for i in range(level + 1):
+        for i in range(1, level + 1):
             allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
 
         allowed_vars.extend(self._get_list_items(level, var_type, True))
@@ -407,6 +410,6 @@ class VarTracker:
             allowed_vars = self._get_global_dyn_arrays(var_type, kwargs.get("assignee", False))
             return allowed_vars
 
-        allowed_vars = [f"self.{v}" for v in self._vars[self.GLOBAL_KEY].get(var_type.vyper_type, [])]
+        allowed_vars = [f"self.{v}" for v in self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, [])]
         allowed_vars.extend(self._get_global_list_items(var_type))
         return allowed_vars
