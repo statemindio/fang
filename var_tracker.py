@@ -14,7 +14,6 @@ class VarTracker:
     READONLY_KEY = "__readonly__"
 
     def __init__(self):
-        self._var_id = -1
         self._var_id_map = {}
         self._global_var_id_map = {}
         self._vars = {
@@ -58,7 +57,6 @@ class VarTracker:
 
         # TODO: check if a variable already exist
         self._dyns[key][var_type.base_type][level][var_type.max_size].append(name)
-        self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
 
         if isinstance(var_type.base_type, FixedList):
@@ -75,7 +73,6 @@ class VarTracker:
         for vyper_type in self._dyns[key]:
             if level not in self._dyns[key][vyper_type]:
                 continue
-            self._var_id -= len(self._dyns[key][vyper_type][level])
             self._dyns[key][vyper_type][level] = {}
 
     # TODO: must handle size changes somehow (pop, append)
@@ -94,7 +91,6 @@ class VarTracker:
 
         # TODO: check if a variable already exist
         self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.max_size].append(name)
-        self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
         if isinstance(var_type.base_type, FixedList):
             for i in range(var_type.size):
@@ -211,7 +207,6 @@ class VarTracker:
 
         # TODO: check if a variable already exist
         self._vars[key][var_type.vyper_type][level].append(name)
-        self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
         if not mutable and level == 0:
             self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
@@ -252,7 +247,6 @@ class VarTracker:
             self._vars[self.GLOBAL_KEY][var_type.vyper_type] = []
         # TODO: check if a variable already exist
         self._vars[self.GLOBAL_KEY][var_type.vyper_type].append(name)
-        self._var_id += 1
         self._var_id_map[var_type.name] = self.next_id(var_type)
         self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
@@ -328,7 +322,6 @@ class VarTracker:
         for vyper_type in self._lists[key]:
             if level not in self._lists[key][vyper_type]:
                 continue
-            self._var_id -= len(self._lists[key][vyper_type][level])
             self._lists[key][vyper_type][level] = []
 
     def remove_function_level(self, level: int, mutable: bool):
@@ -342,7 +335,6 @@ class VarTracker:
         for vyper_type in self._vars[key]:
             if level not in self._vars[key][vyper_type]:
                 continue
-            self._var_id -= len(self._vars[key][vyper_type][level])
             self._vars[key][vyper_type][level] = []
 
         self._remove_function_dyn_array_level(level, key)
