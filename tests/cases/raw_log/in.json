@@ -1,0 +1,63 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 31
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "raw_log": {
+              "topics": {
+                "rexp": {
+                  "varRef": {}
+                },
+                "exp": [
+                  {
+                    "sha": {}
+                  },
+                  {
+                    "keccak": {}
+                  }
+                ]
+              },
+              "topic_amount": 2,
+              "data_bm": {
+                "varRef": {}
+              }
+            }
+          },
+          {
+            "raw_log": {
+              "topics": {
+                "rexp": {
+                  "varRef": {}
+                },
+                "exp": [
+                  {
+                    "sha": {}
+                  },
+                  {
+                    "keccak": {}
+                  },
+                  {
+                    "lit": {
+                      "bMval": "1337"
+                    }
+                  }
+                ]
+              },
+              "topic_amount": 4,
+              "data_bs": {
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

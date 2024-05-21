@@ -13,7 +13,7 @@ with atheris.instrument_imports():
 
 db_client = get_mongo_client()
 
-__version__ = "0.0.8"  # same version as images' one
+__version__ = "0.0.9"  # same version as images' one
 
 
 @atheris.instrument_func

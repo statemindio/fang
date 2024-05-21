@@ -1,0 +1,291 @@
+{
+  "functions": [
+    {
+      "outputParams": [
+        {
+          "barr": {
+            "max_len": 12
+          }
+        }
+      ],
+      "block": {
+        "exitD": {
+          "payload": {
+            "one": {
+              "bExp": {
+                "concat": {
+                  "a": {
+                    "b_bs": {
+                      "lit": {
+                        "barrval": 18446744073709551615
+                      }
+                    },
+                    "s_size": 14
+                  },
+                  "b": {
+                    "b_bs": {
+                      "lit": {
+                        "barrval": 18446744073709551615
+                      }
+                    },
+                    "s_size": 10
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "outputParams": [
+        {
+          "barr": {
+            "max_len": 12
+          }
+        }
+      ],
+      "block": {
+        "exitD": {
+          "payload": {
+            "one": {
+              "bExp": {
+                "concat": {
+                  "a": {
+                    "b_bm": {
+                      "lit": {
+                        "bMval": "11111111111"
+                      }
+                    },
+                    "s_size": 14
+                  },
+                  "b": {
+                    "b_bm": {
+                      "lit": {
+                        "bMval": "222222222222222"
+                      }
+                    },
+                    "s_size": 10
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "outputParams": [
+        {
+          "barr": {
+            "max_len": 65
+          }
+        }
+      ],
+      "block": {
+        "exitD": {
+          "payload": {
+            "one": {
+              "bExp": {
+                "concat": {
+                  "a": {
+                    "b_bs": {
+                      "lit": {
+                        "barrval": 18446744073709551615
+                      }
+                    },
+                    "s_size": 14
+                  },
+                  "b": {
+                    "b_bs": {
+                      "lit": {
+                        "barrval": 18446744073709551615
+                      }
+                    },
+                    "s_size": 10
+                  },
+                  "c": [
+                    {
+                      "b_bm": {
+                        "lit": {
+                          "bMval": "222222222222222222222222222222"
+                        }
+                      },
+                      "s_size": 34
+                    },
+                    {
+                      "b_bm": {
+                        "lit": {
+                          "bMval": "222222222222222222222222222222"
+                        }
+                      },
+                      "s_size": 0
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "outputParams": [
+        {
+          "barr": {
+            "max_len": 33
+          }
+        }
+      ],
+      "block": {
+        "exitD": {
+          "payload": {
+            "one": {
+              "bExp": {
+                "concat": {
+                  "a": {
+                    "b_bs": {
+                      "lit": {
+                        "barrval": 18446744073709551615
+                      }
+                    },
+                    "s_size": 7
+                  },
+                  "b": {
+                    "b_bm": {
+                      "lit": {
+                        "bMval": "222222222222222222222222222222"
+                      }
+                    },
+                    "s_size": 32
+                  },
+                  "c": [
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 3
+                    },
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 1
+                    },
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 1
+                    },
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 1
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "outputParams": [
+        {
+          "barr": {
+            "max_len": 40
+          }
+        }
+      ],
+      "inputParams": [
+        {
+          "barr": {
+            "max_len": 7
+          }
+        },
+        {
+          "bM": {
+            "m": 31
+          }
+        },
+        {
+          "bM": {
+            "m": 0
+          }
+        }
+      ],
+      "block": {
+        "exitD": {
+          "payload": {
+            "one": {
+              "bExp": {
+                "concat": {
+                  "a": {
+                    "b_bs": {
+                      "varRef": {}
+                    },
+                    "s_size": 7
+                  },
+                  "b": {
+                    "b_bm": {
+                      "varRef": {}
+                    },
+                    "s_size": 32
+                  },
+                  "c": [
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "b_bm": {
+                        "varRef": {}
+                      },
+                      "s_size": 1
+                    },
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 1
+                    },
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 1
+                    },
+                    {
+                      "b_bs": {
+                        "lit": {
+                          "barrval": 18446744073709551615
+                        }
+                      },
+                      "s_size": 1
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

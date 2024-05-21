@@ -429,7 +429,11 @@ full_cases = [
     "input_variable_tracker",
     "invalid_operations",
     "constant_only_literal",
-    "constant_var_ref"
+    "constant_var_ref",
+    "raw_log",
+    "ecadd",
+    "concat_string",
+    "concat_bytes"
 ]
 
 
