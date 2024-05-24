@@ -967,14 +967,14 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        current_type = self.type_stack[len(self.type_stack) - 1]
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
-        if expr.HasField("raw_call") and not self._is_constant:
-            byte_size = self.type_stack[len(self.type_stack) - 1].m
-            return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
+        if expr.HasField("raw_call") and not self._is_constant and current_type.m > 0:
+            return self._visit_raw_call(expr.raw_call, expr_size=current_type.m)
         if expr.HasField("concat"):
             return self._visit_concat_bytes(expr.concat)
         return self.create_literal(expr.lit)
