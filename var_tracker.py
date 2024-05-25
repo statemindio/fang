@@ -279,7 +279,8 @@ class VarTracker:
         """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
         allowed_lists = []
-        for i in range(level + 1):
+        start_range = 0 if level == 0 else 1
+        for i in range(start_range, level + 1):
             allowed_lists.extend(self._lists[key].get(var_type.vyper_type, {}).get(i, []))
 
         # TODO: optimize
@@ -295,22 +296,16 @@ class VarTracker:
         :param name: name of the new variable
         :param var_type:
         """
-        base_type = var_type.base_type
 
-        if base_type.vyper_type not in self._lists[self.GLOBAL_KEY]:
-            self._lists[self.GLOBAL_KEY][base_type.vyper_type] = []
-
-        self._lists[self.GLOBAL_KEY][base_type.vyper_type].append((name, var_type.size))
+        self._register_list_items(name, 0, var_type, self.FUNCTION_KEY)
 
     def _get_global_list_items(self, var_type: BaseType):
         """
         :param var_type list's base type:
         :return: list of allowed global list variables
         """
-        allowed_vars = []
-        for v, s in self._lists[self.GLOBAL_KEY].get(var_type.vyper_type, []):
-            allowed_vars.extend([f"self.{v}[{i}]" for i in range(s)])
-        return allowed_vars
+
+        return [f"self.{v}" for v in self._get_list_items(0, var_type, True)]
 
     def _remove_list_items(self, level: int, key):
         """
@@ -352,7 +347,12 @@ class VarTracker:
                 self._vars[self.FUNCTION_KEY][vyper_type][level] = []
         # self._vars[self.READONLY_KEY] = {}
 
-        self._lists[self.FUNCTION_KEY] = {}
+        for vyper_type, level_vars in self._lists[self.FUNCTION_KEY].items():
+            for level, variables in level_vars.items():
+                if level == 0:
+                    continue
+                self._lists[self.FUNCTION_KEY][vyper_type][level] = []
+
         for vyper_type, level_vars in self._lists[self.READONLY_KEY].items():
             for level, variables in level_vars.items():
                 if level == 0:

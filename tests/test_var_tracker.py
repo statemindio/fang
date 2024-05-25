@@ -133,21 +133,21 @@ def test_var_tracker_add_global_and_function_variables_and_list(var_tracker):
     var_tracker.register_global_variable("g_baz1", list_type)
 
     var_tracker.register_function_variable("qux0", 1, list_type, mutable)
-    var_tracker.register_function_variable("qux1", 0, list_type, mutable)
+    var_tracker.register_function_variable("qux1", 1, list_type, mutable)
     var_tracker.register_function_variable("qux2", 3, list_type, mutable)
 
     assert var_tracker.get_global_vars(var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
                                                      "self.g_baz0[0]", "self.g_baz0[1]",
                                                      "self.g_baz1[0]", "self.g_baz1[1]"]
-    assert var_tracker.get_all_allowed_vars(0, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
+    assert var_tracker.get_all_allowed_vars(1, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
                                                              "self.g_baz0[0]", "self.g_baz0[1]",
-                                                             "self.g_baz1[0]", "self.g_baz1[1]",
-                                                             "qux1[0]", "qux1[1]"]
+                                                             "self.g_baz1[0]", "self.g_baz1[1]", "foo0",
+                                                             "qux0[0]", "qux0[1]", "qux1[0]", "qux1[1]"]
     assert var_tracker.get_all_allowed_vars(4, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
                                                              "self.g_baz0[0]", "self.g_baz0[1]",
                                                              "self.g_baz1[0]", "self.g_baz1[1]",
-                                                             "foo0", "foo2", "qux1[0]", "qux1[1]",
-                                                             "qux0[0]", "qux0[1]", "qux2[0]", "qux2[1]"]
+                                                             "foo0", "foo2", "qux0[0]", "qux0[1]", "qux1[0]", "qux1[1]",
+                                                             "qux2[0]", "qux2[1]"]
 
 
 def test_var_tracker_add_different_types(var_tracker):
