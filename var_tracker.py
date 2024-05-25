@@ -21,7 +21,6 @@ class VarTracker:
             self.READONLY_KEY: {}
         }
         self._lists = {
-            self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
         }
