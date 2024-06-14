@@ -27,8 +27,17 @@ def TestOneProtoInput(msg):
         "generator_version": __version__,
     }
     c_log = db_client["compilation_log"]
-    proto = TypedConverter(msg)
-    proto.visit()
+    f_log = db_client['failure_log']
+    try:
+        proto = TypedConverter(msg)
+        proto.visit()
+    except Exception as e:
+        f_log.insert_one({
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "json_msg": MessageToJson(msg),
+        })
+        raise e  # Do we actually want to fail here?
     data["generation_result"] = proto.result
     try:
         c_result = vyper.compile_code(proto.result)
