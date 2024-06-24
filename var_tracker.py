@@ -179,6 +179,16 @@ class VarTracker:
             self._var_id_map[var_type.name] = -1
         return self._var_id_map[var_type.name]
 
+    @classmethod
+    def _init_var_list(cls, var_type, _vars, key, level):
+        if var_type.vyper_type not in _vars[key]:
+            _vars[key][var_type.vyper_type] = {
+                level: []
+            }
+
+        if level not in _vars[key][var_type.vyper_type]:
+            _vars[key][var_type.vyper_type][level] = []
+
     def register_function_variable(self, name, level, var_type: BaseType, mutable: bool):
         """
         Sets a new variable to the passed `level`
@@ -196,12 +206,7 @@ class VarTracker:
             self._register_function_dyn_array(name, level, var_type, mutable)
             return
 
-        if var_type.vyper_type not in self._vars[key]:
-            self._vars[key][var_type.vyper_type] = {
-                level: []
-            }
-        if level not in self._vars[key][var_type.vyper_type]:
-            self._vars[key][var_type.vyper_type][level] = []
+        self._init_var_list(var_type, self._vars, key, level)
 
         # TODO: check if a variable already exist
         self._vars[key][var_type.vyper_type][level].append(name)
@@ -258,12 +263,7 @@ class VarTracker:
         """
         base_type = var_type.base_type
 
-        if base_type.vyper_type not in self._lists[key]:
-            self._lists[key][base_type.vyper_type] = {
-                level: []
-            }
-        if level not in self._lists[key][base_type.vyper_type]:
-            self._lists[key][base_type.vyper_type][level] = []
+        self._init_var_list(base_type, self._lists, key, level)
 
         self._lists[key][base_type.vyper_type][level].append((name, var_type.size))
 
