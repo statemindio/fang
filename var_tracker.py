@@ -225,7 +225,8 @@ class VarTracker:
             2: "IM"
         }
         idx = self.next_id(var_type)
-        name = f"{prefixes[mutability]}_{var_type.name}_{str(idx)}"
+        pre = prefixes[0] if level > 0 else prefixes[mutability]
+        name = f"{pre}_{var_type.name}_{str(idx)}"
         if level == 0 and mutability == VarDecl.Mutability.REGULAR:
             self.register_global_variable(name, var_type)
         else:

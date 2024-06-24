@@ -2,7 +2,7 @@ import copy
 from collections import defaultdict
 
 from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
-from vyperProtoNew_pb2 import Func
+from vyperProtoNew_pb2 import Func, VarDecl
 from .utils import extract_type
 
 
@@ -18,11 +18,9 @@ class ParametersConverter:
         for i, input_param in enumerate(input_params):
             param_type = self._types_provider(input_param)
             input_types.append(param_type)
-            idx = self._var_tracker.next_id(param_type)
-            name = f"x_{param_type.name}_{idx}"
-            names.append(name)
 
-            self._var_tracker.register_function_variable(name, 1, param_type, False)
+            name = self._var_tracker.create_and_register_variable(param_type, 1, VarDecl.Mutability.IMMUTABLE)
+            names.append(name)
 
             if i > 0:
                 result = f"{result}, "
