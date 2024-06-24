@@ -334,29 +334,13 @@ class VarTracker:
         self._remove_list_items(level, key)
 
     def reset_function_variables(self):
-        for vyper_type, level_vars in self._vars[self.READONLY_KEY].items():
-            for level, variables in level_vars.items():
-                if level == 0:
-                    continue
-                self._vars[self.READONLY_KEY][vyper_type][level] = []
-        for vyper_type, level_vars in self._vars[self.FUNCTION_KEY].items():
-            for level, variables in level_vars.items():
-                if level == 0:
-                    continue
-                self._vars[self.FUNCTION_KEY][vyper_type][level] = []
-        # self._vars[self.READONLY_KEY] = {}
-
-        for vyper_type, level_vars in self._lists[self.FUNCTION_KEY].items():
-            for level, variables in level_vars.items():
-                if level == 0:
-                    continue
-                self._lists[self.FUNCTION_KEY][vyper_type][level] = []
-
-        for vyper_type, level_vars in self._lists[self.READONLY_KEY].items():
-            for level, variables in level_vars.items():
-                if level == 0:
-                    continue
-                self._lists[self.READONLY_KEY][vyper_type][level] = []
+        for key in (self.READONLY_KEY, self.FUNCTION_KEY):
+            for _vars in (self._vars, self._lists):
+                for vyper_type, level_vars in _vars[key].items():
+                    for level, variables in level_vars.items():
+                        if level == 0:
+                            continue
+                        _vars[key][vyper_type][level] = []
 
         self._var_id_map = copy.copy(self._global_var_id_map)
 
