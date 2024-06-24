@@ -190,8 +190,14 @@ message BytesMExpression {
   Literal lit = 3;
   oneof expr {
     Sha256 sha = 1;
-    VarRef varRef = 4;
-    Keccak256 keccak = 2;
+    VarRef varRef = 2;
+    Keccak256 keccak = 4;
+    ConvertFromInt convert_int = 5;
+    DecimalExpression convert_decimal = 6;
+    BoolExpression convert_bool = 7;
+    AddressExpression convert_address = 8;
+    ConvertFromBytesM convert_bytesm = 9;
+    BytesExpression convert_bytes = 10;
     //    Convert convert = 5;
   }
 }

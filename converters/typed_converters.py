@@ -910,6 +910,7 @@ class TypedConverter:
                 return self.__visit_conversion(expr.convert_int.exp, current_type, input_type, True)
 
             if isinstance(current_type, Address) and not input_type.signed or \
+                isinstance(current_type, BytesM) and current_type.m * 8 >= input_type.n or \
                 isinstance(current_type, Bool):
                 return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
 
@@ -917,7 +918,11 @@ class TypedConverter:
             input_type = Decimal()
             if isinstance(current_type, Int):
                 return self.__visit_conversion(expr.convert_decimal, current_type, input_type, True)
-            return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
+            if isinstance(current_type, BytesM):
+                if current_type.m >= 21:
+                    return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
+            else:
+                return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
 
         if _has_field(expr, "convert_bool"):
             input_type = Bool()
@@ -926,6 +931,7 @@ class TypedConverter:
         if _has_field(expr, "convert_address"):
             input_type = Address()
             if isinstance(current_type, Int) and not current_type.signed or \
+                isinstance(current_type, BytesM) and current_type.m >= 20 or \
                 isinstance(current_type, Bool):
                 return self.__visit_conversion(expr.convert_address, current_type, input_type)
 
@@ -935,7 +941,10 @@ class TypedConverter:
 
         if _has_field(expr, "convert_bytes"):
             # 32 is max size for int conversions; var must take all sizes below anyway
-            input_type = Bytes(32)
+            if isinstance(current_type, BytesM):
+                input_type = Bytes(current_type.m)
+            else:
+                input_type = Bytes(32)
             return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
 
         if _has_field(expr, "convert_string"):
@@ -981,6 +990,9 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
         return self.create_literal(expr.lit)
 
     def _visit_hash256(self, expr, name):
