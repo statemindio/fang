@@ -27,8 +27,8 @@ class QueueManager:
 
         # TODO: it's supposed to be refactored to support different QM's
         self._connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host=os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
-            port=int(os.environ.get('QUEUE_BROKER_PORT', 5672))
+            host=host,
+            port=port
         ))
         self.channel = self._connection.channel()
         self._queue_name = queue_name
