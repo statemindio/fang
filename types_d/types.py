@@ -215,19 +215,19 @@ class FixedList(BaseType):
 class DynArray(FixedList):
     def __init__(self, size, base_type: BaseType, cur_size = 0):
         self._base_type = base_type
-        self._size = cur_size
-        self._max_size = size
+        self._size = size
+        self._current_size = cur_size
 
-    def adjust_max_size(self, size):
-        self._max_size = size
+    def adjust_current_size(self, size):
+        self._current_size = size
 
     @property
-    def max_size(self):
-        return self._max_size
+    def current_size(self):
+        return self._current_size
 
     @property
     def vyper_type(self):
-        return f"DynArray[{self._base_type.vyper_type},{self._max_size}]"
+        return f"DynArray[{self._base_type.vyper_type},{self._size}]"
 
     @property
     def name(self):

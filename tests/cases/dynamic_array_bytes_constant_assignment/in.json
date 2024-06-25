@@ -1,0 +1,28 @@
+{
+  "decls": [
+    {
+      "i": {
+      },
+      "expr": {
+        "boolExp": {
+        },
+        "addrList": {
+        },
+        "bytesDyn": {
+          "exp": [
+            {
+            "lit": {
+              "addval": 747324309504
+            }
+          }
+        ]
+        }
+      },
+      "mut": "CONSTANT",
+      "dyn": {
+        "barr": {
+        }
+      }
+    }
+  ]
+}
