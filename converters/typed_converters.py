@@ -903,6 +903,7 @@ class TypedConverter:
 
         return self.create_literal(expr.lit)
 
+    # TODO: make conditions prettier somehow
     def _visit_conversion(self, expr, current_type):
         if _has_field(expr, "convert_int"):
             input_type = self.visit_type(expr.convert_int)
@@ -919,7 +920,7 @@ class TypedConverter:
             if isinstance(current_type, Int):
                 return self.__visit_conversion(expr.convert_decimal, current_type, input_type, True)
             if isinstance(current_type, BytesM):
-                if current_type.m >= 21:
+                if current_type.m >= 21: # TODO: save bits size to decimal data?
                     return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
             else:
                 return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
@@ -941,6 +942,7 @@ class TypedConverter:
 
         if _has_field(expr, "convert_bytes"):
             # 32 is max size for int conversions; var must take all sizes below anyway
+            # currently takes only exact sizes
             if isinstance(current_type, BytesM):
                 input_type = Bytes(current_type.m)
             else:

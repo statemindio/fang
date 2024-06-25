@@ -448,7 +448,13 @@ full_cases = [
     "bool_string_convert",
     "address_bytes_convert",
     "address_int_convert",
-    "address_bytesm_convert"
+    "address_bytesm_convert",
+    "bytesm_address_convert",
+    "bytesm_int_convert",
+    "bytesm_decimal_convert",
+    "bytesm_bytesm_convert",
+    "bytesm_bool_convert",
+    "bytesm_bytes_convert"
 ]
 
 
