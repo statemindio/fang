@@ -226,6 +226,10 @@ message DecimalExpression {
     DecimalBinOp binOp = 1;
     DecimalUnOp unOp = 2;
     VarRef varRef = 4;
+    ConvertFromInt convert_int = 5;
+    BoolExpression convert_bool = 6;
+    ConvertFromBytesM convert_bytesm = 7;
+    BytesExpression convert_bytes = 8;
     //    Convert convert = 5;
   }
   Literal lit = 3;

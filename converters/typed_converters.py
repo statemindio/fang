@@ -912,7 +912,7 @@ class TypedConverter:
 
             if isinstance(current_type, Address) and not input_type.signed or \
                 isinstance(current_type, BytesM) and current_type.m * 8 >= input_type.n or \
-                isinstance(current_type, Bool):
+                isinstance(current_type, Bool) or isinstance(current_type, Decimal):
                 return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
 
         if _has_field(expr, "convert_decimal"):
@@ -1042,6 +1042,11 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        current_type = self.type_stack[-1]
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return self.create_literal(expr.lit)
 
     def _visit_bytes_expression(self, expr):
