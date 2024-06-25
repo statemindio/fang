@@ -49,6 +49,15 @@ class MultiQueueManager:
             queue.publish(**kwargs)
 
 
+qm = MultiQueueManager(queue_managers=[
+    QueueManager(
+        os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
+        os.environ.get('QUEUE_BROKER_PORT', '5672'),
+        "queue3.10"
+    ),
+])
+
+
 @atheris.instrument_func
 def TestOneProtoInput(msg):
     data = {
@@ -79,7 +88,12 @@ def TestOneProtoInput(msg):
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
 
-    # TODO: push payload to queues here
+    message = {
+        "generation_result": proto.result,
+        "json_msg": MessageToJson(msg),
+        "generator_version": __version__,
+    }
+    qm.publish(**message)
     c_log.insert_one(data)
 
 
