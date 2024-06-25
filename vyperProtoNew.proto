@@ -208,6 +208,7 @@ message BytesExpression {
     RawCall raw_call = 2;
     //    Convert convert = 2;
     ConcatBytes concat = 4;
+    StringExpression convert_string = 5;
   }
   Literal lit = 3;
 }
@@ -217,6 +218,7 @@ message StringExpression {
     VarRef varRef = 1;
     //    Convert convert = 2;
     ConcatString concat = 2;
+    BytesExpression convert_bytes = 4;
   }
   Literal lit = 3;
 }

@@ -943,8 +943,8 @@ class TypedConverter:
         if _has_field(expr, "convert_bytes"):
             # 32 is max size for int conversions; var must take all sizes below anyway
             # currently takes only exact sizes
-            if isinstance(current_type, BytesM):
-                input_type = Bytes(current_type.m)
+            if isinstance(current_type, Bytes):
+                input_type = Bytes(current_type.m) # BytesM and Bytes
             else:
                 input_type = Bytes(32)
             return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
@@ -952,6 +952,8 @@ class TypedConverter:
         if _has_field(expr, "convert_string"):
             # 32 is max size for int conversions; var must take all sizes below anyway
             input_type = String(32)
+            if isinstance(current_type, Bytes): #BytesM and String cant enter here
+                input_type = String(current_type.m)
             return self.__visit_conversion(expr.convert_string, current_type, input_type)
 
         return None
@@ -1058,11 +1060,17 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        current_type = self.type_stack[-1]
         if expr.HasField("raw_call") and not self._is_constant:
-            byte_size = self.type_stack[len(self.type_stack) - 1].m
+            byte_size = current_type.m
             return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
         if expr.HasField("concat"):
             return self._visit_concat_bytes(expr.concat)
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
@@ -1076,6 +1084,11 @@ class TypedConverter:
                 return result
         if expr.HasField("concat"):
             return self._visit_concat_string(expr.concat)
+        current_type = self.type_stack[-1]
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
