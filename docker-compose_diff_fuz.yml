@@ -1,0 +1,48 @@
+version: '3'
+services:
+  generator:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.10
+    command:
+      - python3.10
+      - run.py
+      - /corpus
+    networks:
+      - db
+      - queue_opt_gas
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+    depends_on:
+      - mongodb
+    volumes:
+      - corpus:/corpus
+  queue_optimization_gas:
+    image: rabbitmq
+    networks:
+      - queue_opt_gas
+    ports:
+      - "56720:5672"
+  #  compiler_optimization_gas:
+  #    image: ""
+  #    environment:
+  #      PARAMS: ""
+  mongodb:
+    image: mongo
+    networks:
+      - db
+    ports:
+      - "27017:27017"
+    volumes:
+      - db:/data/db
+
+networks:
+  db:
+    driver: bridge
+  queue_opt_gas:
+    driver: bridge
+
+volumes:
+  db:
+  corpus:
+  # TODO: come up with queues' volumes to not lose it in case of a failure
