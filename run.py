@@ -49,13 +49,30 @@ class MultiQueueManager:
             queue.publish(**kwargs)
 
 
+class Config:
+    def __init__(self):
+        self._compiler_queues = [
+            {
+                "host": os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
+                "port": os.environ.get('QUEUE_BROKER_PORT', '5672'),
+                "queue_name": "queue3.10"
+            }
+        ]
+
+    @property
+    def compiler_queues(self):
+        return self._compiler_queues
+
+
+config = Config()
+
 qm = MultiQueueManager(queue_managers=[
     QueueManager(
-        os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
-        os.environ.get('QUEUE_BROKER_PORT', '5672'),
-        "queue3.10"
-    ),
-])
+        q_params["host"],
+        q_params["port"],
+        q_params["queue_name"]
+    )
+    for q_params in config.compiler_queues])
 
 
 @atheris.instrument_func
