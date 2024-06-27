@@ -1,7 +1,7 @@
 version: '3'
 services:
   generator:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.0.10
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
     command:
       - python3.10
       - run.py
@@ -13,16 +13,20 @@ services:
       PYTHONPATH: /app
       DB_HOST: mongodb
       DB_PORT: 27017
+      QUEUE_BROKER_HOST: queue_optimization_gas
+      QUEUE_BROKER_PORT: 5672
     depends_on:
       - mongodb
+      - queue_optimization_gas
     volumes:
       - corpus:/corpus
   queue_optimization_gas:
-    image: rabbitmq
+    image: rabbitmq:management
     networks:
       - queue_opt_gas
     ports:
       - "56720:5672"
+      - "15672:15672"
   #  compiler_optimization_gas:
   #    image: ""
   #    environment:
