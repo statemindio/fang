@@ -433,7 +433,8 @@ full_cases = [
     "raw_log",
     "ecadd",
     "concat_string",
-    "concat_bytes"
+    "concat_bytes",
+    "dynamic_array_bytes_constant_assignment"
 ]
 
 

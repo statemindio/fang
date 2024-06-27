@@ -203,7 +203,7 @@ class TypedConverter:
             value += f", {expr_val}"
         self.type_stack.pop()
 
-        if list_size < current_type.size and not isinstance(base_type, FixedList):
+        if not isinstance(current_type, DynArray) and list_size < current_type.size and not isinstance(base_type, FixedList):
             for i in range(current_type.size - list_size):
                 expr_val = base_type.generate()
                 value += f", {expr_val}"
