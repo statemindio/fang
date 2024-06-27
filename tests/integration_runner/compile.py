@@ -2,14 +2,15 @@ import json
 import os
 
 import pika.exceptions
-from vyper import compile_code
+# from vyper import compile_code
+import vyper
 
 from db import get_mongo_client
 from bson.objectid import ObjectId
 
 db_ = get_mongo_client()
 compilation_results = db_["compilation_results"]
-queue_collection = db_["test_col"]
+queue_collection = db_["compilation_log"]
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
     host=os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
@@ -17,7 +18,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters(
 ))
 channel = connection.channel()
 
-queue_name = 'to_compile'
+queue_name = 'queue3.10'
 
 channel.queue_declare(queue_name)
 
@@ -29,9 +30,10 @@ def callback(ch, method, properties, body):
         "generation_id": data["_id"]
     }
     try:
-        comp = compile_code(data["result"])
+        comp = vyper.compile_code(data["generation_result"])
         gen.update(comp)
-        queue_collection.update_one({"_id": ObjectId(data["_id"])}, {"$set": {"compiled": True}})
+        queue_collection.update_one({"_id": ObjectId(data["_id"])},
+                                    {"$set": {f"compiled_{vyper.__version__.replace('.', '_')}": True}})
     except Exception as e:
         gen.update({"error": str(e)})
     compilation_results.insert_one(gen)

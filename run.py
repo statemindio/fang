@@ -104,14 +104,15 @@ def TestOneProtoInput(msg):
     except Exception as e:
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
+    ins_res = c_log.insert_one(data)
 
     message = {
+        "_id": str(ins_res.inserted_id),
         "generation_result": proto.result,
         "json_msg": MessageToJson(msg),
         "generator_version": __version__,
     }
     qm.publish(**message)
-    c_log.insert_one(data)
 
 
 if __name__ == '__main__':

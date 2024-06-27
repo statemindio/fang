@@ -27,10 +27,24 @@ services:
     ports:
       - "56720:5672"
       - "15672:15672"
-  #  compiler_optimization_gas:
-  #    image: ""
-  #    environment:
-  #      PARAMS: ""
+  compiler_optimization_gas:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
+    environment:
+      PARAMS: ""
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      QUEUE_BROKER_HOST: queue_optimization_gas
+      QUEUE_BROKER_PORT: 5672
+    depends_on:
+      - mongodb
+      - queue_optimization_gas
+    command:
+      - python3.10
+      - tests/integration_runner/compile.py
+    networks:
+      - db
+      - queue_opt_gas
   mongodb:
     image: mongo
     networks:
