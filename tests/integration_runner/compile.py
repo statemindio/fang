@@ -3,6 +3,7 @@ import os
 
 import pika.exceptions
 # from vyper import compile_code
+from vyper.compiler.settings import Settings, OptimizationLevel
 import vyper
 
 from db import get_mongo_client
@@ -34,7 +35,8 @@ def callback(ch, method, properties, body):
         "generation_id": data["_id"]
     }
     try:
-        comp = vyper.compile_code(data["generation_result"])
+        settings = Settings(optimize=OptimizationLevel.from_string(params["optimization"]))
+        comp = vyper.compile_code(data["generation_result"], settings=settings)
         gen.update(comp)
         queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                     {"$set": {f"compiled_{compiler_key}": True}})
