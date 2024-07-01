@@ -9,28 +9,32 @@ services:
     networks:
       - db
       - queue_opt_gas
+      - queue_opt_codesize
     environment:
       PYTHONPATH: /app
       DB_HOST: mongodb
       DB_PORT: 27017
-      QUEUE_BROKER_HOST: queue_optimization_gas
-      QUEUE_BROKER_PORT: 5672
+      QUEUE_BROKER_HOST0: queue_optimization_gas
+      QUEUE_BROKER_PORT0: 5672
+      QUEUE_BROKER_HOST1: queue_optimization_codesize
+      QUEUE_BROKER_PORT1: 5672
     depends_on:
       - mongodb
       - queue_optimization_gas
     volumes:
       - corpus:/corpus
+
+  # compiler 0
   queue_optimization_gas:
     image: rabbitmq:management
     networks:
       - queue_opt_gas
     ports:
-      - "56720:5672"
       - "15672:15672"
   compiler_optimization_gas:
     image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
     environment:
-      PARAMS: ""
+      PARAMS: '{"optimization": "gas", "key": "gas"}'
       PYTHONPATH: /app
       DB_HOST: mongodb
       DB_PORT: 27017
@@ -45,6 +49,32 @@ services:
     networks:
       - db
       - queue_opt_gas
+
+  # compiler 1
+  queue_optimization_codesize:
+    image: rabbitmq:management
+    networks:
+      - queue_opt_codesize
+    ports:
+      - "15673:15672"
+  compiler_optimization_codesize:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
+    environment:
+      PARAMS: '{"optimization": "codesize", "key": "codesize"}'
+      PYTHONPATH: /app
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      QUEUE_BROKER_HOST: queue_optimization_codesize
+      QUEUE_BROKER_PORT: 5672
+    depends_on:
+      - mongodb
+      - queue_optimization_codesize
+    command:
+      - python3.10
+      - tests/integration_runner/compile.py
+    networks:
+      - db
+      - queue_opt_codesize
   mongodb:
     image: mongo
     networks:
@@ -58,6 +88,8 @@ networks:
   db:
     driver: bridge
   queue_opt_gas:
+    driver: bridge
+  queue_opt_codesize:
     driver: bridge
 
 volumes:
