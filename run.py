@@ -53,8 +53,13 @@ class Config:
     def __init__(self):
         self._compiler_queues = [
             {
-                "host": os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
-                "port": os.environ.get('QUEUE_BROKER_PORT', '5672'),
+                "host": os.environ.get('QUEUE_BROKER_HOST0', 'localhost'),
+                "port": os.environ.get('QUEUE_BROKER_PORT0', '5672'),
+                "queue_name": "queue3.10"
+            },
+            {
+                "host": os.environ.get('QUEUE_BROKER_HOST1', 'localhost'),
+                "port": os.environ.get('QUEUE_BROKER_PORT1', '5672'),
                 "queue_name": "queue3.10"
             }
         ]
