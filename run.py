@@ -17,7 +17,7 @@ with atheris.instrument_imports():
 
 db_client = get_mongo_client()
 
-__version__ = "0.0.9"  # same version as images' one
+__version__ = "0.1.0"  # same version as images' one
 
 
 class QueueManager:
