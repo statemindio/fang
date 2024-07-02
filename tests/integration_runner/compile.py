@@ -36,7 +36,7 @@ def callback(ch, method, properties, body):
     }
     try:
         settings = Settings(optimize=OptimizationLevel.from_string(params["optimization"]))
-        comp = vyper.compile_code(data["generation_result"], settings=settings)
+        comp = vyper.compile_code(data["generation_result"], output_formats=("bytecode", "abi"), settings=settings)
         gen.update(comp)
         queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                     {"$set": {f"compiled_{compiler_key}": True}})
