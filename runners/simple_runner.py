@@ -29,9 +29,14 @@ def external_nonpayable_runner(contract, abi_func):
     return computation, output
 
 
-def f(comp, ret) -> dict:
-    # TODO: it's a stub for a function to be supposed to deal with return value and computation results
-    return dict()
+def compose_result(comp, ret) -> dict:
+    # now we dump first ten slots only
+    state = [comp.state.get_storage(bytes.fromhex(contract.address[2:]), i) for i in range(10)]
+
+    # first 1280 bytes are dumped
+    memory = comp.memory_read_bytes(0, 1280).hex()
+
+    return dict(state=state, memory=memory, return_value=ret)
 
 
 db_contracts = get_mongo_client()
@@ -68,7 +73,7 @@ if __name__ == "__main__":
 
                     # well, now we save some side effects as json since it's not
                     # easy to pickle an object of abc.TitanoboaComputation
-                    function_call_res = f(comp, ret)
+                    function_call_res = compose_result(comp, ret)
                     interim_results[contract_desc["_id"]].append(function_call_res)
     results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
     save_results(results)
