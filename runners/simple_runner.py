@@ -1,10 +1,9 @@
 import json
-import pickle
 from collections import defaultdict
 
-from db import get_mongo_client
-
 import boa
+
+from db import get_mongo_client
 
 sender = ""  # TODO: init actual sender address
 
@@ -35,9 +34,14 @@ def f(comp, ret) -> dict:
     return dict()
 
 
+db_contracts = get_mongo_client()
+
+run_results_collection = db_contracts["run_results"]
+
+
 def save_results(res):
-    # TODO: it's a stub for a function to be supposed to deal with runners' results
-    pass
+    for gid, results in res.items():
+        run_results_collection.insert_many({"generation_id": gid, "results": results})
 
 
 if __name__ == "__main__":
@@ -45,7 +49,6 @@ if __name__ == "__main__":
         'compilation_results_0_3_10_codesize',
         'compilation_results_0_3_10_gas',
     )
-    db_contracts = get_mongo_client()
     contracts_cols = (db_contracts[col] for col in collections)
     contracts_providers = (ContractsProvider(contracts_col) for contracts_col in contracts_cols)
     reference_amount = len(collections)
