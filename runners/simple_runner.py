@@ -17,14 +17,14 @@ class ContractsProvider:
         return contracts
 
 
-def get_input_params(types):
+def get_input_params(types, sizes):
     # TODO: implement
     return []
 
 
-def external_nonpayable_runner(contract, abi_func):
+def external_nonpayable_runner(contract, abi_func, input_sizes):
     func = getattr(contract, abi_func["name"])
-    input_params = get_input_params(abi_func["inputs"])
+    input_params = get_input_params(abi_func["inputs"], input_sizes)
     computation, output = func(*input_params)
     return computation, output
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
             contract = factory.at(at)
             for abi_item in contract_desc["abi"]:
                 if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
-                    comp, ret = external_nonpayable_runner(contract, abi_item)
+                    comp, ret = external_nonpayable_runner(contract, abi_item, contract_desc["function_input_sizes"])
 
                     # well, now we save some side effects as json since it's not
                     # easy to pickle an object of abc.TitanoboaComputation

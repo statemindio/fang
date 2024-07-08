@@ -8,7 +8,7 @@ from types_d.base import BaseType
 from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
-from .utils import extract_type
+from .utils import extract_type, _get_sizes_from_array
 from vyperProtoNew_pb2 import VarDecl
 
 PURE = 0
@@ -113,6 +113,7 @@ class TypedConverter:
             "DA_FL_ADDRESS": (self._visit_list_expression, "ladrDyn"),
         }
         self.result = ""
+        self.function_inputs = {}
         self._var_tracker = VarTracker()
         self._func_tracker = FuncTracker()
         self._block_level_count = 0
@@ -153,7 +154,8 @@ class TypedConverter:
         for func_id in func_order:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
-            _, _, names = self._visit_input_parameters(func.input_params)
+            _, types, names = self._visit_input_parameters(func.input_params)
+            self.function_inputs[func_obj._name] = _get_sizes_from_array(types, names)
             input_names.append(names)
             self.visit_func(func_obj, func)
 
@@ -368,8 +370,8 @@ class TypedConverter:
 
         visibility = "@external"
 
-        input_params, _, _ = self._visit_input_parameters(init.input_params)
-
+        input_params, input_types, input_names = self._visit_input_parameters(init.input_params)
+        self.function_inputs["__init__"] = _get_sizes_from_array(input_types, input_names)
         function_name = "__init__"
         # self._func_tracker.register_function(function_name)
 

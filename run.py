@@ -85,6 +85,7 @@ def TestOneProtoInput(msg):
     data = {
         "json_msg": MessageToJson(msg),
         "generation_result": None,
+        "function_input_sizes": None,
         "compilation_result": None,
         "error_type": None,
         "error_message": None,
@@ -106,6 +107,7 @@ def TestOneProtoInput(msg):
     try:
         c_result = vyper.compile_code(proto.result)
         data["compilation_result"] = c_result
+        data["function_input_sizes"] = proto.function_inputs
     except Exception as e:
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
@@ -114,6 +116,7 @@ def TestOneProtoInput(msg):
     message = {
         "_id": str(ins_res.inserted_id),
         "generation_result": proto.result,
+        "function_input_sizes": proto.function_inputs,
         "json_msg": MessageToJson(msg),
         "generator_version": __version__,
     }
