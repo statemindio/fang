@@ -12,17 +12,12 @@ services:
       - queue_opt_codesize
     environment:
       PYTHONPATH: /app
-      DB_HOST: mongodb
-      DB_PORT: 27017
-      QUEUE_BROKER_HOST0: queue_optimization_gas
-      QUEUE_BROKER_PORT0: 5672
-      QUEUE_BROKER_HOST1: queue_optimization_codesize
-      QUEUE_BROKER_PORT1: 5672
     depends_on:
       - mongodb
       - queue_optimization_gas
     volumes:
       - corpus:/corpus
+      - ./config.yml:/app/config.yml
 
   # compiler 0
   queue_optimization_gas:

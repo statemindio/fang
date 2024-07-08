@@ -1,10 +1,10 @@
 import json
-import os
 from typing import List
 
 import atheris
 import atheris_libprotobuf_mutator
 import pika
+import yaml
 from google.protobuf.json_format import MessageToJson
 
 import vyperProtoNew_pb2
@@ -14,8 +14,6 @@ with atheris.instrument_imports():
     import sys
     import vyper
     from converters.typed_converters import TypedConverter
-
-db_client = get_mongo_client()
 
 __version__ = "0.1.0"  # same version as images' one
 
@@ -50,26 +48,28 @@ class MultiQueueManager:
 
 
 class Config:
-    def __init__(self):
+    def __init__(self, config_source_path="./config.yml"):
+        with open(config_source_path) as csf:
+            self.__config_source = yaml.safe_load(csf)
+
         self._compiler_queues = [
-            {
-                "host": os.environ.get('QUEUE_BROKER_HOST0', 'localhost'),
-                "port": os.environ.get('QUEUE_BROKER_PORT0', '5672'),
-                "queue_name": "queue3.10"
-            },
-            {
-                "host": os.environ.get('QUEUE_BROKER_HOST1', 'localhost'),
-                "port": os.environ.get('QUEUE_BROKER_PORT1', '5672'),
-                "queue_name": "queue3.10"
-            }
+            dict(host=c["queue"]["host"], port=c["queue"]["port"], queue_name="queue3.10")
+            for c in self.__config_source["compilers"]
         ]
+        self._db = self.__config_source["db"]
 
     @property
     def compiler_queues(self):
         return self._compiler_queues
 
+    @property
+    def db(self):
+        return self._db
+
 
 config = Config()
+
+db_client = get_mongo_client(config.db["host"], config.db["port"])
 
 qm = MultiQueueManager(queue_managers=[
     QueueManager(

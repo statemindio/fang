@@ -1,0 +1,12 @@
+compilers:
+  - name: opt_gas
+    queue:
+      host: queue_optimization_gas
+      port: 5672
+  - name: opt_codesize
+    queue:
+      host: queue_optimization_codesize
+      port: 5672
+db:
+  host: mongodb
+  port: 27017
