@@ -36,7 +36,9 @@ def compose_result(comp, ret) -> dict:
     # first 1280 bytes are dumped
     memory = comp.memory_read_bytes(0, 1280).hex()
 
-    return dict(state=state, memory=memory, return_value=ret)
+    consumed_gas = comp.get_gas_used()
+
+    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=ret)
 
 
 db_contracts = get_mongo_client()
