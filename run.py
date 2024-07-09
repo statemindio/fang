@@ -4,10 +4,10 @@ from typing import List
 import atheris
 import atheris_libprotobuf_mutator
 import pika
-import yaml
 from google.protobuf.json_format import MessageToJson
 
 import vyperProtoNew_pb2
+from config import Config
 from db import get_mongo_client
 
 with atheris.instrument_imports():
@@ -47,29 +47,9 @@ class MultiQueueManager:
             queue.publish(**kwargs)
 
 
-class Config:
-    def __init__(self, config_source_path="./config.yml"):
-        with open(config_source_path) as csf:
-            self.__config_source = yaml.safe_load(csf)
+conf = Config()
 
-        self._compiler_queues = [
-            dict(host=c["queue"]["host"], port=c["queue"]["port"], queue_name="queue3.10")
-            for c in self.__config_source["compilers"]
-        ]
-        self._db = self.__config_source["db"]
-
-    @property
-    def compiler_queues(self):
-        return self._compiler_queues
-
-    @property
-    def db(self):
-        return self._db
-
-
-config = Config()
-
-db_client = get_mongo_client(config.db["host"], config.db["port"])
+db_client = get_mongo_client(conf.db["host"], conf.db["port"])
 
 qm = MultiQueueManager(queue_managers=[
     QueueManager(
@@ -77,7 +57,7 @@ qm = MultiQueueManager(queue_managers=[
         q_params["port"],
         q_params["queue_name"]
     )
-    for q_params in config.compiler_queues])
+    for q_params in conf.compiler_queues])
 
 
 @atheris.instrument_func
