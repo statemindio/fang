@@ -31,6 +31,10 @@ class Config:
     def db(self):
         return self._db
 
+    @property
+    def compilers(self):
+        return self.__config_source["compilers"]
+
     def get_compiler_params_by_name(self, name):
         for comp in self.__config_source["compilers"]:
             if comp["name"] == name:

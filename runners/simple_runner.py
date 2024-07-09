@@ -2,7 +2,9 @@ import json
 from collections import defaultdict
 
 import boa
+import vyper
 
+from config import Config
 from db import get_mongo_client
 
 sender = ""  # TODO: init actual sender address
@@ -41,21 +43,21 @@ def compose_result(comp, ret) -> dict:
     return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=ret)
 
 
-db_contracts = get_mongo_client()
-
-run_results_collection = db_contracts["run_results"]
-
-
 def save_results(res):
     for gid, results in res.items():
         run_results_collection.insert_many({"generation_id": gid, "results": results})
 
 
 if __name__ == "__main__":
-    collections = (
-        'compilation_results_0_3_10_codesize',
-        'compilation_results_0_3_10_gas',
-    )
+    conf = Config()
+
+    db_contracts = get_mongo_client(conf.db["host"], conf.db["port"])
+
+    run_results_collection = db_contracts["run_results"]
+
+    collections = [
+        f"compilation_results_{vyper.__version__}_{c['name']}" for c in conf.compilers
+    ]
     contracts_cols = (db_contracts[col] for col in collections)
     contracts_providers = (ContractsProvider(contracts_col) for contracts_col in contracts_cols)
     reference_amount = len(collections)
