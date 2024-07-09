@@ -30,3 +30,9 @@ class Config:
     @property
     def db(self):
         return self._db
+
+    def get_compiler_params_by_name(self, name):
+        for comp in self.__config_source["compilers"]:
+            if comp["name"] == name:
+                return comp
+        return None

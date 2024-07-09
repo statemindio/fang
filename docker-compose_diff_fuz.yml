@@ -29,12 +29,8 @@ services:
   compiler_optimization_gas:
     image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
     environment:
-      PARAMS: '{"optimization": "gas", "key": "gas"}'
       PYTHONPATH: /app
-      DB_HOST: mongodb
-      DB_PORT: 27017
-      QUEUE_BROKER_HOST: queue_optimization_gas
-      QUEUE_BROKER_PORT: 5672
+      SERVICE_NAME: opt_gas
     depends_on:
       - mongodb
       - queue_optimization_gas
@@ -44,6 +40,8 @@ services:
     networks:
       - db
       - queue_opt_gas
+    volumes:
+      - ./config.yml:/app/config.yml
 
   # compiler 1
   queue_optimization_codesize:
@@ -55,12 +53,8 @@ services:
   compiler_optimization_codesize:
     image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
     environment:
-      PARAMS: '{"optimization": "codesize", "key": "codesize"}'
       PYTHONPATH: /app
-      DB_HOST: mongodb
-      DB_PORT: 27017
-      QUEUE_BROKER_HOST: queue_optimization_codesize
-      QUEUE_BROKER_PORT: 5672
+      SERVICE_NAME: opt_codesize
     depends_on:
       - mongodb
       - queue_optimization_codesize
@@ -70,6 +64,8 @@ services:
     networks:
       - db
       - queue_opt_codesize
+    volumes:
+      - ./config.yml:/app/config.yml
   mongodb:
     image: mongo
     networks:

@@ -2,16 +2,25 @@ import json
 import os
 
 import pika.exceptions
-# from vyper import compile_code
-from vyper.compiler.settings import Settings, OptimizationLevel
 import vyper
-
-from db import get_mongo_client
 from bson.objectid import ObjectId
+from vyper.compiler.settings import Settings, OptimizationLevel
+
+from config import Config
+from db import get_mongo_client
+
+compiler_name = os.environ.get("SERVICE_NAME")
+
+conf = Config("./config.yml")
+compiler_params = conf.get_compiler_params_by_name(compiler_name)
+
+if compiler_params is None:
+    # TODO: raise a error here
+    pass
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
-    host=os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
-    port=int(os.environ.get('QUEUE_BROKER_PORT', 5672))
+    host=compiler_params["queue"]["host"],
+    port=int(compiler_params["queue"]["port"])
 ))
 channel = connection.channel()
 
@@ -19,11 +28,9 @@ queue_name = 'queue3.10'
 
 channel.queue_declare(queue_name)
 
-raw_params = os.environ.get("PARAMS")
-params = json.loads(raw_params)
-compiler_key = f"{vyper.__version__.replace('.', '_')}_{params['key']}"
+compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
 
-db_ = get_mongo_client()
+db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
 compilation_results = db_[f"compilation_results_{compiler_key}"]
 
@@ -35,7 +42,7 @@ def callback(ch, method, properties, body):
         "generation_id": data["_id"]
     }
     try:
-        settings = Settings(optimize=OptimizationLevel.from_string(params["optimization"]))
+        settings = Settings(optimize=OptimizationLevel.from_string(compiler_params["exec_params"]["optimization"]))
         comp = vyper.compile_code(data["generation_result"], output_formats=("bytecode", "abi"), settings=settings)
         gen.update(comp)
         queue_collection.update_one({"_id": ObjectId(data["_id"])},

@@ -3,10 +3,14 @@ compilers:
     queue:
       host: queue_optimization_gas
       port: 5672
+    exec_params:
+      optimization: gas
   - name: opt_codesize
     queue:
       host: queue_optimization_codesize
       port: 5672
+    exec_params:
+      optimization: gas
 db:
   host: mongodb
   port: 27017
