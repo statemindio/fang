@@ -32,7 +32,9 @@ def callback(ch, method, properties, body):
     data = json.loads(body)
     print(data["_id"])
     gen = {
-        "generation_id": data["_id"]
+        "generation_id": data["_id"],
+        "function_input_types": data["function_input_types"],
+        "ran": False
     }
     try:
         settings = Settings(optimize=OptimizationLevel.from_string(params["optimization"]))

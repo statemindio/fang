@@ -155,7 +155,7 @@ class TypedConverter:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
             _, types, names = self._visit_input_parameters(func.input_params)
-            self.function_inputs[func_obj._name] = _get_sizes_from_array(types, names)
+            self.function_inputs[func_obj._name] = types
             input_names.append(names)
             self.visit_func(func_obj, func)
 
@@ -371,8 +371,8 @@ class TypedConverter:
         visibility = "@external"
 
         input_params, input_types, input_names = self._visit_input_parameters(init.input_params)
-        self.function_inputs["__init__"] = _get_sizes_from_array(input_types, input_names)
         function_name = "__init__"
+        self.function_inputs[function_name] = input_names
         # self._func_tracker.register_function(function_name)
 
         self._block_level_count = 1

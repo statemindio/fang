@@ -1,7 +1,12 @@
 import json
+import pickle
 from collections import defaultdict
+import contextlib
 
 import boa
+import sys
+sys.path.append('.')
+import types_d
 
 from db import get_mongo_client
 
@@ -12,19 +17,36 @@ class ContractsProvider:
     def __init__(self, db_connector):
         self._source = db_connector
 
+    @contextlib.contextmanager
     def get_contracts(self):
         contracts = self._source.find({"ran": False})
-        return contracts
+        contracts = list(contracts)
+        yield contracts
+        self._source.update_many(
+            {'_id': {'$in': [c['_id'] for c in contracts]}},
+            {'$set': {'ran': True}}
+        )
 
 
-def get_input_params(types, sizes):
-    # TODO: implement
-    return []
+def get_input_params(gen_types):
+    values = []
+    print(gen_types)
+    for typ in gen_types:
+        val = []
+        if isinstance(typ, types_d.FixedList):
+            val.append(get_input_params([typ.base_type for i in range(typ.size)]))
+            #for i in range(typ.size):
+                #val.append(typ.base_type.generate())
+        else:
+            val = typ.generate()
+        values.append(val)
+    return values
 
 
-def external_nonpayable_runner(contract, abi_func, input_sizes):
+def external_nonpayable_runner(contract, abi_func, gen_types):
     func = getattr(contract, abi_func["name"])
-    input_params = get_input_params(abi_func["inputs"], input_sizes)
+    decoded_types = pickle.loads(bytes.fromhex(gen_types))
+    input_params = get_input_params(decoded_types[abi_func["name"]])
     computation, output = func(*input_params)
     return computation, output
 
@@ -59,21 +81,23 @@ if __name__ == "__main__":
     reference_amount = len(collections)
     interim_results = defaultdict(list)
     for provider in contracts_providers:
-        contracts = provider.get_contracts()
-        for contract_desc in contracts:
-            at, _ = boa.env.deploy_code(
-                bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
-            )
+        with provider.get_contracts() as contracts:
+            for contract_desc in contracts:
+                at, _ = boa.env.deploy_code(
+                    bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+                )
 
-            factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
-            contract = factory.at(at)
-            for abi_item in contract_desc["abi"]:
-                if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
-                    comp, ret = external_nonpayable_runner(contract, abi_item, contract_desc["function_input_sizes"])
+                factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+                contract = factory.at(at)
+                if not "abi" in contract_desc:
+                    continue
+                for abi_item in contract_desc["abi"]:
+                    if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
+                        comp, ret = external_nonpayable_runner(contract, abi_item, contract_desc["function_input_types"])
 
-                    # well, now we save some side effects as json since it's not
-                    # easy to pickle an object of abc.TitanoboaComputation
-                    function_call_res = compose_result(comp, ret)
-                    interim_results[contract_desc["_id"]].append(function_call_res)
+                        # well, now we save some side effects as json since it's not
+                        # easy to pickle an object of abc.TitanoboaComputation
+                        function_call_res = compose_result(comp, ret)
+                        interim_results[contract_desc["_id"]].append(function_call_res)
     results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
     save_results(results)
