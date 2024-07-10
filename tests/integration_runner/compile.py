@@ -39,7 +39,8 @@ def callback(ch, method, properties, body):
     data = json.loads(body)
     print(data["_id"])
     gen = {
-        "generation_id": data["_id"]
+        "generation_id": data["_id"],
+        "ran": False
     }
     try:
         settings = Settings(optimize=OptimizationLevel.from_string(compiler_params["exec_params"]["optimization"]))
