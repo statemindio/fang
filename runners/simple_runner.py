@@ -1,4 +1,5 @@
 import json
+import time
 from collections import defaultdict
 
 import boa
@@ -59,25 +60,29 @@ if __name__ == "__main__":
         f"compilation_results_{vyper.__version__}_{c['name']}" for c in conf.compilers
     ]
     contracts_cols = (db_contracts[col] for col in collections)
-    contracts_providers = (ContractsProvider(contracts_col) for contracts_col in contracts_cols)
-    reference_amount = len(collections)
-    interim_results = defaultdict(list)
-    for provider in contracts_providers:
-        contracts = provider.get_contracts()
-        for contract_desc in contracts:
-            at, _ = boa.env.deploy_code(
-                bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
-            )
 
-            factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
-            contract = factory.at(at)
-            for abi_item in contract_desc["abi"]:
-                if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
-                    comp, ret = external_nonpayable_runner(contract, abi_item)
+    while True:
+        contracts_providers = (ContractsProvider(contracts_col) for contracts_col in contracts_cols)
+        reference_amount = len(collections)
+        interim_results = defaultdict(list)
+        for provider in contracts_providers:
+            contracts = provider.get_contracts()
+            for contract_desc in contracts:
+                at, _ = boa.env.deploy_code(
+                    bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+                )
 
-                    # well, now we save some side effects as json since it's not
-                    # easy to pickle an object of abc.TitanoboaComputation
-                    function_call_res = compose_result(comp, ret)
-                    interim_results[contract_desc["_id"]].append(function_call_res)
-    results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
-    save_results(results)
+                factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+                contract = factory.at(at)
+                for abi_item in contract_desc["abi"]:
+                    if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
+                        comp, ret = external_nonpayable_runner(contract, abi_item)
+
+                        # well, now we save some side effects as json since it's not
+                        # easy to pickle an object of abc.TitanoboaComputation
+                        function_call_res = compose_result(comp, ret)
+                        interim_results[contract_desc["_id"]].append(function_call_res)
+        results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
+        save_results(results)
+
+        time.sleep(2)  # wait two seconds before the next request
