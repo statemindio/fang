@@ -66,6 +66,20 @@ services:
       - queue_opt_codesize
     volumes:
       - ./config.yml:/app/config.yml
+  runner:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.0-dev0
+    environment:
+      PYTHONPATH: /app
+    depends_on:
+      - mongodb
+    command:
+      - python3.10
+      - runners/simple_runner.py
+    networks:
+      - db
+    volumes:
+      - ./config.yml:/app/config.yml
+
   mongodb:
     image: mongo
     networks:
