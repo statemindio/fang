@@ -1,5 +1,4 @@
 import json
-import os
 import pickle
 from typing import List
 
@@ -9,14 +8,13 @@ import pika
 from google.protobuf.json_format import MessageToJson
 
 import vyperProtoNew_pb2
+from config import Config
 from db import get_mongo_client
 
 with atheris.instrument_imports():
     import sys
     import vyper
     from converters.typed_converters import TypedConverter
-
-db_client = get_mongo_client()
 
 __version__ = "0.1.0"  # same version as images' one
 
@@ -50,27 +48,9 @@ class MultiQueueManager:
             queue.publish(**kwargs)
 
 
-class Config:
-    def __init__(self):
-        self._compiler_queues = [
-            {
-                "host": os.environ.get('QUEUE_BROKER_HOST0', 'localhost'),
-                "port": os.environ.get('QUEUE_BROKER_PORT0', '5672'),
-                "queue_name": "queue3.10"
-            },
-            {
-                "host": os.environ.get('QUEUE_BROKER_HOST1', 'localhost'),
-                "port": os.environ.get('QUEUE_BROKER_PORT1', '5672'),
-                "queue_name": "queue3.10"
-            }
-        ]
+conf = Config()
 
-    @property
-    def compiler_queues(self):
-        return self._compiler_queues
-
-
-config = Config()
+db_client = get_mongo_client(conf.db["host"], conf.db["port"])
 
 qm = MultiQueueManager(queue_managers=[
     QueueManager(
@@ -78,7 +58,7 @@ qm = MultiQueueManager(queue_managers=[
         q_params["port"],
         q_params["queue_name"]
     )
-    for q_params in config.compiler_queues])
+    for q_params in conf.compiler_queues])
 
 
 @atheris.instrument_func
