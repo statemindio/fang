@@ -86,8 +86,8 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(contract, abi_item):
-    comp, ret = external_nonpayable_runner(contract, abi_item)
+def execution_result(contract, abi_item, gen_types):
+    comp, ret = external_nonpayable_runner(contract, abi_item, gen_types)
     function_call_res = compose_result(comp, ret)
     return function_call_res
 
@@ -125,7 +125,11 @@ if __name__ == "__main__":
                     r = []
                     for abi_item in contract_desc["abi"]:
                         if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
-                            function_call_res = execution_result()
+                            function_call_res = execution_result(
+                                contract,
+                                abi_item,
+                                contract_desc["function_input_types"]
+                            )
                             r.append(function_call_res)
                     interim_results[contract_desc["generation_id"]].append(r)
             print("interim results", interim_results, flush=True)
