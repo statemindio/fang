@@ -1,3 +1,4 @@
+import contextlib
 import json
 import time
 from collections import defaultdict
@@ -15,9 +16,14 @@ class ContractsProvider:
     def __init__(self, db_connector):
         self._source = db_connector
 
+    @contextlib.contextmanager
     def get_contracts(self):
         contracts = self._source.find({"ran": False})
-        return contracts
+        yield contracts
+        self._source.update_many(
+            {'_id': {'$in': [c['_id'] for c in contracts]}},
+            {'ran': True}
+        )
 
 
 def get_input_params(types):
@@ -66,22 +72,22 @@ if __name__ == "__main__":
         reference_amount = len(collections)
         interim_results = defaultdict(list)
         for provider in contracts_providers:
-            contracts = provider.get_contracts()
-            for contract_desc in contracts:
-                at, _ = boa.env.deploy_code(
-                    bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
-                )
+            with provider.get_contracts() as contracts:
+                for contract_desc in contracts:
+                    at, _ = boa.env.deploy_code(
+                        bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+                    )
 
-                factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
-                contract = factory.at(at)
-                for abi_item in contract_desc["abi"]:
-                    if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
-                        comp, ret = external_nonpayable_runner(contract, abi_item)
+                    factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+                    contract = factory.at(at)
+                    for abi_item in contract_desc["abi"]:
+                        if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
+                            comp, ret = external_nonpayable_runner(contract, abi_item)
 
-                        # well, now we save some side effects as json since it's not
-                        # easy to pickle an object of abc.TitanoboaComputation
-                        function_call_res = compose_result(comp, ret)
-                        interim_results[contract_desc["_id"]].append(function_call_res)
+                            # well, now we save some side effects as json since it's not
+                            # easy to pickle an object of abc.TitanoboaComputation
+                            function_call_res = compose_result(comp, ret)
+                            interim_results[contract_desc["_id"]].append(function_call_res)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
         save_results(results)
 
