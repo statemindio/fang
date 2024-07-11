@@ -8,7 +8,7 @@ from types_d.base import BaseType
 from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
-from .utils import extract_type, _get_sizes_from_array
+from .utils import extract_type
 from vyperProtoNew_pb2 import VarDecl
 
 PURE = 0
@@ -370,9 +370,9 @@ class TypedConverter:
 
         visibility = "@external"
 
-        input_params, input_types, input_names = self._visit_input_parameters(init.input_params)
+        input_params, input_types, _ = self._visit_input_parameters(init.input_params)
         function_name = "__init__"
-        self.function_inputs[function_name] = input_names
+        self.function_inputs[function_name] = input_types
         # self._func_tracker.register_function(function_name)
 
         self._block_level_count = 1
