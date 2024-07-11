@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 
 import boa
+import eth.exceptions
 import vyper
 
 sys.path.append('.')
@@ -39,8 +40,8 @@ def get_input_params(gen_types):
         val = []
         if isinstance(typ, types_d.FixedList):
             val.append(get_input_params([typ.base_type for i in range(typ.size)]))
-            #for i in range(typ.size):
-                #val.append(typ.base_type.generate())
+            # for i in range(typ.size):
+            # val.append(typ.base_type.generate())
         else:
             val = typ.generate()
         values.append(val)
@@ -92,6 +93,23 @@ def execution_result(contract, abi_item, gen_types):
     return function_call_res
 
 
+def deploy_bytecode(_contract_desc):
+    if "bytecode" not in _contract_desc:
+        return None
+    try:
+        at, _ = boa.env.deploy_code(
+            bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+        )
+
+        factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+        _contract = factory.at(at)
+        return _contract
+    except eth.exceptions.Revert as e:
+        # TODO: log the exception into db
+        print("deployment failed: ", str(e), _contract_desc, flush=True)
+        return None
+
+
 if __name__ == "__main__":
     conf = Config()
 
@@ -114,13 +132,8 @@ if __name__ == "__main__":
             with provider.get_contracts() as contracts:
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
-                    at, _ = boa.env.deploy_code(
-                        bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
-                    )
-
-                    factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
-                    contract = factory.at(at)
-                    if not "abi" in contract_desc:
+                    contract = deploy_bytecode(contract_desc)
+                    if contract is None:
                         continue
                     r = []
                     for abi_item in contract_desc["abi"]:
