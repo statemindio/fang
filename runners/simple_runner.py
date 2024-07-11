@@ -1,10 +1,16 @@
 import contextlib
 import json
+import pickle
+import sys
 import time
 from collections import defaultdict
 
 import boa
+import eth.exceptions
 import vyper
+
+sys.path.append('.')
+import types_d
 
 from config import Config
 from db import get_mongo_client
@@ -27,14 +33,25 @@ class ContractsProvider:
         )
 
 
-def get_input_params(types):
-    # TODO: implement
-    return []
+def get_input_params(gen_types):
+    values = []
+    print(gen_types)
+    for typ in gen_types:
+        val = []
+        if isinstance(typ, types_d.FixedList):
+            val.append(get_input_params([typ.base_type for i in range(typ.size)]))
+            # for i in range(typ.size):
+            # val.append(typ.base_type.generate())
+        else:
+            val = typ.generate()
+        values.append(val)
+    return values
 
 
-def external_nonpayable_runner(contract, abi_func):
+def external_nonpayable_runner(contract, abi_func, gen_types):
     func = getattr(contract, abi_func["name"])
-    input_params = get_input_params(abi_func["inputs"])
+    decoded_types = pickle.loads(bytes.fromhex(gen_types))
+    input_params = get_input_params(decoded_types[abi_func["name"]])
     computation, output = func(*input_params)
     return computation, output
 
@@ -70,10 +87,27 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(contract, abi_item):
-    comp, ret = external_nonpayable_runner(contract, abi_item)
+def execution_result(contract, abi_item, gen_types):
+    comp, ret = external_nonpayable_runner(contract, abi_item, gen_types)
     function_call_res = compose_result(comp, ret)
     return function_call_res
+
+
+def deploy_bytecode(_contract_desc):
+    if "bytecode" not in _contract_desc:
+        return None
+    try:
+        at, _ = boa.env.deploy_code(
+            bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+        )
+
+        factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+        _contract = factory.at(at)
+        return _contract
+    except eth.exceptions.Revert as e:
+        # TODO: log the exception into db
+        print("deployment failed: ", str(e), _contract_desc, flush=True)
+        return None
 
 
 if __name__ == "__main__":
@@ -98,16 +132,17 @@ if __name__ == "__main__":
             with provider.get_contracts() as contracts:
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
-                    at, _ = boa.env.deploy_code(
-                        bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
-                    )
-
-                    factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
-                    contract = factory.at(at)
+                    contract = deploy_bytecode(contract_desc)
+                    if contract is None:
+                        continue
                     r = []
                     for abi_item in contract_desc["abi"]:
                         if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
-                            function_call_res = execution_result()
+                            function_call_res = execution_result(
+                                contract,
+                                abi_item,
+                                contract_desc["function_input_types"]
+                            )
                             r.append(function_call_res)
                     interim_results[contract_desc["generation_id"]].append(r)
             print("interim results", interim_results, flush=True)

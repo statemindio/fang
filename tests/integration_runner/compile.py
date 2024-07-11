@@ -40,6 +40,7 @@ def callback(ch, method, properties, body):
     print(data["_id"])
     gen = {
         "generation_id": data["_id"],
+        "function_input_types": data["function_input_types"],
         "ran": False
     }
     try:

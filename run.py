@@ -1,4 +1,5 @@
 import json
+import pickle
 from typing import List
 
 import atheris
@@ -91,9 +92,12 @@ def TestOneProtoInput(msg):
         data["error_message"] = str(e)
     ins_res = c_log.insert_one(data)
 
+    function_inputs = pickle.dumps(proto.function_inputs).hex()
+
     message = {
         "_id": str(ins_res.inserted_id),
         "generation_result": proto.result,
+        "function_input_types": function_inputs,
         "json_msg": MessageToJson(msg),
         "generator_version": __version__,
     }
