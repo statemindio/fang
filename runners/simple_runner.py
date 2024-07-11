@@ -87,10 +87,10 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(contract, abi_item, gen_types):
-    comp, ret = external_nonpayable_runner(contract, abi_item, gen_types)
-    function_call_res = compose_result(comp, ret)
-    return function_call_res
+def execution_result(_contract, _abi_item, gen_types):
+    comp, ret = external_nonpayable_runner(_contract, _abi_item, gen_types)
+    _function_call_res = compose_result(comp, ret)
+    return _function_call_res
 
 
 def deploy_bytecode(_contract_desc):
