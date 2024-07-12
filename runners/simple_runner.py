@@ -113,7 +113,6 @@ def encode_init_inputs(contract_abi, *args):
         if func["type"] == "constructor":
             init_abi = func
             break
-
     # Otherwise will throw an error
     init_abi["name"] = "__init__"
     init_function = ABIFunction(init_abi, contract_name="__init__")
@@ -124,8 +123,12 @@ def deploy_bytecode(_contract_desc, _input_types):
     if "bytecode" not in _contract_desc:
         return None
     try:
-        init_inputs = get_input_params(_input_types["__init__"])
-        encoded_inputs = encode_init_inputs(_contract_desc["abi"], *init_inputs)
+        # relies on generator data
+        init_types = _input_types.get("__init__", None)
+        encoded_inputs = b''
+        if init_types is not None:
+            init_inputs = get_input_params(init_types)
+            encoded_inputs = encode_init_inputs(_contract_desc["abi"], *init_inputs)
         at, _ = boa.env.deploy_code(
             bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
         )
