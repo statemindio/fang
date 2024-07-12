@@ -58,14 +58,14 @@ def external_nonpayable_runner(contract, abi_func, gen_types):
 
 def compose_result(comp, ret) -> dict:
     # now we dump first ten slots only
-    state = [comp.state.get_storage(bytes.fromhex(contract.address[2:]), i) for i in range(10)]
+    state = [str(comp.state.get_storage(bytes.fromhex(contract.address[2:]), i)) for i in range(10)]
 
     # first 1280 bytes are dumped
     memory = comp.memory_read_bytes(0, 1280).hex()
 
     consumed_gas = comp.get_gas_used()
 
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=ret)
+    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret))
 
 
 def save_results(res):
