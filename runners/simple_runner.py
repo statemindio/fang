@@ -19,8 +19,13 @@ sender = ""  # TODO: init actual sender address
 
 
 class ContractsProvider:
-    def __init__(self, db_connector):
+    def __init__(self, db_connector, name):
         self._source = db_connector
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
 
     @contextlib.contextmanager
     def get_contracts(self):
@@ -123,7 +128,10 @@ if __name__ == "__main__":
     print("Collections: ", collections, flush=True)
     contracts_cols = (db_contracts[col] for col in collections)
 
-    contracts_providers = [ContractsProvider(contracts_col) for contracts_col in contracts_cols]
+    contracts_providers = [
+        ContractsProvider(contracts_col, f"{vyper.__version__}_{c['name']}")
+        for contracts_col, c in zip(contracts_cols, conf.compilers)
+    ]
     reference_amount = len(collections)
 
     while True:
@@ -144,7 +152,7 @@ if __name__ == "__main__":
                                 contract_desc["function_input_types"]
                             )
                             r.append(function_call_res)
-                    interim_results[contract_desc["generation_id"]].append(r)
+                    interim_results[contract_desc["generation_id"]].append({provider.name: r})
             print("interim results", interim_results, flush=True)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
         print("results", results, flush=True)
