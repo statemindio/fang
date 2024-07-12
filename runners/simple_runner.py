@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 
 import boa
+from boa.contracts.abi.abi_contract import ABIFunction
 import eth.exceptions
 import vyper
 
@@ -37,10 +38,9 @@ class ContractsProvider:
             {'$set': {'ran': True}}
         )
 
-
+# Cant actually use the data from generators xD, requires typeconversions
 def get_input_params(gen_types):
     values = []
-    print(gen_types)
     for typ in gen_types:
         val = []
         if isinstance(typ, types_d.FixedList):
@@ -53,10 +53,9 @@ def get_input_params(gen_types):
     return values
 
 
-def external_nonpayable_runner(contract, abi_func, gen_types):
-    func = getattr(contract, abi_func["name"])
-    decoded_types = pickle.loads(bytes.fromhex(gen_types))
-    input_params = get_input_params(decoded_types[abi_func["name"]])
+def external_nonpayable_runner(contract, function_name, input_types):
+    func = getattr(contract, function_name)
+    input_params = get_input_params(input_types[function_name])
     computation, output = func(*input_params)
     return computation, output
 
@@ -92,21 +91,34 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(_contract, _abi_item, gen_types):
-    comp, ret = external_nonpayable_runner(_contract, _abi_item, gen_types)
+def execution_result(_contract, function_name, input_types):
+    comp, ret = external_nonpayable_runner(_contract, function_name, input_types)
     _function_call_res = compose_result(comp, ret)
     return _function_call_res
 
+def encode_init_inputs(contract_abi, *args):
+    for func in contract_abi:
+        if func["type"] == "constructor":
+            init_abi = func
+            break
 
-def deploy_bytecode(_contract_desc):
+    # Otherwise will throw an error
+    init_abi["name"] = "__init__"
+    init_function = ABIFunction(init_abi, contract_name="__init__")
+
+    return init_function.prepare_calldata(*args)[4:]
+
+def deploy_bytecode(_contract_desc, _input_types):
     if "bytecode" not in _contract_desc:
         return None
     try:
+        init_inputs = get_input_params(_input_types["__init__"])
+        encoded_inputs = encode_init_inputs(_contract_desc["abi"], *init_inputs)
         at, _ = boa.env.deploy_code(
-            bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+            bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
         )
 
-        factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+        factory = boa.loads_abi(json.dumps(_contract_desc["abi"]), name="Foo")
         _contract = factory.at(at)
         return _contract
     except eth.exceptions.Revert as e:
@@ -140,7 +152,8 @@ if __name__ == "__main__":
             with provider.get_contracts() as contracts:
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
-                    contract = deploy_bytecode(contract_desc)
+                    unpacked_types = pickle.loads(bytes.fromhex(contract_desc["function_input_types"]))
+                    contract = deploy_bytecode(contract_desc, unpacked_types)
                     if contract is None:
                         continue
                     r = []
@@ -148,8 +161,8 @@ if __name__ == "__main__":
                         if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
                             function_call_res = execution_result(
                                 contract,
-                                abi_item,
-                                contract_desc["function_input_types"]
+                                abi_item["name"],
+                                unpacked_types
                             )
                             r.append(function_call_res)
                     interim_results[contract_desc["generation_id"]].append({provider.name: r})
