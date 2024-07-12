@@ -4,6 +4,7 @@ import pickle
 import sys
 import time
 from collections import defaultdict
+import decimal
 
 import boa
 from boa.contracts.abi.abi_contract import ABIFunction
@@ -39,6 +40,17 @@ class ContractsProvider:
         )
 
 # Cant actually use the data from generators xD, requires typeconversions
+def _get_converted_generator_output(typ):
+    if isinstance(typ, types_d.Decimal):
+        return decimal.Decimal(typ.generate())
+    if isinstance(typ, types_d.BytesM):
+        return bytes.fromhex(typ.generate()[2:])
+    if isinstance(typ, types_d.Bytes):
+        return bytes.fromhex(typ.generate()[2:-1])
+    return typ.generate()
+    # Shouldn't catch types_d.String but not sure
+
+
 def get_input_params(gen_types):
     values = []
     for typ in gen_types:
@@ -48,7 +60,7 @@ def get_input_params(gen_types):
             # for i in range(typ.size):
             # val.append(typ.base_type.generate())
         else:
-            val = typ.generate()
+            val = _get_converted_generator_output(typ)
         values.append(val)
     return values
 
