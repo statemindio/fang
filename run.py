@@ -1,15 +1,13 @@
-import json
 import pickle
-from typing import List
 
 import atheris
 import atheris_libprotobuf_mutator
-import pika
 from google.protobuf.json_format import MessageToJson
 
 import vyperProtoNew_pb2
 from config import Config
 from db import get_mongo_client
+from queue_managers import QueueManager, MultiQueueManager
 
 with atheris.instrument_imports():
     import sys
@@ -17,36 +15,6 @@ with atheris.instrument_imports():
     from converters.typed_converters import TypedConverter
 
 __version__ = "0.1.0"  # same version as images' one
-
-
-class QueueManager:
-    def __init__(self, host, port, queue_name):
-        self.host = host
-        self.port = port
-
-        # TODO: it's supposed to be refactored to support different QM's
-        self._connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host=host,
-            port=port
-        ))
-        self.channel = self._connection.channel()
-        self._queue_name = queue_name
-
-        self.channel.queue_declare(queue_name)
-
-    def publish(self, **kwargs):
-        message = json.dumps(kwargs)
-        self.channel.basic_publish(exchange='', routing_key=self._queue_name, body=message)
-
-
-class MultiQueueManager:
-    def __init__(self, queue_managers: List[QueueManager] = None):
-        self.queue_managers = queue_managers if queue_managers is not None else []
-
-    def publish(self, **kwargs):
-        for queue in self.queue_managers:
-            queue.publish(**kwargs)
-
 
 conf = Config()
 
