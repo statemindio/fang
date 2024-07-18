@@ -8,6 +8,7 @@ from vyper.compiler.settings import Settings, OptimizationLevel
 
 from config import Config
 from db import get_mongo_client
+from queue_managers import QueueManager
 
 compiler_name = os.environ.get("SERVICE_NAME")
 
@@ -18,15 +19,10 @@ if compiler_params is None:
     # TODO: raise a error here
     pass
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(
-    host=compiler_params["queue"]["host"],
-    port=int(compiler_params["queue"]["port"])
-))
-channel = connection.channel()
-
 queue_name = 'queue3.10'
+qm = QueueManager(compiler_params["queue"]["host"], int(compiler_params["queue"]["port"]), queue_name)
 
-channel.queue_declare(queue_name)
+channel = qm.channel
 
 compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
 
