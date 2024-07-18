@@ -149,7 +149,8 @@ if __name__ == "__main__":
                         continue
                     r = []
                     for abi_item in contract_desc["abi"]:
-                        if abi_item["type"] == "function" and abi_item["stateMutability"] == "nonpayable":
+                        if abi_item["type"] == "function" and \
+                                abi_item["stateMutability"] in ("nonpayable", "view", "pure"):
                             function_call_res = execution_result(
                                 contract,
                                 abi_item["name"],
