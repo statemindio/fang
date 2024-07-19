@@ -453,6 +453,5 @@ def test_proto_converter(case_name):
     random.seed(1337)
 
     conv.visit()
-    #print(conv.result)
-    print(conv.function_inputs)
+    print(conv.result)
     assert conv.result == expected

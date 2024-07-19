@@ -32,7 +32,7 @@ class Bytes(BaseType):
         return f"Bytes[{self._m}]"
 
     def generate(self):
-        return self._value_generator.generate(self._m)
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(self._m, value)
@@ -80,7 +80,7 @@ class Int(BaseType):
         return type_name
 
     def generate(self):
-        return self._value_generator.generate(self._n, self._signed)
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(self._n, self._signed, value)
@@ -138,7 +138,7 @@ class Bool(BaseType):
         return "bool"
 
     def generate(self):
-        return self._value_generator.generate()
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(value)
@@ -154,7 +154,7 @@ class Decimal(BaseType):
         return "decimal"
 
     def generate(self):
-        return self._value_generator.generate()
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(value)
@@ -181,7 +181,7 @@ class Address(BaseType):
         return "address"
 
     def generate(self):
-        return self._value_generator.generate()
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(value)
@@ -211,7 +211,13 @@ class FixedList(BaseType):
     def name(self):
         #return self.__class__.__name__.upper() + self._base_type.name
         return "FL_" + self._base_type.name
-    
+
+    def generate(self):
+        values = []
+        for i in range(self.size):
+            values.append(self.base_type.generate())
+        return values
+
 class DynArray(FixedList):
     def __init__(self, size, base_type: BaseType, cur_size = 0):
         self._base_type = base_type
