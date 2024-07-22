@@ -4,15 +4,13 @@ import pickle
 import sys
 import time
 from collections import defaultdict
-import decimal
 
 import boa
 from boa.contracts.abi.abi_contract import ABIFunction
 import eth.exceptions
 import vyper
 
-sys.path.append('.')
-import types_d
+from input_generation import InputGenerator, InputStrategy
 
 from config import Config
 from db import get_mongo_client
@@ -39,35 +37,10 @@ class ContractsProvider:
             {'$set': {'ran': True}}
         )
 
-# Cant actually use the data from generators xD, requires typeconversions
-def _get_converted_generator_output(typ):
-    if isinstance(typ, types_d.Decimal):
-        return decimal.Decimal(typ.generate())
-    if isinstance(typ, types_d.BytesM):
-        return bytes.fromhex(typ.generate()[2:])
-    if isinstance(typ, types_d.Bytes):
-        return bytes.fromhex(typ.generate()[2:-1])
-    return typ.generate()
-    # Shouldn't catch types_d.String but not sure
 
-
-def get_input_params(gen_types):
-    values = []
-    for typ in gen_types:
-        val = []
-        if isinstance(typ, types_d.FixedList):
-            val.append(get_input_params([typ.base_type for i in range(typ.size)]))
-            # for i in range(typ.size):
-            # val.append(typ.base_type.generate())
-        else:
-            val = _get_converted_generator_output(typ)
-        values.append(val)
-    return values
-
-
-def external_nonpayable_runner(contract, function_name, input_types):
+def external_nonpayable_runner(contract, function_name, input_types, input_generator):
     func = getattr(contract, function_name)
-    input_params = get_input_params(input_types[function_name])
+    input_params = input_generator.generate(input_types[function_name])
     computation, output = func(*input_params)
     return computation, output
 
@@ -103,8 +76,8 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(_contract, function_name, input_types):
-    comp, ret = external_nonpayable_runner(_contract, function_name, input_types)
+def execution_result(_contract, function_name, input_types, input_generator):
+    comp, ret = external_nonpayable_runner(_contract, function_name, input_types, input_generator)
     _function_call_res = compose_result(comp, ret)
     return _function_call_res
 
@@ -119,7 +92,7 @@ def encode_init_inputs(contract_abi, *args):
 
     return init_function.prepare_calldata(*args)[4:]
 
-def deploy_bytecode(_contract_desc, _input_types):
+def deploy_bytecode(_contract_desc, _input_types, input_generator):
     if "bytecode" not in _contract_desc:
         return None
     try:
@@ -127,7 +100,7 @@ def deploy_bytecode(_contract_desc, _input_types):
         init_types = _input_types.get("__init__", None)
         encoded_inputs = b''
         if init_types is not None:
-            init_inputs = get_input_params(init_types)
+            init_inputs = input_generator.generate(init_types)
             encoded_inputs = encode_init_inputs(_contract_desc["abi"], *init_inputs)
         at, _ = boa.env.deploy_code(
             bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
@@ -161,6 +134,9 @@ if __name__ == "__main__":
     ]
     reference_amount = len(collections)
 
+    input_strategy = InputStrategy.DEFAULT
+    input_generator = InputGenerator(input_strategy)
+
     while True:
         interim_results = defaultdict(list)
         for provider in contracts_providers:
@@ -168,7 +144,7 @@ if __name__ == "__main__":
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
                     unpacked_types = pickle.loads(bytes.fromhex(contract_desc["function_input_types"]))
-                    contract = deploy_bytecode(contract_desc, unpacked_types)
+                    contract = deploy_bytecode(contract_desc, unpacked_types, input_generator)
                     if contract is None:
                         continue
                     r = []
@@ -177,7 +153,8 @@ if __name__ == "__main__":
                             function_call_res = execution_result(
                                 contract,
                                 abi_item["name"],
-                                unpacked_types
+                                unpacked_types,
+                                input_generator
                             )
                             r.append(function_call_res)
                     interim_results[contract_desc["generation_id"]].append({provider.name: r})
