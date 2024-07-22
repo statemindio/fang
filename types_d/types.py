@@ -212,6 +212,9 @@ class FixedList(BaseType):
         #return self.__class__.__name__.upper() + self._base_type.name
         return "FL_" + self._base_type.name
 
+    def generate(self):
+        return [self.base_type.generate() for _ in range(self.size)]
+
 class DynArray(FixedList):
     def __init__(self, size, base_type: BaseType, cur_size = 0):
         self._base_type = base_type
