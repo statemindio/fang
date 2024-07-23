@@ -1,19 +1,17 @@
 import contextlib
 import json
 import pickle
-import sys
 import time
 from collections import defaultdict
 
 import boa
-from boa.contracts.abi.abi_contract import ABIFunction
 import eth.exceptions
 import vyper
-
-from runners.input_generation import InputGenerator, InputStrategy
+from boa.contracts.abi.abi_contract import ABIFunction
 
 from config import Config
 from db import get_mongo_client
+from runners.input_generation import InputGenerator, InputStrategy
 
 sender = ""  # TODO: init actual sender address
 
