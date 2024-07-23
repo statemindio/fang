@@ -26,7 +26,7 @@ class QueueManager:
             ))
         except pika.exceptions.AMQPConnectionError as e:
             attempt = self._attempts_counter
-            if attempt < 10:
+            if attempt < 20:
                 print("connect failed, attempt number {}".format(attempt), flush=True)
                 time.sleep(5)
                 return self.__connect()
