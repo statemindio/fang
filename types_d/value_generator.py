@@ -14,6 +14,8 @@ class BytesRandomGen:
         val = random.randint(0, 2 ** 256 - 1)  # TO-DO: check range of random.randint
         hex_val = hex(val)[2: input_type.m+2]
         # return "0x" + os.urandom(m).hex()
+        if len(hex_val) % 2 != 0:
+            hex_val = '0' + hex_val
         return f"b\"{hex_val}\""
 
 
