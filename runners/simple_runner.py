@@ -143,6 +143,7 @@ if __name__ == "__main__":
             with provider.get_contracts() as contracts:
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
+                    print("Handling compilation: ", contract_desc["_id"])
                     unpacked_types = pickle.loads(bytes.fromhex(contract_desc["function_input_types"]))
                     contract = deploy_bytecode(contract_desc, unpacked_types, input_generator)
                     if contract is None:
