@@ -1,19 +1,17 @@
 import contextlib
 import json
 import pickle
-import sys
 import time
 from collections import defaultdict
 
 import boa
 import eth.exceptions
 import vyper
-
-sys.path.append('.')
-import types_d
+from boa.contracts.abi.abi_contract import ABIFunction
 
 from config import Config
 from db import get_mongo_client
+from runners.input_generation import InputGenerator, InputStrategy
 
 sender = ""  # TODO: init actual sender address
 
@@ -38,32 +36,16 @@ class ContractsProvider:
         )
 
 
-def get_input_params(gen_types):
-    values = []
-    print(gen_types)
-    for typ in gen_types:
-        val = []
-        if isinstance(typ, types_d.FixedList):
-            val.append(get_input_params([typ.base_type for i in range(typ.size)]))
-            # for i in range(typ.size):
-            # val.append(typ.base_type.generate())
-        else:
-            val = typ.generate()
-        values.append(val)
-    return values
-
-
-def external_nonpayable_runner(contract, abi_func, gen_types):
-    func = getattr(contract, abi_func["name"])
-    decoded_types = pickle.loads(bytes.fromhex(gen_types))
-    input_params = get_input_params(decoded_types[abi_func["name"]])
+def external_nonpayable_runner(contract, function_name, input_types, input_generator):
+    func = getattr(contract, function_name)
+    input_params = input_generator.generate(input_types[function_name])
     computation, output = func(*input_params)
     return computation, output
 
 
-def compose_result(comp, ret) -> dict:
+def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
-    state = [str(comp.state.get_storage(bytes.fromhex(contract.address[2:]), i)) for i in range(10)]
+    state = [str(comp.state.get_storage(bytes.fromhex(_contract.address[2:]), i)) for i in range(10)]
 
     # first 1280 bytes are dumped
     memory = comp.memory_read_bytes(0, 1280).hex()
@@ -92,27 +74,62 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(_contract, _abi_item, gen_types):
-    comp, ret = external_nonpayable_runner(_contract, _abi_item, gen_types)
-    _function_call_res = compose_result(comp, ret)
+def execution_result(_contract, function_name, input_types, input_generator):
+    comp, ret = external_nonpayable_runner(_contract, function_name, input_types, input_generator)
+    _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
+def encode_init_inputs(contract_abi, args):
+    for func in contract_abi:
+        if func["type"] == "constructor":
+            init_abi = func
+            break
+    # Otherwise will throw an error
+    init_abi["name"] = "__init__"
+    init_function = ABIFunction(init_abi, contract_name="__init__")
 
-def deploy_bytecode(_contract_desc):
+    return init_function.prepare_calldata(*args)[4:]
+
+def deploy_bytecode(_contract_desc, _input_types, input_generator):
     if "bytecode" not in _contract_desc:
         return None
     try:
+        # relies on generator data
+        init_types = _input_types.get("__init__", None)
+        encoded_inputs = b''
+        if init_types is not None:
+            init_inputs = input_generator.generate(init_types)
+            encoded_inputs = encode_init_inputs(_contract_desc["abi"], init_inputs)
         at, _ = boa.env.deploy_code(
-            bytecode=bytes.fromhex(contract_desc["bytecode"][2:])
+            bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
         )
 
-        factory = boa.loads_abi(json.dumps(contract_desc["abi"]), name="Foo")
+        factory = boa.loads_abi(json.dumps(_contract_desc["abi"]), name="Foo")
         _contract = factory.at(at)
         return _contract
     except eth.exceptions.Revert as e:
         # TODO: log the exception into db
         print("deployment failed: ", str(e), _contract_desc, flush=True)
         return None
+
+
+def handle_compilation(_contract_desc, _input_generator):
+    unpacked_types = pickle.loads(bytes.fromhex(_contract_desc["function_input_types"]))
+    contract = deploy_bytecode(_contract_desc, unpacked_types, _input_generator)
+    if contract is None:
+        return None
+    _r = []
+    for abi_item in _contract_desc["abi"]:
+        if abi_item["type"] == "function" and \
+                abi_item["stateMutability"] in ("nonpayable", "view", "pure"):
+            function_call_res = execution_result(
+                contract,
+                abi_item["name"],
+                unpacked_types,
+                _input_generator
+            )
+            _r.append(function_call_res)
+    return _r
 
 
 if __name__ == "__main__":
@@ -134,25 +151,17 @@ if __name__ == "__main__":
     ]
     reference_amount = len(collections)
 
+    input_strategy = InputStrategy.DEFAULT
+    input_generator = InputGenerator(input_strategy)
+
     while True:
         interim_results = defaultdict(list)
         for provider in contracts_providers:
             with provider.get_contracts() as contracts:
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
-                    contract = deploy_bytecode(contract_desc)
-                    if contract is None:
-                        continue
-                    r = []
-                    for abi_item in contract_desc["abi"]:
-                        if abi_item["type"] == "function" and \
-                                abi_item["stateMutability"] in ("nonpayable", "view", "pure"):
-                            function_call_res = execution_result(
-                                contract,
-                                abi_item,
-                                contract_desc["function_input_types"]
-                            )
-                            r.append(function_call_res)
+                    print("Handling compilation: ", contract_desc["_id"])
+                    r = handle_compilation(contract_desc, input_generator)
                     interim_results[contract_desc["generation_id"]].append({provider.name: r})
             print("interim results", interim_results, flush=True)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
