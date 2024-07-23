@@ -27,9 +27,8 @@ class InputGenerator:
     def generate(self, input_types):
         values = []
         for itype in input_types:
-            t_val = []
             if isinstance(itype, types.FixedList) or isinstance(itype, types.DynArray):
-                t_val.append(self.generate([itype.base_type for i in range(itype.size)]))
+                t_val = self.generate([itype.base_type for i in range(itype.size)])
             else:
                 t_val = self.gens[itype.__class__].generate(itype)
                 t_val = self._convert_gen_output(itype, t_val)
