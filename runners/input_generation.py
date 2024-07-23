@@ -11,13 +11,13 @@ class InputGenerator:
     def __init__(self, strategy: InputStrategy):
         # set up type generators
         self.default = {
-            type(types.Int): value_generator.IntRandomGen(),
-            type(types.Bytes): value_generator.BytesRandomGen(),
-            type(types.BytesM): value_generator.BytesMRandomGen(),
-            type(types.Bool): value_generator.BoolRandomGen(),
-            type(types.Decimal): value_generator.DecimalRandomGen(),
-            type(types.String): value_generator.StringRandomGen(),
-            type(types.Address): value_generator.AddressRandomGen()
+            types.Int: value_generator.IntRandomGen(),
+            types.Bytes: value_generator.BytesRandomGen(),
+            types.BytesM: value_generator.BytesMRandomGen(),
+            types.Bool: value_generator.BoolRandomGen(),
+            types.Decimal: value_generator.DecimalRandomGen(),
+            types.String: value_generator.StringRandomGen(),
+            types.Address: value_generator.AddressRandomGen()
         }
         self.zeroes = {}
         # set current strategy
@@ -31,7 +31,7 @@ class InputGenerator:
             if isinstance(itype, types.FixedList) or isinstance(itype, types.DynArray):
                 t_val.append(self.generate([itype.base_type for i in range(itype.size)]))
             else:
-                t_val = self.gens[type(itype)](itype)
+                t_val = self.gens[itype.__class__].generate(itype)
                 t_val = self._convert_gen_output(itype, t_val)
             values.append(t_val)
         return values
@@ -41,7 +41,7 @@ class InputGenerator:
             return decimal.Decimal(value)
         if isinstance(typ, types.BytesM):
             return bytes.fromhex(value[2:])
-        if isinstance(typ, types.Bytes):
+        if type(typ) == types.Bytes:
             return bytes.fromhex(value[2:-1])
         return value
         # Shouldn't catch types_d.String but not sure
