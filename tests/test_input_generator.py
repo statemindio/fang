@@ -20,7 +20,7 @@ data = [
 
 
 @pytest.mark.parametrize("types, expected", data)
-def test_input_generator_default_int(types, expected):
+def test_input_generator_default(types, expected):
     import random
     random.seed(1337)
 
