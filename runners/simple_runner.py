@@ -81,7 +81,7 @@ def execution_result(_contract, function_name, input_types, input_generator):
     _function_call_res = compose_result(comp, ret)
     return _function_call_res
 
-def encode_init_inputs(contract_abi, *args):
+def encode_init_inputs(contract_abi, args):
     for func in contract_abi:
         if func["type"] == "constructor":
             init_abi = func
@@ -101,7 +101,7 @@ def deploy_bytecode(_contract_desc, _input_types, input_generator):
         encoded_inputs = b''
         if init_types is not None:
             init_inputs = input_generator.generate(init_types)
-            encoded_inputs = encode_init_inputs(_contract_desc["abi"], *init_inputs)
+            encoded_inputs = encode_init_inputs(_contract_desc["abi"], init_inputs)
         at, _ = boa.env.deploy_code(
             bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
         )
