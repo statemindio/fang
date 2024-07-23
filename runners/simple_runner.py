@@ -113,6 +113,25 @@ def deploy_bytecode(_contract_desc, _input_types, input_generator):
         return None
 
 
+def handle_compilation(_contract_desc, _input_generator):
+    unpacked_types = pickle.loads(bytes.fromhex(_contract_desc["function_input_types"]))
+    contract = deploy_bytecode(_contract_desc, unpacked_types, _input_generator)
+    if contract is None:
+        return None
+    _r = []
+    for abi_item in _contract_desc["abi"]:
+        if abi_item["type"] == "function" and \
+                abi_item["stateMutability"] in ("nonpayable", "view", "pure"):
+            function_call_res = execution_result(
+                contract,
+                abi_item["name"],
+                unpacked_types,
+                _input_generator
+            )
+            _r.append(function_call_res)
+    return _r
+
+
 if __name__ == "__main__":
     conf = Config()
 
@@ -142,21 +161,7 @@ if __name__ == "__main__":
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
                     print("Handling compilation: ", contract_desc["_id"])
-                    unpacked_types = pickle.loads(bytes.fromhex(contract_desc["function_input_types"]))
-                    contract = deploy_bytecode(contract_desc, unpacked_types, input_generator)
-                    if contract is None:
-                        continue
-                    r = []
-                    for abi_item in contract_desc["abi"]:
-                        if abi_item["type"] == "function" and \
-                                abi_item["stateMutability"] in ("nonpayable", "view", "pure"):
-                            function_call_res = execution_result(
-                                contract,
-                                abi_item["name"],
-                                unpacked_types,
-                                input_generator
-                            )
-                            r.append(function_call_res)
+                    r = handle_compilation(contract_desc, input_generator)
                     interim_results[contract_desc["generation_id"]].append({provider.name: r})
             print("interim results", interim_results, flush=True)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
