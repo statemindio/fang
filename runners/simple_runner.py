@@ -45,9 +45,9 @@ def external_nonpayable_runner(contract, function_name, input_types, input_gener
     return computation, output
 
 
-def compose_result(comp, ret) -> dict:
+def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
-    state = [str(comp.state.get_storage(bytes.fromhex(contract.address[2:]), i)) for i in range(10)]
+    state = [str(comp.state.get_storage(bytes.fromhex(_contract.address[2:]), i)) for i in range(10)]
 
     # first 1280 bytes are dumped
     memory = comp.memory_read_bytes(0, 1280).hex()
@@ -78,7 +78,7 @@ def skip_execution_errors(f):
 @skip_execution_errors
 def execution_result(_contract, function_name, input_types, input_generator):
     comp, ret = external_nonpayable_runner(_contract, function_name, input_types, input_generator)
-    _function_call_res = compose_result(comp, ret)
+    _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
 def encode_init_inputs(contract_abi, args):
