@@ -10,7 +10,7 @@ from boa.contracts.abi.abi_contract import ABIFunction
 import eth.exceptions
 import vyper
 
-from input_generation import InputGenerator, InputStrategy
+from runners.input_generation import InputGenerator, InputStrategy
 
 from config import Config
 from db import get_mongo_client
