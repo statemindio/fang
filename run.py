@@ -1,19 +1,32 @@
+import pickle
+
 import atheris
 import atheris_libprotobuf_mutator
 from google.protobuf.json_format import MessageToJson
 
 import vyperProtoNew_pb2
+from config import Config
 from db import get_mongo_client
+from queue_managers import QueueManager, MultiQueueManager
 
 with atheris.instrument_imports():
     import sys
     import vyper
     from converters.typed_converters import TypedConverter
-    from vyper.exceptions import CompilerPanic, StaticAssertionException
 
-db_client = get_mongo_client()
+__version__ = "0.1.0"  # same version as images' one
 
-__version__ = "0.0.9"  # same version as images' one
+conf = Config()
+
+db_client = get_mongo_client(conf.db["host"], conf.db["port"])
+
+qm = MultiQueueManager(queue_managers=[
+    QueueManager(
+        q_params["host"],
+        q_params["port"],
+        q_params["queue_name"]
+    )
+    for q_params in conf.compiler_queues])
 
 
 @atheris.instrument_func
@@ -45,8 +58,18 @@ def TestOneProtoInput(msg):
     except Exception as e:
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
+    ins_res = c_log.insert_one(data)
 
-    c_log.insert_one(data)
+    function_inputs = pickle.dumps(proto.function_inputs).hex()
+
+    message = {
+        "_id": str(ins_res.inserted_id),
+        "generation_result": proto.result,
+        "function_input_types": function_inputs,
+        "json_msg": MessageToJson(msg),
+        "generator_version": __version__,
+    }
+    qm.publish(**message)
 
 
 if __name__ == '__main__':
