@@ -9,7 +9,7 @@ from db import get_mongo_client
 
 # TODO: get level from config
 logger = logging.getLogger("queue_producer")
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(

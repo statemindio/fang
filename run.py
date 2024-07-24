@@ -20,7 +20,7 @@ __version__ = "0.1.0"  # same version as images' one
 conf = Config()
 # TODO: get level from config
 logger = logging.getLogger("generator")
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 db_client = get_mongo_client(conf.db["host"], conf.db["port"])
 

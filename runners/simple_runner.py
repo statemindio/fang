@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     # TODO: get level from config
     logger = logging.getLogger("runner")
-    logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 
     db_contracts = get_mongo_client(conf.db["host"], conf.db["port"])

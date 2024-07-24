@@ -33,7 +33,7 @@ compilation_results = db_[f"compilation_results_{compiler_key}"]
 
 # TODO: get level from config
 logger = logging.getLogger(f"compiler_{compiler_key}")
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
