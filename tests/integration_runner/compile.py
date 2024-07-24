@@ -16,10 +16,6 @@ compiler_name = os.environ.get("SERVICE_NAME")
 conf = Config("./config.yml")
 compiler_params = conf.get_compiler_params_by_name(compiler_name)
 
-# TODO: get level from config
-logger = logging.getLogger("generator")
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
-
 if compiler_params is None:
     # TODO: raise a error here
     pass
@@ -35,6 +31,9 @@ db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
 compilation_results = db_[f"compilation_results_{compiler_key}"]
 
+# TODO: get level from config
+logger = logging.getLogger(f"compiler_{compiler_key}")
+logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 def callback(ch, method, properties, body):
     data = json.loads(body)

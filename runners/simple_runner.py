@@ -139,7 +139,7 @@ if __name__ == "__main__":
     conf = Config()
 
     # TODO: get level from config
-    logger = logging.getLogger("generator")
+    logger = logging.getLogger("runner")
     logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 
