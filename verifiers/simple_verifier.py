@@ -12,7 +12,12 @@ if __name__ == '__main__':
     db_client = get_mongo_client(conf.db["host"], conf.db["port"])
     results_collection = db_client["run_results"]
 
-    unhandled_results = results_collection.find({"is_handled": False})
+    unhandled_results = list(results_collection.find({"is_handled": False}))
 
     for res in unhandled_results:
         verify_results(res)
+
+    results_collection.update_many(
+        {"_id": {"$in": [r["_id"] for r in unhandled_results]}},
+        {"$set": {"is_handled": True}}
+    )
