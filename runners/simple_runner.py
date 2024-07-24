@@ -2,6 +2,7 @@ import contextlib
 import json
 import pickle
 import time
+import logging
 from collections import defaultdict
 
 import boa
@@ -58,7 +59,8 @@ def compose_result(_contract, comp, ret) -> dict:
 def save_results(res):
     to_save = [{"generation_id": gid, "results": results} for gid, results in res.items()]
     if len(to_save) == 0:
-        print("No results to save...")
+        #print("No results to save...")
+        logger.debug("No results to save...")
         return
     run_results_collection.insert_many(to_save)
 
@@ -109,7 +111,8 @@ def deploy_bytecode(_contract_desc, _input_types, input_generator):
         return _contract
     except eth.exceptions.Revert as e:
         # TODO: log the exception into db
-        print("deployment failed: ", str(e), _contract_desc, flush=True)
+        #print("deployment failed: ", str(e), _contract_desc, flush=True)
+        logger.error("Deployment failed: %s; %s", str(e), _contract_desc)
         return None
 
 
@@ -135,6 +138,11 @@ def handle_compilation(_contract_desc, _input_generator):
 if __name__ == "__main__":
     conf = Config()
 
+    # TODO: get level from config
+    logger = logging.getLogger("generator")
+    logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+
+
     db_contracts = get_mongo_client(conf.db["host"], conf.db["port"])
 
     run_results_collection = db_contracts["run_results"]
@@ -142,7 +150,8 @@ if __name__ == "__main__":
     collections = [
         f"compilation_results_{vyper.__version__.replace('.', '_')}_{c['name']}" for c in conf.compilers
     ]
-    print("Collections: ", collections, flush=True)
+    #print("Collections: ", collections, flush=True)
+    logger.info("Target collections: %s", collections)
     contracts_cols = (db_contracts[col] for col in collections)
 
     contracts_providers = [
@@ -158,15 +167,20 @@ if __name__ == "__main__":
         interim_results = defaultdict(list)
         for provider in contracts_providers:
             with provider.get_contracts() as contracts:
-                print(f"Amount of contracts: ", len(contracts), flush=True)
+                #print(f"Amount of contracts: ", len(contracts), flush=True)
+                logger.info("Amount of contracts: %s", len(contracts))
                 for contract_desc in contracts:
-                    print("Handling compilation: ", contract_desc["_id"])
+                    #print("Handling compilation: ", contract_desc["_id"])
+                    logger.info("Handling compilation: %s", len(contracts))
                     r = handle_compilation(contract_desc, input_generator)
                     interim_results[contract_desc["generation_id"]].append({provider.name: r})
-            print("interim results", interim_results, flush=True)
+            #print("interim results", interim_results, flush=True)
+            logger.debug("Interim results: %s", interim_results)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
-        print("results", results, flush=True)
+        #print("results", results, flush=True)
+        logger.debug("Results: %s", results)
         save_results(results)
 
-        print("waiting....", flush=True)
+        #print("waiting....", flush=True)
+        logger.debug("Waiting (2 sec)")
         time.sleep(2)  # wait two seconds before the next request

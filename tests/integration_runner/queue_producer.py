@@ -1,10 +1,16 @@
 import json
 import os
 import time
+import logging
 
 import pika
 
 from db import get_mongo_client
+
+# TODO: get level from config
+logger = logging.getLogger("generator")
+logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
     host=os.environ.get('QUEUE_BROKER_HOST', 'localhost'),
@@ -30,6 +36,7 @@ while True:
         queue.update_one({"_id": doc["_id"]}, {"$set": {"in_queue": True}})
         counter += 1
 
-    print("[ * ] Handled {} messages\n".format(counter))
+    logger.info("[ * ] Handled %s messages", counter)
+    #print("[ * ] Handled {} messages\n".format(counter))
 
     time.sleep(5)

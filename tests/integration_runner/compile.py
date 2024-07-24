@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 import pika.exceptions
 import vyper
@@ -14,6 +15,10 @@ compiler_name = os.environ.get("SERVICE_NAME")
 
 conf = Config("./config.yml")
 compiler_params = conf.get_compiler_params_by_name(compiler_name)
+
+# TODO: get level from config
+logger = logging.getLogger("generator")
+logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
 
 if compiler_params is None:
     # TODO: raise a error here
@@ -33,20 +38,24 @@ compilation_results = db_[f"compilation_results_{compiler_key}"]
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
-    print(data["_id"])
+    #print(data["_id"])
     gen = {
         "generation_id": data["_id"],
         "function_input_types": data["function_input_types"],
         "ran": False
     }
+    logger.debug("Compiling: %s", gen)
+
     try:
         settings = Settings(optimize=OptimizationLevel.from_string(compiler_params["exec_params"]["optimization"]))
         comp = vyper.compile_code(data["generation_result"], output_formats=("bytecode", "abi"), settings=settings)
         gen.update(comp)
+        logger.debug("Compilation result: %s", comp)
         queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                     {"$set": {f"compiled_{compiler_key}": True}})
     except Exception as e:
         gen.update({"error": str(e)})
+        logger.debug("Compilation error: %s", str(e))
     compilation_results.insert_one(gen)
 
 
