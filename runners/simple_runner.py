@@ -56,7 +56,7 @@ def compose_result(_contract, comp, ret) -> dict:
 
 
 def save_results(res):
-    to_save = [{"generation_id": gid, "results": results} for gid, results in res.items()]
+    to_save = [{"generation_id": gid, "results": results, "is_handled": False} for gid, results in res.items()]
     if len(to_save) == 0:
         print("No results to save...")
         return
