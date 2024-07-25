@@ -1,4 +1,4 @@
-import pickle
+import json
 
 import atheris
 import atheris_libprotobuf_mutator
@@ -8,6 +8,8 @@ import vyperProtoNew_pb2
 from config import Config
 from db import get_mongo_client
 from queue_managers import QueueManager, MultiQueueManager
+from input_generation import InputGenerator, InputStrategy
+from json_encoders import ExtendedEncoder
 
 with atheris.instrument_imports():
     import sys
@@ -28,6 +30,8 @@ qm = MultiQueueManager(queue_managers=[
     )
     for q_params in conf.compiler_queues])
 
+input_strategy = InputStrategy.DEFAULT
+input_generator = InputGenerator(input_strategy)
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -60,12 +64,16 @@ def TestOneProtoInput(msg):
         data["error_message"] = str(e)
     ins_res = c_log.insert_one(data)
 
-    function_inputs = pickle.dumps(proto.function_inputs).hex()
+    input_values = dict()
+    for name, types in proto.function_inputs.items():
+        input_values[name] = input_generator.generate(types)
+
+    input_values = json.dumps(input_values, cls=ExtendedEncoder)
 
     message = {
         "_id": str(ins_res.inserted_id),
         "generation_result": proto.result,
-        "function_input_types": function_inputs,
+        "function_input_values": input_values,
         "json_msg": MessageToJson(msg),
         "generator_version": __version__,
     }

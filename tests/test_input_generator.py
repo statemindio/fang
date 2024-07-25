@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from runners.input_generation import InputGenerator, InputStrategy
+from input_generation import InputGenerator, InputStrategy
 from runners.simple_runner import handle_compilation
 from types_d import types as t
 
