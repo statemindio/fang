@@ -52,19 +52,19 @@ protoc  --python_out=./ ./vyperProto.proto
 Since all dependencies are installed the services can be run:
 
 ```bash
-python ./run.sh
+python ./run.py
 ```
 
 ### Running the Compiler service
 
 ```bash
-PYTHONPATH=$(pwd)
+export PYTHONPATH=$(pwd)
 SERVICE_NAME=opt_codesize python tests/integration_runner/compile.py
 ```
 
 ### Running the Runner service
 
 ```bash
-PYTHONPATH=$(pwd)
+export PYTHONPATH=$(pwd)
 python runners/simple_runner.py
 ```
