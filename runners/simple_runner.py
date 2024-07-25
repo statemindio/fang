@@ -79,6 +79,7 @@ def execution_result(_contract, function_name, input_types, input_generator):
     _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
+
 def encode_init_inputs(contract_abi, args):
     for func in contract_abi:
         if func["type"] == "constructor":
@@ -89,6 +90,7 @@ def encode_init_inputs(contract_abi, args):
     init_function = ABIFunction(init_abi, contract_name="__init__")
 
     return init_function.prepare_calldata(*args)[4:]
+
 
 def deploy_bytecode(_contract_desc, _input_types, input_generator):
     if "bytecode" not in _contract_desc:
