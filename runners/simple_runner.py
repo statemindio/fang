@@ -79,6 +79,7 @@ def execution_result(_contract, function_name, input_types, input_generator):
     _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
+
 def encode_init_inputs(contract_abi, args):
     for func in contract_abi:
         if func["type"] == "constructor":
@@ -89,6 +90,7 @@ def encode_init_inputs(contract_abi, args):
     init_function = ABIFunction(init_abi, contract_name="__init__")
 
     return init_function.prepare_calldata(*args)[4:]
+
 
 def deploy_bytecode(_contract_desc, _input_types, input_generator):
     if "bytecode" not in _contract_desc:
@@ -155,14 +157,14 @@ if __name__ == "__main__":
     input_generator = InputGenerator(input_strategy)
 
     while True:
-        interim_results = defaultdict(list)
+        interim_results = defaultdict(lambda: defaultdict(list))
         for provider in contracts_providers:
             with provider.get_contracts() as contracts:
                 print(f"Amount of contracts: ", len(contracts), flush=True)
                 for contract_desc in contracts:
                     print("Handling compilation: ", contract_desc["_id"])
                     r = handle_compilation(contract_desc, input_generator)
-                    interim_results[contract_desc["generation_id"]].append({provider.name: r})
+                    interim_results[contract_desc["generation_id"]][provider.name].append(r)
             print("interim results", interim_results, flush=True)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
         print("results", results, flush=True)
