@@ -11,7 +11,7 @@ from boa.contracts.abi.abi_contract import ABIFunction
 
 from config import Config
 from db import get_mongo_client
-from runners.input_generation import InputGenerator, InputStrategy
+from json_encoders import ExtendedDecoder
 
 sender = ""  # TODO: init actual sender address
 
@@ -37,9 +37,9 @@ class ContractsProvider:
         )
 
 
-def external_nonpayable_runner(contract, function_name, input_types, input_generator):
+def external_nonpayable_runner(contract, function_name, input_values):
     func = getattr(contract, function_name)
-    input_params = input_generator.generate(input_types[function_name])
+    input_params = input_values[function_name]
     computation, output = func(*input_params)
     return computation, output
 
@@ -75,8 +75,8 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(_contract, function_name, input_types, input_generator):
-    comp, ret = external_nonpayable_runner(_contract, function_name, input_types, input_generator)
+def execution_result(_contract, function_name, input_values):
+    comp, ret = external_nonpayable_runner(_contract, function_name, input_values)
     _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
@@ -93,16 +93,15 @@ def encode_init_inputs(contract_abi, args):
     return init_function.prepare_calldata(*args)[4:]
 
 
-def deploy_bytecode(_contract_desc, _input_types, input_generator):
+def deploy_bytecode(_contract_desc, _input_values):
     if "bytecode" not in _contract_desc:
         return None
     try:
         # relies on generator data
-        init_types = _input_types.get("__init__", None)
+        init_values = _input_values.get("__init__", None)
         encoded_inputs = b''
-        if init_types is not None:
-            init_inputs = input_generator.generate(init_types)
-            encoded_inputs = encode_init_inputs(_contract_desc["abi"], init_inputs)
+        if init_values is not None:
+            encoded_inputs = encode_init_inputs(_contract_desc["abi"], init_values)
         at, _ = boa.env.deploy_code(
             bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
         )
@@ -116,9 +115,9 @@ def deploy_bytecode(_contract_desc, _input_types, input_generator):
         return None
 
 
-def handle_compilation(_contract_desc, _input_generator):
-    unpacked_types = pickle.loads(bytes.fromhex(_contract_desc["function_input_types"]))
-    contract = deploy_bytecode(_contract_desc, unpacked_types, _input_generator)
+def handle_compilation(_contract_desc):
+    input_values = json.loads(_contract_desc["function_input_values"], cls=ExtendedDecoder)
+    contract = deploy_bytecode(_contract_desc, input_values)
     if contract is None:
         return None
     _r = []
@@ -128,8 +127,7 @@ def handle_compilation(_contract_desc, _input_generator):
             function_call_res = execution_result(
                 contract,
                 abi_item["name"],
-                unpacked_types,
-                _input_generator
+                input_values
             )
             _r.append(function_call_res)
     return _r
@@ -154,9 +152,6 @@ if __name__ == "__main__":
     ]
     reference_amount = len(collections)
 
-    input_strategy = InputStrategy.DEFAULT
-    input_generator = InputGenerator(input_strategy)
-
     while True:
         interim_results = defaultdict(list)
         for provider in contracts_providers:
@@ -164,7 +159,7 @@ if __name__ == "__main__":
             print(f"Amount of contracts: ", len(contracts), flush=True)
             for contract_desc in contracts:
                 print("Handling compilation: ", contract_desc["_id"])
-                r = handle_compilation(contract_desc, input_generator)
+                r = handle_compilation(contract_desc)
                 interim_results[contract_desc["generation_id"]].append({provider.name: r})
             print("interim results", interim_results, flush=True)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
