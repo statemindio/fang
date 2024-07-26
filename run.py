@@ -1,5 +1,4 @@
 import json
-import pickle
 import logging
 
 import atheris
@@ -9,9 +8,9 @@ from google.protobuf.json_format import MessageToJson
 import vyperProtoNew_pb2
 from config import Config
 from db import get_mongo_client
-from queue_managers import QueueManager, MultiQueueManager
 from input_generation import InputGenerator, InputStrategy
 from json_encoders import ExtendedEncoder
+from queue_managers import QueueManager, MultiQueueManager
 
 with atheris.instrument_imports():
     import sys
