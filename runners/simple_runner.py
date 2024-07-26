@@ -1,6 +1,5 @@
-import contextlib
 import json
-import pickle
+import logging
 import time
 from collections import defaultdict
 
@@ -11,7 +10,7 @@ from boa.contracts.abi.abi_contract import ABIFunction
 
 from config import Config
 from db import get_mongo_client
-from runners.input_generation import InputGenerator, InputStrategy
+from json_encoders import ExtendedDecoder
 
 sender = ""  # TODO: init actual sender address
 
@@ -25,20 +24,21 @@ class ContractsProvider:
     def name(self):
         return self._name
 
-    @contextlib.contextmanager
     def get_contracts(self):
-        contracts = self._source.find({"ran": False})
-        contracts = list(contracts)
-        yield contracts
+        _contracts = self._source.find({"ran": False})
+        _contracts = list(_contracts)
+        return _contracts
+
+    def mark_as_run_by_generation_ids(self, _ids):
         self._source.update_many(
-            {'_id': {'$in': [c['_id'] for c in contracts]}},
+            {'generation_id': {'$in': _ids}},
             {'$set': {'ran': True}}
         )
 
 
-def external_nonpayable_runner(contract, function_name, input_types, input_generator):
+def external_nonpayable_runner(contract, function_name, input_values):
     func = getattr(contract, function_name)
-    input_params = input_generator.generate(input_types[function_name])
+    input_params = input_values[function_name]
     computation, output = func(*input_params)
     return computation, output
 
@@ -56,9 +56,9 @@ def compose_result(_contract, comp, ret) -> dict:
 
 
 def save_results(res):
-    to_save = [{"generation_id": gid, "results": results, "is_handled": False} for gid, results in res.items()]
+    to_save = [{"generation_id": gid, "results": _results, "is_handled": False} for gid, _results in res.items()]
     if len(to_save) == 0:
-        print("No results to save...")
+        logger.debug("No results to save...")
         return
     run_results_collection.insert_many(to_save)
 
@@ -74,8 +74,8 @@ def skip_execution_errors(f):
 
 
 @skip_execution_errors
-def execution_result(_contract, function_name, input_types, input_generator):
-    comp, ret = external_nonpayable_runner(_contract, function_name, input_types, input_generator)
+def execution_result(_contract, function_name, input_values):
+    comp, ret = external_nonpayable_runner(_contract, function_name, input_values)
     _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
@@ -92,16 +92,15 @@ def encode_init_inputs(contract_abi, args):
     return init_function.prepare_calldata(*args)[4:]
 
 
-def deploy_bytecode(_contract_desc, _input_types, input_generator):
+def deploy_bytecode(_contract_desc, _input_values):
     if "bytecode" not in _contract_desc:
         return None
     try:
         # relies on generator data
-        init_types = _input_types.get("__init__", None)
+        init_values = _input_values.get("__init__", None)
         encoded_inputs = b''
-        if init_types is not None:
-            init_inputs = input_generator.generate(init_types)
-            encoded_inputs = encode_init_inputs(_contract_desc["abi"], init_inputs)
+        if init_values is not None:
+            encoded_inputs = encode_init_inputs(_contract_desc["abi"], init_values)
         at, _ = boa.env.deploy_code(
             bytecode=bytes.fromhex(_contract_desc["bytecode"][2:]) + encoded_inputs
         )
@@ -111,13 +110,14 @@ def deploy_bytecode(_contract_desc, _input_types, input_generator):
         return _contract
     except eth.exceptions.Revert as e:
         # TODO: log the exception into db
-        print("deployment failed: ", str(e), _contract_desc, flush=True)
+        # failed deployment is normal course of action
+        logger.debug("Deployment failed: %s; %s", str(e), _contract_desc)
         return None
 
 
-def handle_compilation(_contract_desc, _input_generator):
-    unpacked_types = pickle.loads(bytes.fromhex(_contract_desc["function_input_types"]))
-    contract = deploy_bytecode(_contract_desc, unpacked_types, _input_generator)
+def handle_compilation(_contract_desc):
+    input_values = json.loads(_contract_desc["function_input_values"], cls=ExtendedDecoder)
+    contract = deploy_bytecode(_contract_desc, input_values)
     if contract is None:
         return None
     _r = []
@@ -127,8 +127,7 @@ def handle_compilation(_contract_desc, _input_generator):
             function_call_res = execution_result(
                 contract,
                 abi_item["name"],
-                unpacked_types,
-                _input_generator
+                input_values
             )
             _r.append(function_call_res)
     return _r
@@ -137,6 +136,10 @@ def handle_compilation(_contract_desc, _input_generator):
 if __name__ == "__main__":
     conf = Config()
 
+    # TODO: get level from config
+    logger = logging.getLogger("runner")
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+
     db_contracts = get_mongo_client(conf.db["host"], conf.db["port"])
 
     run_results_collection = db_contracts["run_results"]
@@ -144,7 +147,7 @@ if __name__ == "__main__":
     collections = [
         f"compilation_results_{vyper.__version__.replace('.', '_')}_{c['name']}" for c in conf.compilers
     ]
-    print("Collections: ", collections, flush=True)
+    logger.info("Target collections: %s", collections)
     contracts_cols = (db_contracts[col] for col in collections)
 
     contracts_providers = [
@@ -153,22 +156,21 @@ if __name__ == "__main__":
     ]
     reference_amount = len(collections)
 
-    input_strategy = InputStrategy.DEFAULT
-    input_generator = InputGenerator(input_strategy)
-
     while True:
         interim_results = defaultdict(lambda: defaultdict(list))
         for provider in contracts_providers:
-            with provider.get_contracts() as contracts:
-                print(f"Amount of contracts: ", len(contracts), flush=True)
-                for contract_desc in contracts:
-                    print("Handling compilation: ", contract_desc["_id"])
-                    r = handle_compilation(contract_desc, input_generator)
-                    interim_results[contract_desc["generation_id"]][provider.name].append(r)
-            print("interim results", interim_results, flush=True)
+            contracts = provider.get_contracts()
+            logger.info("Amount of contracts: %s", len(contracts))
+            for contract_desc in contracts:
+                logger.info("Handling compilation: %s", contract_desc["_id"])
+                r = handle_compilation(contract_desc)
+                interim_results[contract_desc["generation_id"]][provider.name].append(r)
+            logger.debug("Interim results: %s", interim_results)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
-        print("results", results, flush=True)
+        logger.debug("Results: %s", results)
         save_results(results)
+        for provider in contracts_providers:
+            provider.mark_as_run_by_generation_ids([generation_id for generation_id in results])
 
-        print("waiting....", flush=True)
+        logger.debug("Waiting (2 sec)")
         time.sleep(2)  # wait two seconds before the next request

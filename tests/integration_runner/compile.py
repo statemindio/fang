@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 import pika.exceptions
 import vyper
@@ -19,12 +20,16 @@ if compiler_params is None:
     # TODO: raise a error here
     pass
 
+compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
+
+# TODO: get level from config
+logger = logging.getLogger(f"compiler_{compiler_key}")
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+
 queue_name = 'queue3.10'
-qm = QueueManager(compiler_params["queue"]["host"], int(compiler_params["queue"]["port"]), queue_name)
+qm = QueueManager(compiler_params["queue"]["host"], int(compiler_params["queue"]["port"]), queue_name, logger)
 
 channel = qm.channel
-
-compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
 
 db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
@@ -33,20 +38,24 @@ compilation_results = db_[f"compilation_results_{compiler_key}"]
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
-    print(data["_id"])
+    # print(data["_id"])
     gen = {
         "generation_id": data["_id"],
-        "function_input_types": data["function_input_types"],
+        "function_input_values": data["function_input_values"],
         "ran": False
     }
+    logger.debug("Compiling: %s", gen)
+
     try:
         settings = Settings(optimize=OptimizationLevel.from_string(compiler_params["exec_params"]["optimization"]))
         comp = vyper.compile_code(data["generation_result"], output_formats=("bytecode", "abi"), settings=settings)
         gen.update(comp)
+        logger.debug("Compilation result: %s", comp)
         queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                     {"$set": {f"compiled_{compiler_key}": True}})
     except Exception as e:
         gen.update({"error": str(e)})
+        logger.debug("Compilation error: %s", str(e))
     compilation_results.insert_one(gen)
 
 
