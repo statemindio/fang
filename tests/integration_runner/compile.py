@@ -20,6 +20,8 @@ if compiler_params is None:
     # TODO: raise a error here
     pass
 
+compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
+
 # TODO: get level from config
 logger = logging.getLogger(f"compiler_{compiler_key}")
 logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
@@ -29,15 +31,14 @@ qm = QueueManager(compiler_params["queue"]["host"], int(compiler_params["queue"]
 
 channel = qm.channel
 
-compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
-
 db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
 compilation_results = db_[f"compilation_results_{compiler_key}"]
 
+
 def callback(ch, method, properties, body):
     data = json.loads(body)
-    #print(data["_id"])
+    # print(data["_id"])
     gen = {
         "generation_id": data["_id"],
         "function_input_values": data["function_input_values"],
