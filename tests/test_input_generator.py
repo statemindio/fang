@@ -77,7 +77,7 @@ def test_handle_compilation():
 
 json_data = [
   ([t.Bytes(1), t.Bytes(10), t.Bytes(32)], 'bytes', lambda x: x.hex()),
-  ([t.Decimal(), t.Decimal(), t.Decimal()], 'Decimal', lambda x: str(x)),
+  ([t.Decimal(), t.Decimal(), t.Decimal()], 'Decimal', str),
 ]
 
 @pytest.mark.parametrize("types, type_name, fn", json_data)

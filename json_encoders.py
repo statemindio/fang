@@ -13,12 +13,12 @@ class ExtendedEncoder(json.JSONEncoder):
                 "_type": "bytes",
                 "value": obj.hex()
             }
-        return json.JSONEncoder.default(self, obj)
+        return super().default(obj)
 
 
 class ExtendedDecoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
-        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
         if '_type' not in obj:
