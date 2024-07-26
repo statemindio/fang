@@ -4,8 +4,18 @@ from db import get_mongo_client
 conf = Config()
 
 
-def verify_results(_results):
+def verify_two_results(_res0, _res1):
+    # TODO: call low lever verifiers here
     pass
+
+
+def verify_results(_results):
+    compilers = _results["results"].keys()
+    for _res in zip(_results["results"][compiler_key] for compiler_key in compilers):
+        for i, _func_res in enumerate(_res):
+            if i == len(_res):
+                break
+            verify_two_results(_func_res, _res[i + 1])
 
 
 if __name__ == '__main__':
