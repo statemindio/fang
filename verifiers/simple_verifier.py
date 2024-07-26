@@ -1,14 +1,23 @@
+import json
+
 from config import Config
 from db import get_mongo_client
 
 conf = Config()
 
 
-def storage_verifier(storage0, storage1):
+class VerifierException(Exception):
     pass
 
 
+def storage_verifier(storage0, storage1):
+    if storage0 != storage1:
+        raise VerifierException(f"Storage discrepancy: {storage0} | {storage1}")
+
+
 def memory_verifier(memory0, memory1):
+    # TODO: come up with memory verification process
+    # It seems like we won't me right to just compare this two values
     pass
 
 
@@ -17,7 +26,10 @@ def gas_verifier(gas0, gas1):
 
 
 def return_value_verifier(value0, value1):
-    pass
+    loaded_value0 = json.loads(value0)
+    loaded_value1 = json.loads(value1)
+    if loaded_value0 != loaded_value1:
+        raise VerifierException(f"Return Value discrepancy: {loaded_value0} | {loaded_value1}")
 
 
 def verify_two_results(_res0, _res1):
@@ -33,7 +45,11 @@ def verify_results(_results):
         for i, _func_res in enumerate(_res):
             if i == len(_res):
                 break
-            verify_two_results(_func_res, _res[i + 1])
+            try:
+                verify_two_results(_func_res, _res[i + 1])
+            except VerifierException as e:
+                # TODO: save discrepancy to db here
+                pass
 
 
 if __name__ == '__main__':
