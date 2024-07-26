@@ -112,7 +112,8 @@ def deploy_bytecode(_contract_desc, _input_types, input_generator):
     except eth.exceptions.Revert as e:
         # TODO: log the exception into db
         #print("deployment failed: ", str(e), _contract_desc, flush=True)
-        logger.error("Deployment failed: %s; %s", str(e), _contract_desc)
+        # failed deployment is normal course of action
+        logger.debug("Deployment failed: %s; %s", str(e), _contract_desc)
         return None
 
 
@@ -171,7 +172,7 @@ if __name__ == "__main__":
                 logger.info("Amount of contracts: %s", len(contracts))
                 for contract_desc in contracts:
                     #print("Handling compilation: ", contract_desc["_id"])
-                    logger.info("Handling compilation: %s", len(contracts))
+                    logger.info("Handling compilation: %s", contract_desc["_id"])
                     r = handle_compilation(contract_desc, input_generator)
                     interim_results[contract_desc["generation_id"]].append({provider.name: r})
             #print("interim results", interim_results, flush=True)

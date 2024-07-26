@@ -6,13 +6,16 @@ import pika
 
 
 class QueueManager:
-    def __init__(self, host, port, queue_name):
+    def __init__(self, host, port, queue_name, logger):
         self.host = host
         self.port = port
         self.__attempts_count = 0
+        self.logger = logger
 
         # TODO: it's supposed to be refactored to support different QM's
         self._connection = self.__connect()
+        self.logger.info("successful connection after %s attempts", self.__attempts_count)
+
         self.channel = self._connection.channel()
         self._queue_name = queue_name
 
@@ -27,7 +30,8 @@ class QueueManager:
         except pika.exceptions.AMQPConnectionError as e:
             attempt = self._attempts_counter
             if attempt < 20:
-                print("connect failed, attempt number {}".format(attempt), flush=True)
+                #print("connect failed, attempt number {}".format(attempt), flush=True)
+                self.logger.info("connect failed, attempt number %s", attempt)
                 time.sleep(5)
                 return self.__connect()
             raise e

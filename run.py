@@ -21,6 +21,7 @@ conf = Config()
 # TODO: get level from config
 logger = logging.getLogger("generator")
 logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logger.info("Starting version %s", __version__)
 
 db_client = get_mongo_client(conf.db["host"], conf.db["port"])
 
@@ -28,7 +29,8 @@ qm = MultiQueueManager(queue_managers=[
     QueueManager(
         q_params["host"],
         q_params["port"],
-        q_params["queue_name"]
+        q_params["queue_name"],
+        logger
     )
     for q_params in conf.compiler_queues])
 
@@ -44,7 +46,7 @@ def TestOneProtoInput(msg):
         "generator_version": __version__,
     }
 
-    logger.debug("Converting: %s", data)
+    logger.debug("Converting: %s", MessageToJson(msg))
 
     c_log = db_client["compilation_log"]
     f_log = db_client['failure_log']
@@ -73,6 +75,7 @@ def TestOneProtoInput(msg):
     logger.debug("Compilation result: %s", data)
 
     function_inputs = pickle.dumps(proto.function_inputs).hex()
+    logger.debug("Generated inputs: %s", function_inputs)
 
     message = {
         "_id": str(ins_res.inserted_id),
