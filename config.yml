@@ -10,7 +10,7 @@ compilers:
       host: queue_optimization_codesize
       port: 5672
     exec_params:
-      optimization: gas
+      optimization: codesize
 db:
   host: mongodb
   port: 27017

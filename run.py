@@ -1,3 +1,4 @@
+import json
 import pickle
 import logging
 
@@ -9,13 +10,15 @@ import vyperProtoNew_pb2
 from config import Config
 from db import get_mongo_client
 from queue_managers import QueueManager, MultiQueueManager
+from input_generation import InputGenerator, InputStrategy
+from json_encoders import ExtendedEncoder
 
 with atheris.instrument_imports():
     import sys
     import vyper
     from converters.typed_converters import TypedConverter
 
-__version__ = "0.1.0"  # same version as images' one
+__version__ = "0.1.1"  # same version as images' one
 
 conf = Config()
 # TODO: get level from config
@@ -34,6 +37,8 @@ qm = MultiQueueManager(queue_managers=[
     )
     for q_params in conf.compiler_queues])
 
+input_strategy = InputStrategy.DEFAULT
+input_generator = InputGenerator(input_strategy)
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -74,13 +79,17 @@ def TestOneProtoInput(msg):
 
     logger.debug("Compilation result: %s", data)
 
-    function_inputs = pickle.dumps(proto.function_inputs).hex()
-    logger.debug("Generated inputs: %s", function_inputs)
+    input_values = dict()
+    for name, types in proto.function_inputs.items():
+        input_values[name] = input_generator.generate(types)
+
+    input_values = json.dumps(input_values, cls=ExtendedEncoder)
+    logger.debug("Generated inputs: %s", input_values)
 
     message = {
         "_id": str(ins_res.inserted_id),
         "generation_result": proto.result,
-        "function_input_types": function_inputs,
+        "function_input_values": input_values,
         "json_msg": MessageToJson(msg),
         "generator_version": __version__,
     }
