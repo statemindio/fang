@@ -25,13 +25,14 @@ class ContractsProvider:
     def name(self):
         return self._name
 
-    @contextlib.contextmanager
     def get_contracts(self):
-        contracts = self._source.find({"ran": False})
-        contracts = list(contracts)
-        yield contracts
+        _contracts = self._source.find({"ran": False})
+        _contracts = list(_contracts)
+        return _contracts
+
+    def mark_as_run_by_generation_ids(self, _ids):
         self._source.update_many(
-            {'_id': {'$in': [c['_id'] for c in contracts]}},
+            {'generation_id': {'$in': _ids}},
             {'$set': {'ran': True}}
         )
 
@@ -56,7 +57,7 @@ def compose_result(_contract, comp, ret) -> dict:
 
 
 def save_results(res):
-    to_save = [{"generation_id": gid, "results": results} for gid, results in res.items()]
+    to_save = [{"generation_id": gid, "results": _results} for gid, _results in res.items()]
     if len(to_save) == 0:
         print("No results to save...")
         return
@@ -79,6 +80,7 @@ def execution_result(_contract, function_name, input_types, input_generator):
     _function_call_res = compose_result(_contract, comp, ret)
     return _function_call_res
 
+
 def encode_init_inputs(contract_abi, args):
     for func in contract_abi:
         if func["type"] == "constructor":
@@ -89,6 +91,7 @@ def encode_init_inputs(contract_abi, args):
     init_function = ABIFunction(init_abi, contract_name="__init__")
 
     return init_function.prepare_calldata(*args)[4:]
+
 
 def deploy_bytecode(_contract_desc, _input_types, input_generator):
     if "bytecode" not in _contract_desc:
@@ -157,16 +160,18 @@ if __name__ == "__main__":
     while True:
         interim_results = defaultdict(list)
         for provider in contracts_providers:
-            with provider.get_contracts() as contracts:
-                print(f"Amount of contracts: ", len(contracts), flush=True)
-                for contract_desc in contracts:
-                    print("Handling compilation: ", contract_desc["_id"])
-                    r = handle_compilation(contract_desc, input_generator)
-                    interim_results[contract_desc["generation_id"]].append({provider.name: r})
+            contracts = provider.get_contracts()
+            print(f"Amount of contracts: ", len(contracts), flush=True)
+            for contract_desc in contracts:
+                print("Handling compilation: ", contract_desc["_id"])
+                r = handle_compilation(contract_desc, input_generator)
+                interim_results[contract_desc["generation_id"]].append({provider.name: r})
             print("interim results", interim_results, flush=True)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
         print("results", results, flush=True)
         save_results(results)
+        for provider in contracts_providers:
+            provider.mark_as_run_by_generation_ids([generation_id for generation_id in results])
 
         print("waiting....", flush=True)
         time.sleep(2)  # wait two seconds before the next request
