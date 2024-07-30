@@ -94,6 +94,8 @@ def TestOneProtoInput(msg):
     }
     qm.publish(**message)
 
+    # Creating the result entry, so there's no race condition in runners
+    db_client["run_results"].insert_one({'generation_id': str(ins_res.inserted_id)})
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(
