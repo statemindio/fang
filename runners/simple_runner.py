@@ -162,14 +162,18 @@ if __name__ == "__main__":
     reference_amount = len(collections)
 
     while True:
-        interim_results = defaultdict(lambda: defaultdict(list))
+        interim_results = defaultdict(dict)
         for provider in contracts_providers:
             contracts = provider.get_contracts()
             logger.info("Amount of contracts: %s", len(contracts))
             for contract_desc in contracts:
                 logger.info("Handling compilation: %s", contract_desc["_id"])
                 r = handle_compilation(contract_desc)
-                interim_results[contract_desc["generation_id"]][provider.name].append(r)
+                if r is None:
+                    # TODO: save error of handling to db
+                    logger.error("handling error: %s", contract_desc["generation_id"])
+                    continue
+                interim_results[contract_desc["generation_id"]][provider.name] = r
             logger.debug("Interim results: %s", interim_results)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
         logger.debug("Results: %s", results)
