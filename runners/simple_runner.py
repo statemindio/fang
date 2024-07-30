@@ -52,7 +52,12 @@ def compose_result(_contract, comp, ret) -> dict:
 
     consumed_gas = comp.get_gas_used()
 
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret))
+    return dict(
+        state=state,
+        memory=memory,
+        consumed_gas=consumed_gas,
+        return_value=str(ret)  # FIXME: come up with a better way to serialize some values(e.g. Decimal and large int's)
+    )
 
 
 def save_results(res):
