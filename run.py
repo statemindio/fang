@@ -74,7 +74,6 @@ def TestOneProtoInput(msg):
     except Exception as e:
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
-    ins_res = c_log.insert_one(data)
 
     logger.debug("Compilation result: %s", data)
 
@@ -84,6 +83,9 @@ def TestOneProtoInput(msg):
 
     input_values = json.dumps(input_values, cls=ExtendedEncoder)
     logger.debug("Generated inputs: %s", input_values)
+
+    data["function_input_values"] = input_values
+    ins_res = c_log.insert_one(data)
 
     message = {
         "_id": str(ins_res.inserted_id),

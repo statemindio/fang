@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 
 from config import Config
 from db import get_mongo_client
-from json_encoders import ExtendedDecoder
+from json_encoders import ExtendedEncoder, ExtendedDecoder
 from queue_managers import QueueManager
 
 
@@ -51,6 +51,46 @@ def callback(ch, method, properties, body):
                                         {"$set": {f"result_{compiler_key}": result}})
 
 
+def handle_compilation(_contract_desc):
+    input_values = json.loads(_contract_desc["function_input_values"], cls=ExtendedDecoder)
+    init_values = input_values.get("__init__", [])
+   # contract = deploy_contract(_contract_desc["generation_result"], init_values)
+
+    try:
+        contract = boa.loads(_contract_desc["generation_result"], *init_values, compiler_args = {"settings": compiler_settings})
+    except Exception as e:
+        logger.debug("Deployment failed: %s", str(e))
+        # returning as a list, depends on verifier, might change
+        return [dict(deploy_error = str(e))]
+
+    _r = []
+    externals = [c for c in dir(contract) if c.startswith('func') ]
+    internals = [c for c in dir(contract.internal) if c.startswith('func') ]
+    for fn in externals:
+        function_call_res = execution_result(contract, fn, input_values[fn])
+        _r.append(function_call_res)
+    for fn in internals:
+        function_call_res = execution_result(contract, fn, input_values[fn], internal=True)
+        _r.append(function_call_res)
+
+    return _r
+
+
+def execution_result(_contract, fn, _input_values, internal = False):
+    try:
+        logger.debug("calling %s with calldata: %s", fn, _input_values)
+        if internal:
+            computation, res = getattr(_contract.internal, fn)(*_input_values)
+        else:
+            computation, res = getattr(_contract, fn)(*_input_values)
+        logger.debug("%s result: %s", fn, res)
+        _function_call_res = compose_result(_contract, computation, res)
+    except Exception as e:
+        res = str(e)
+        _function_call_res = dict(runtime_error = res)
+    return _function_call_res
+
+
 def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
     state = [str(comp.state.get_storage(bytes.fromhex(_contract.address[2:]), i)) for i in range(10)]
@@ -60,47 +100,9 @@ def compose_result(_contract, comp, ret) -> dict:
 
     consumed_gas = comp.get_gas_used()
 
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret))
+    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
 
 
-def execution_result(_contract, fn, _input_values):
-    try:
-        res = getattr(_contract, fn)(*_input_values)
-        _function_call_res = compose_result(_contract, _contract._computation, res)
-    except Exception as e:
-        res = str(e)
-        _function_call_res = dict(error = res)
-    return _function_call_res
-
-
-def deploy_contract(_source, _init_values):
-    try:
-        _contract = boa.loads(_source, *_init_values, compiler_args = {"settings": compiler_settings})
-        return _contract
-    except Exception as e:
-        # catch compilation errors as well as runtime
-        # TODO: maybe distinguish runtime from compilation
-        logger.debug("Deployment failed: %s", str(e))
-        return str(e)
-
-
-def handle_compilation(_contract_desc):
-    input_values = json.loads(_contract_desc["function_input_values"], cls=ExtendedDecoder)
-    init_values = input_values.get("__init__", [])
-    contract = deploy_contract(_contract_desc["generation_result"], init_values)
-
-    # TODO: can it be more meaningful than error string?
-    if isinstance(contract, str):
-        return contract
-
-    _r = []
-    externals = [c for c in dir(contract) if c.startswith('func') ]
-    internals = [c for c in dir(contract.internal) if c.startswith('func') ]
-    for funcs in (externals, internals):
-        for fn in funcs:
-            function_call_res = execution_result(contract, fn, init_values[fn])
-            _r.append(function_call_res)
-    return _r
 
 while True:
     try:
