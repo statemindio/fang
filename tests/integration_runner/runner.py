@@ -73,6 +73,11 @@ def handle_compilation(_contract_desc):
         function_call_res = execution_result(contract, fn, input_values[fn], internal=True)
         _r.append(function_call_res)
 
+    fn = "__default__"
+    if fn in dir(contract):
+        function_call_res = execution_result(contract, fn, [])
+        _r.append(function_call_res)
+
     return _r
 
 
@@ -84,14 +89,14 @@ def execution_result(_contract, fn, _input_values, internal = False):
         else:
             computation, res = getattr(_contract, fn)(*_input_values)
         logger.debug("%s result: %s", fn, res)
-        _function_call_res = compose_result(_contract, computation, res)
+        _function_call_res = compose_result(_contract, fn, computation, res)
     except Exception as e:
         res = str(e)
-        _function_call_res = dict(runtime_error = res)
+        _function_call_res = dict(name = fn, runtime_error = res)
     return _function_call_res
 
 
-def compose_result(_contract, comp, ret) -> dict:
+def compose_result(_contract, name, comp, ret) -> dict:
     # now we dump first ten slots only
     state = [str(comp.state.get_storage(bytes.fromhex(_contract.address[2:]), i)) for i in range(10)]
 
@@ -100,7 +105,7 @@ def compose_result(_contract, comp, ret) -> dict:
 
     consumed_gas = comp.get_gas_used()
 
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
+    return dict(name=name, state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
 
 
 
