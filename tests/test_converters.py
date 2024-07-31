@@ -460,7 +460,8 @@ full_cases = [
     "decimal_int_convert",
     "decimal_bool_convert",
     "string_bytes_convert",
-    "bytes_string_convert"
+    "bytes_string_convert",
+    "dynamic_array_bytes_constant_assignment"
 ]
 
 

@@ -94,5 +94,33 @@
         }
       }
     }
-  ]
+  ],
+  "defFunc": {
+    "block": {
+      "exitD": {
+        "rawRevert": {
+          "data": {
+            "concat": {
+              "a": {
+                "bBs": {
+                  "rawCall": {
+                    "to": {
+                      "lit": {
+                        "decimalval": "63232"
+                      }
+                    }
+                  }
+                }
+              },
+              "c": [
+                {
+                  "sSize": 16449536
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
 }

@@ -1,0 +1,103 @@
+version: '3'
+services:
+  generator:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.2
+    command:
+      - python3.10
+      - run.py
+      - /corpus
+    networks:
+      - db
+      - queue_opt_gas
+      - queue_opt_codesize
+    environment:
+      PYTHONPATH: /app
+    depends_on:
+      - mongodb
+      - queue_optimization_gas
+    volumes:
+      - corpus:/corpus
+      - ./config.yml:/app/config.yml
+
+  # compiler 0
+  queue_optimization_gas:
+    image: rabbitmq:management
+    networks:
+      - queue_opt_gas
+    ports:
+      - "15672:15672"
+  compiler_optimization_gas:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.2
+    environment:
+      PYTHONPATH: /app
+      SERVICE_NAME: opt_gas
+    depends_on:
+      - mongodb
+      - queue_optimization_gas
+    command:
+      - python3.10
+      - tests/integration_runner/compile.py
+    networks:
+      - db
+      - queue_opt_gas
+    volumes:
+      - ./config.yml:/app/config.yml
+
+  # compiler 1
+  queue_optimization_codesize:
+    image: rabbitmq:management
+    networks:
+      - queue_opt_codesize
+    ports:
+      - "15673:15672"
+  compiler_optimization_codesize:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.2
+    environment:
+      PYTHONPATH: /app
+      SERVICE_NAME: opt_codesize
+    depends_on:
+      - mongodb
+      - queue_optimization_codesize
+    command:
+      - python3.10
+      - tests/integration_runner/compile.py
+    networks:
+      - db
+      - queue_opt_codesize
+    volumes:
+      - ./config.yml:/app/config.yml
+  runner:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.2
+    environment:
+      PYTHONPATH: /app
+    depends_on:
+      - mongodb
+    command:
+      - python3.10
+      - runners/simple_runner.py
+    networks:
+      - db
+    volumes:
+      - ./config.yml:/app/config.yml
+
+  mongodb:
+    image: mongo
+    networks:
+      - db
+    ports:
+      - "27017:27017"
+    volumes:
+      - db:/data/db
+
+networks:
+  db:
+    driver: bridge
+  queue_opt_gas:
+    driver: bridge
+  queue_opt_codesize:
+    driver: bridge
+
+volumes:
+  db:
+  corpus:
+  # TODO: come up with queues' volumes to not lose it in case of a failure

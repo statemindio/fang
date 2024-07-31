@@ -32,7 +32,7 @@ class Bytes(BaseType):
         return f"Bytes[{self._m}]"
 
     def generate(self):
-        return self._value_generator.generate(self._m)
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(self._m, value)
@@ -80,7 +80,7 @@ class Int(BaseType):
         return type_name
 
     def generate(self):
-        return self._value_generator.generate(self._n, self._signed)
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(self._n, self._signed, value)
@@ -145,7 +145,7 @@ class Bool(BaseType):
         return "bool"
 
     def generate(self):
-        return self._value_generator.generate()
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(value)
@@ -161,7 +161,7 @@ class Decimal(BaseType):
         return "decimal"
 
     def generate(self):
-        return self._value_generator.generate()
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(value)
@@ -188,7 +188,7 @@ class Address(BaseType):
         return "address"
 
     def generate(self):
-        return self._value_generator.generate()
+        return self._value_generator.generate(self)
 
     def generate_literal(self, value):
         return self._literal_generator.generate(value)
@@ -218,23 +218,26 @@ class FixedList(BaseType):
     def name(self):
         #return self.__class__.__name__.upper() + self._base_type.name
         return "FL_" + self._base_type.name
-    
+
+    def generate(self):
+        return [self.base_type.generate() for _ in range(self.size)]
+
 class DynArray(FixedList):
     def __init__(self, size, base_type: BaseType, cur_size = 0):
         self._base_type = base_type
-        self._size = cur_size
-        self._max_size = size
+        self._size = size
+        self._current_size = cur_size
 
-    def adjust_max_size(self, size):
-        self._max_size = size
+    def adjust_current_size(self, size):
+        self._current_size = size
 
     @property
-    def max_size(self):
-        return self._max_size
+    def current_size(self):
+        return self._current_size
 
     @property
     def vyper_type(self):
-        return f"DynArray[{self._base_type.vyper_type},{self._max_size}]"
+        return f"DynArray[{self._base_type.vyper_type},{self._size}]"
 
     @property
     def name(self):

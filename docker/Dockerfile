@@ -18,8 +18,9 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
 RUN mkdir -p /app
 WORKDIR /app
 
+RUN apt update
+RUN apt install -y --fix-missing git
 COPY requirements.txt .
-RUN apt install -y git
 RUN pip3.10 install -r requirements.txt
 
 COPY . .

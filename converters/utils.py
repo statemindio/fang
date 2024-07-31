@@ -9,6 +9,14 @@ def _has_field(instance, field):
     except ValueError:
         return False
 
+def _get_sizes(type_):
+    if isinstance(type_, Bytes):
+        return [type_.m]
+    if isinstance(type_, FixedList):
+        return [type_.size, _get_sizes(type_._base_type)]
+    if isinstance(type_, Int):
+        return type_.n
+    return 0
 
 def extract_type(instance):
     if _has_field(instance, "b"):

@@ -113,6 +113,7 @@ class TypedConverter:
             "DA_FL_ADDRESS": (self._visit_list_expression, "ladrDyn"),
         }
         self.result = ""
+        self.function_inputs = {}
         self._var_tracker = VarTracker()
         self._func_tracker = FuncTracker()
         self._block_level_count = 0
@@ -153,7 +154,8 @@ class TypedConverter:
         for func_id in func_order:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
-            _, _, names = self._visit_input_parameters(func.input_params)
+            _, types, names = self._visit_input_parameters(func.input_params)
+            self.function_inputs[func_obj._name] = types
             input_names.append(names)
             self.visit_func(func_obj, func)
 
@@ -203,7 +205,8 @@ class TypedConverter:
             value += f", {expr_val}"
         self.type_stack.pop()
 
-        if list_size < current_type.size and not isinstance(base_type, FixedList):
+        # FixedList will generate `size` values, hence cant use here
+        if not isinstance(current_type, DynArray) and list_size < current_type.size and not isinstance(base_type, FixedList):
             for i in range(current_type.size - list_size):
                 expr_val = base_type.generate()
                 value += f", {expr_val}"
@@ -368,9 +371,9 @@ class TypedConverter:
 
         visibility = "@external"
 
-        input_params, _, _ = self._visit_input_parameters(init.input_params)
-
+        input_params, input_types, _ = self._visit_input_parameters(init.input_params)
         function_name = "__init__"
+        self.function_inputs[function_name] = input_types
         # self._func_tracker.register_function(function_name)
 
         self._block_level_count = 1
@@ -1055,13 +1058,14 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        current_type = self.type_stack[len(self.type_stack) - 1]
         if expr.HasField("varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
         current_type = self.type_stack[-1]
-        if expr.HasField("raw_call") and not self._is_constant:
+        if expr.HasField("raw_call") and not self._is_constant and current_type.m > 0:
             byte_size = current_type.m
             return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
         if expr.HasField("concat"):

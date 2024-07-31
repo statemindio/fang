@@ -1,20 +1,43 @@
+import json
+import logging
+
 import atheris
 import atheris_libprotobuf_mutator
 from google.protobuf.json_format import MessageToJson
 
 import vyperProtoNew_pb2
+from config import Config
 from db import get_mongo_client
+from input_generation import InputGenerator, InputStrategy
+from json_encoders import ExtendedEncoder
+from queue_managers import QueueManager, MultiQueueManager
 
 with atheris.instrument_imports():
     import sys
     import vyper
     from converters.typed_converters import TypedConverter
-    from vyper.exceptions import CompilerPanic, StaticAssertionException
 
-db_client = get_mongo_client()
+__version__ = "0.1.2"  # same version as images' one
 
-__version__ = "0.0.9"  # same version as images' one
+conf = Config()
+# TODO: get level from config
+logger = logging.getLogger("generator")
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logger.info("Starting version %s", __version__)
 
+db_client = get_mongo_client(conf.db["host"], conf.db["port"])
+
+qm = MultiQueueManager(queue_managers=[
+    QueueManager(
+        q_params["host"],
+        q_params["port"],
+        q_params["queue_name"],
+        logger
+    )
+    for q_params in conf.compiler_queues])
+
+input_strategy = InputStrategy.DEFAULT
+input_generator = InputGenerator(input_strategy)
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -26,9 +49,24 @@ def TestOneProtoInput(msg):
         "error_message": None,
         "generator_version": __version__,
     }
+
+    logger.debug("Converting: %s", MessageToJson(msg))
+
     c_log = db_client["compilation_log"]
-    proto = TypedConverter(msg)
-    proto.visit()
+    f_log = db_client['failure_log']
+    try:
+        proto = TypedConverter(msg)
+        proto.visit()
+    except Exception as e:
+        converter_error = {
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "json_msg": MessageToJson(msg),
+        }
+        f_log.insert_one(converter_error)
+
+        logger.critical("Converter has crashed: %s", converter_error)
+        raise e  # Do we actually want to fail here?
     data["generation_result"] = proto.result
     try:
         c_result = vyper.compile_code(proto.result)
@@ -36,8 +74,25 @@ def TestOneProtoInput(msg):
     except Exception as e:
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
+    ins_res = c_log.insert_one(data)
 
-    c_log.insert_one(data)
+    logger.debug("Compilation result: %s", data)
+
+    input_values = dict()
+    for name, types in proto.function_inputs.items():
+        input_values[name] = input_generator.generate(types)
+
+    input_values = json.dumps(input_values, cls=ExtendedEncoder)
+    logger.debug("Generated inputs: %s", input_values)
+
+    message = {
+        "_id": str(ins_res.inserted_id),
+        "generation_result": proto.result,
+        "function_input_values": input_values,
+        "json_msg": MessageToJson(msg),
+        "generator_version": __version__,
+    }
+    qm.publish(**message)
 
 
 if __name__ == '__main__':
