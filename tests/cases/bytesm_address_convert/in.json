@@ -1,0 +1,43 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "adr": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m": 19
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_address": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 18
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_address": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

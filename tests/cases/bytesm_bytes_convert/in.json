@@ -1,0 +1,45 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "barr": {
+            "max_len": 20
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m": 19
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 1
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

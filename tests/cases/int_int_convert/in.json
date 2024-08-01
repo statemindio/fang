@@ -1,0 +1,131 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_int": {
+                    "i": {
+                      "n": 255
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_int": {
+                    "i": {
+                      "n": 255
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "i": {
+            "sign": true,
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_int": {
+                    "i": {
+                      "sign": true,
+                      "n": 255
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_int": {
+                    "i": {
+                      "sign": true,
+                      "n": 255
+                    },
+                    "exp": {
+                      "lit": {
+                        "intval": 1234
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

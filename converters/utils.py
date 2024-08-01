@@ -19,18 +19,18 @@ def _get_sizes(type_):
     return 0
 
 def extract_type(instance):
-    if instance.HasField("b"):
+    if _has_field(instance, "b"):
         current_type = Bool()
-    elif instance.HasField("d"):
+    elif _has_field(instance, "d"):
         current_type = Decimal()
-    elif instance.HasField("bM"):
+    elif _has_field(instance, "bM"):
         m = instance.bM.m % 32 + 1
         current_type = BytesM(m)
     elif _has_field(instance, "s"):
         max_len = 1 if instance.s.max_len == 0 else instance.s.max_len
         max_len = max_len if max_len < MAX_BYTESTRING_SIZE else MAX_BYTESTRING_SIZE
         current_type = String(max_len)
-    elif instance.HasField("adr"):
+    elif _has_field(instance, "adr"):
         current_type = Address()
     elif _has_field(instance, "barr"):
         max_len = 1 if instance.barr.max_len == 0 else instance.barr.max_len

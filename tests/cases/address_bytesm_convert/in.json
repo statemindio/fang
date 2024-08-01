@@ -1,0 +1,94 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 15
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "convert_bytesm": {
+                    "bM": {
+                      "m": 15
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 31
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "convert_bytesm": {
+                    "bM": {
+                      "m": 31
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 0
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "convert_bytesm": {
+                    "bM": {
+                      "m": 0
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

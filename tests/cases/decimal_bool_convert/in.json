@@ -1,0 +1,41 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "b": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "d": {},
+              "expr": {
+                "decExpression": {
+                  "convert_bool": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "d": {},
+              "expr": {
+                "decExpression": {
+                  "convert_bool": {
+                    "lit": {
+                      "boolval": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

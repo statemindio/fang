@@ -1,0 +1,141 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_decimal": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_decimal": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_decimal": {
+                    "unOp": {
+                      "expr": {
+                        "lit": {
+                          "decimalval": 123
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_decimal": {
+                    "unOp": {
+                      "expr": {
+                        "lit": {
+                          "decimalval": 123
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_int": {
+                    "i": {
+                      "n": 255
+                    },
+                    "exp": {
+                      "convert_decimal": {
+                        "unOp": {
+                          "expr": {
+                            "lit": {
+                              "decimalval": 123
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
