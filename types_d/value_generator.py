@@ -62,3 +62,38 @@ class AddressRandomGen:
 class DecimalRandomGen:
     def generate(self, input_type):
         return random.randint(0, 2 ** 168 - 1) / 10 ** 10 - (2 ** 167 / 10 ** 10)
+
+class BytesZeroGen:
+    def generate(self, input_type):
+        #hex_val = '0' * input_type.m
+        return f"b''"
+
+
+class BytesMZeroGen:
+    def generate(self, input_type):
+        return "0x" + '00' * input_type.m
+
+
+class IntZeroGen:
+    def generate(self, input_type):
+        return 0
+
+
+class BoolZeroGen:
+    def generate(self, input_type):
+        return False
+
+
+class StringZeroGen:
+    def generate(self, input_type):
+        return '""'
+
+
+class AddressZeroGen:
+    def generate(self, input_type):
+        return '0x0000000000000000000000000000000000000000'
+
+
+class DecimalZeroGen:
+    def generate(self, input_type):
+        return 0.0

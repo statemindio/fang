@@ -19,9 +19,19 @@ class InputGenerator:
             types.String: value_generator.StringRandomGen(),
             types.Address: value_generator.AddressRandomGen()
         }
-        self.zeroes = {}
+        self.zeroes = {
+            types.Int: value_generator.IntZeroGen(),
+            types.Bytes: value_generator.BytesZeroGen(),
+            types.BytesM: value_generator.BytesMZeroGen(),
+            types.Bool: value_generator.BoolZeroGen(),
+            types.Decimal: value_generator.DecimalZeroGen(),
+            types.String: value_generator.StringZeroGen(),
+            types.Address: value_generator.AddressZeroGen()
+        }
         # set current strategy
-        if strategy is InputStrategy.DEFAULT:
+        if strategy is InputStrategy.ZEROS:
+            self.gens = self.zeroes
+        else:
             self.gens = self.default
 
     def generate(self, input_types):
