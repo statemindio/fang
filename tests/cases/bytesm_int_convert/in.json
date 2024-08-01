@@ -1,0 +1,78 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "i": {
+            "n": 247,
+            "sign": true
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m": 30
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_int": {
+                    "exp": {
+                      "varRef": {}
+                    },
+                    "i": {
+                      "n": 247,
+                      "sign": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 31
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_int": {
+                    "exp": {
+                      "varRef": {}
+                    },
+                    "i": {
+                      "n": 247,
+                      "sign": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 19
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_int": {
+                    "exp": {
+                      "varRef": {}
+                    },
+                    "i": {
+                      "n": 247,
+                      "sign": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

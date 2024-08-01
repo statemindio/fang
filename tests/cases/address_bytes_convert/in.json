@@ -1,0 +1,54 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "barr": {
+            "max_len": 32
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "barr": {
+            "max_len": 31
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "adr": {},
+              "expr": {
+                "addrExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

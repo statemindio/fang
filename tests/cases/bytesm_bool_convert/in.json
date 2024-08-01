@@ -1,0 +1,43 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "b": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m": 31
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bool": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 0
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bool": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

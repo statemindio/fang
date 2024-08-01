@@ -1,0 +1,74 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "bM": {
+            "m": 15
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m": 31
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bytesm": {
+                    "exp": {
+                      "varRef": {}
+                    },
+                    "bM": {
+                      "m": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 1
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bytesm": {
+                    "exp": {
+                      "varRef": {}
+                    },
+                    "bM": {
+                      "m": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 1
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_bytesm": {
+                    "exp": {
+                      "varRef": {}
+                    },
+                    "bM": {
+                      "m": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

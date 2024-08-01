@@ -1,0 +1,61 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "adr": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 63
+              },
+              "expr": {
+                "intExp": {
+                  "convert_address": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "n": 255
+              },
+              "expr": {
+                "intExp": {
+                  "convert_address": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 63
+              },
+              "expr": {
+                "intExp": {
+                  "convert_address": {
+                    "varRef": {}
+                  },
+                  "lit": {
+                    "intval": 9223372036854775809
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "i": {
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_int": {
+                    "i": {
+                      "n": 255
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "i": {
+            "sign": true,
+            "n": 255
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_int": {
+                    "i": {
+                      "sign": true,
+                      "n": 255
+                    },
+                    "exp": {
+                      "varRef": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_int": {
+                    "i": {
+                      "n": 255
+                    },
+                    "exp": {
+                      "lit": {
+                        "intval": 1234
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_decimal": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "input_params": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_decimal": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_decimal": {
+                    "unOp": {
+                      "expr": {
+                        "lit": {
+                          "decimalval": 123
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_decimal": {
+                    "unOp": {
+                      "expr": {
+                        "lit": {
+                          "decimalval": 123
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "b": {},
+              "expr": {
+                "boolExp": {
+                  "convert_int": {
+                    "i": {
+                      "n": 255
+                    },
+                    "exp": {
+                      "convert_decimal": {
+                        "unOp": {
+                          "expr": {
+                            "lit": {
+                              "decimalval": 123
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

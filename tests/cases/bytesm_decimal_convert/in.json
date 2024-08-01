@@ -1,0 +1,43 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "d": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "bM": {
+                "m": 20
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_decimal": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "bM": {
+                "m": 19
+              },
+              "expr": {
+                "bmExp": {
+                  "convert_decimal": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

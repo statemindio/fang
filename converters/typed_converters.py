@@ -8,8 +8,9 @@ from types_d.base import BaseType
 from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter, ParametersConverter
-from .utils import extract_type
+from .utils import extract_type, _has_field
 from vyperProtoNew_pb2 import VarDecl
+from proto_helpers import ConvertFromTypeMessageHelper
 
 PURE = 0
 VIEW = 1
@@ -59,7 +60,6 @@ LITERAL_ATTR_MAP = {
 
 def get_bin_op(op, op_set):
     return op_set[op]
-
 
 
 class TypedConverter:
@@ -113,6 +113,7 @@ class TypedConverter:
             "DA_FL_ADDRESS": (self._visit_list_expression, "ladrDyn"),
         }
         self.result = ""
+        self.function_inputs = {}
         self._var_tracker = VarTracker()
         self._func_tracker = FuncTracker()
         self._block_level_count = 0
@@ -153,7 +154,8 @@ class TypedConverter:
         for func_id in func_order:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
-            _, _, names = self._visit_input_parameters(func.input_params)
+            _, types, names = self._visit_input_parameters(func.input_params)
+            self.function_inputs[func_obj._name] = types
             input_names.append(names)
             self.visit_func(func_obj, func)
 
@@ -203,14 +205,16 @@ class TypedConverter:
             value += f", {expr_val}"
         self.type_stack.pop()
 
-        if list_size < current_type.size and not isinstance(base_type, FixedList):
+        # FixedList will generate `size` values, hence cant use here
+        if not isinstance(current_type, DynArray) and list_size < current_type.size and not isinstance(base_type,
+                                                                                                       FixedList):
             for i in range(current_type.size - list_size):
                 expr_val = base_type.generate()
                 value += f", {expr_val}"
 
         # current_type.adjust_size(list_size)
 
-        return f"[{value}]"           
+        return f"[{value}]"
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
         current_type = self.type_stack[len(self.type_stack) - 1]
@@ -358,9 +362,9 @@ class TypedConverter:
 
         visibility = "@external"
 
-        input_params, _, _ = self._visit_input_parameters(init.input_params)
-
+        input_params, input_types, _ = self._visit_input_parameters(init.input_params)
         function_name = "__init__"
+        self.function_inputs[function_name] = input_types
         # self._func_tracker.register_function(function_name)
 
         self._block_level_count = 1
@@ -689,6 +693,7 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        current_type = self.type_stack[-1]
         if expr.HasField("cmp") and not self._is_constant:
             name = "create_minimal_proxy_to"
             return self.visit_create_min_proxy_or_copy_of(expr.cmp, name)
@@ -704,6 +709,10 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
         return self.create_literal(expr.lit)
 
     def visit_create_min_proxy_or_copy_of(self, cmp, name):
@@ -786,6 +795,7 @@ class TypedConverter:
         # if expr.HasField("convert"):
         #     result = self._visit_convert(expr.convert)
         #     return result
+        current_type = self.type_stack[-1]
         if expr.HasField("boolBinOp"):
             bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
@@ -838,6 +848,10 @@ class TypedConverter:
                 return result
         if expr.HasField("raw_call") and not self._is_constant:
             return self._visit_raw_call(expr.raw_call, expr_bool=True)
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
         return self.create_literal(expr.lit)
 
     def _visit_int_expression(self, expr):
@@ -874,7 +888,77 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return self.create_literal(expr.lit)
+
+    # TODO: make conditions prettier somehow
+    def _visit_conversion(self, expr, current_type):
+        if _has_field(expr, "convert_int"):
+            input_type = self.visit_type(ConvertFromTypeMessageHelper(expr.convert_int))
+            if isinstance(current_type, Int) and input_type != current_type:
+                return self.__visit_conversion(expr.convert_int.exp, current_type, input_type, True)
+
+            if isinstance(current_type, Address) and not input_type.signed or \
+                    isinstance(current_type, BytesM) and current_type.m * 8 >= input_type.n or \
+                    isinstance(current_type, Bool) or isinstance(current_type, Decimal):
+                return self.__visit_conversion(expr.convert_int.exp, current_type, input_type)
+
+        if _has_field(expr, "convert_decimal"):
+            input_type = Decimal()
+            if isinstance(current_type, Int):
+                return self.__visit_conversion(expr.convert_decimal, current_type, input_type, True)
+            if isinstance(current_type, BytesM):
+                if current_type.m >= 21:  # TODO: save bits size to decimal data?
+                    return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
+            else:
+                return self.__visit_conversion(expr.convert_decimal, current_type, input_type)
+
+        if _has_field(expr, "convert_bool"):
+            input_type = Bool()
+            return self.__visit_conversion(expr.convert_bool, current_type, input_type)
+
+        if _has_field(expr, "convert_address"):
+            input_type = Address()
+            if isinstance(current_type, Int) and not current_type.signed or \
+                    isinstance(current_type, BytesM) and current_type.m >= 20 or \
+                    isinstance(current_type, Bool):
+                return self.__visit_conversion(expr.convert_address, current_type, input_type)
+
+        if _has_field(expr, "convert_bytesm"):
+            input_type = self.visit_type(ConvertFromTypeMessageHelper(expr.convert_bytesm))
+            return self.__visit_conversion(expr.convert_bytesm.exp, current_type, input_type)
+
+        if _has_field(expr, "convert_bytes"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            # currently takes only exact sizes
+            if isinstance(current_type, Bytes):
+                input_type = Bytes(current_type.m)  # BytesM and Bytes
+            else:
+                input_type = Bytes(32)
+            return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
+
+        if _has_field(expr, "convert_string"):
+            # 32 is max size for int conversions; var must take all sizes below anyway
+            input_type = String(32)
+            if isinstance(current_type, Bytes):  # BytesM and String cant enter here
+                input_type = String(current_type.m)
+            return self.__visit_conversion(expr.convert_string, current_type, input_type)
+
+        return None
+
+    def __visit_conversion(self, message, current_type, input_type, check_bounds=False):
+        handler, _ = self._expression_handlers[input_type.name]
+        self.type_stack.append(input_type)
+        result = handler(message)
+        self.type_stack.pop()
+
+        if check_bounds:
+            result = current_type.check_literal_bounds(result)
+        return f"convert({result}, {current_type.vyper_type})"
 
     def _visit_bytes_m_expression(self, expr):
         # if expr.HasField("convert"):
@@ -902,13 +986,16 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
         return self.create_literal(expr.lit)
 
     def _visit_hash256(self, expr, name):
         result = f"{name}("
         if expr.HasField("strVal"):
             self.type_stack.append(String(100))
-            value = self._visit_string_expression(expr.strVal) # can be empty?
+            value = self._visit_string_expression(expr.strVal)  # can be empty?
             self.type_stack.pop()
             return f"{result}{value})"
         if expr.HasField("bVal"):
@@ -949,6 +1036,11 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        current_type = self.type_stack[-1]
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return self.create_literal(expr.lit)
 
     def _visit_bytes_expression(self, expr):
@@ -961,10 +1053,17 @@ class TypedConverter:
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
+        current_type = self.type_stack[-1]
         if expr.HasField("raw_call") and not self._is_constant and current_type.m > 0:
-            return self._visit_raw_call(expr.raw_call, expr_size=current_type.m)
+            byte_size = current_type.m
+            return self._visit_raw_call(expr.raw_call, expr_size=byte_size)
         if expr.HasField("concat"):
             return self._visit_concat_bytes(expr.concat)
+
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
@@ -978,6 +1077,11 @@ class TypedConverter:
                 return result
         if expr.HasField("concat"):
             return self._visit_concat_string(expr.concat)
+        current_type = self.type_stack[-1]
+        convert_expr = self._visit_conversion(expr, current_type)
+        if convert_expr is not None:
+            return convert_expr
+
         return f"\"{self.create_literal(expr.lit)}\""
 
     def _visit_continue_statement(self):
@@ -1193,7 +1297,7 @@ class TypedConverter:
 
         total_size = a_size + b_size
         if a_size + b_size > max_size:
-            a_size, b_size = a_size*max_size//total_size, b_size*max_size//total_size
+            a_size, b_size = a_size * max_size // total_size, b_size * max_size // total_size
 
         a, a_size = expr_handler(concat.a, a_size)
         b, b_size = expr_handler(concat.b, b_size)
@@ -1216,6 +1320,7 @@ class TypedConverter:
             var = self._visit_string_expression(message.s)
             self.type_stack.pop()
             return var, size
+
         return self._visit_concat(concat, _visit_string_type_size)
 
     def _visit_concat_bytes(self, concat):
@@ -1230,6 +1335,7 @@ class TypedConverter:
                 var = self._visit_bytes_expression(message.b_bs)
                 self.type_stack.pop()
             return var, size
+
         return self._visit_concat(concat, _visit_bytes_type_size)
 
     @property

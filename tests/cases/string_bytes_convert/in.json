@@ -1,0 +1,59 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "barr": {
+            "max_len": 20
+          }
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "s": {
+                "max_len": 30
+              },
+              "expr": {
+                "strExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "s": {
+                "max_len": 20
+              },
+              "expr": {
+                "strExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "s": {
+                "max_len": 10
+              },
+              "expr": {
+                "strExp": {
+                  "convert_bytes": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

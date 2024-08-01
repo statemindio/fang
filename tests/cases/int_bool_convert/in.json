@@ -1,0 +1,134 @@
+{
+  "functions": [
+    {
+      "input_params": [
+        {
+          "b": {}
+        }
+      ],
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_bool": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_bool": {
+                    "varRef": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_bool": {
+                    "lit": {
+                      "boolval": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "sign": true,
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_bool": {
+                    "lit": {
+                      "boolval": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_bool": {
+                    "lit": {
+                      "boolval": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "block": {
+        "statements": [
+          {
+            "decl": {
+              "i": {
+                "n": 127
+              },
+              "expr": {
+                "intExp": {
+                  "convert_bool": {
+                    "lit": {
+                      "boolval": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -47,18 +47,18 @@ class VarTracker:
             }
         if level not in self._dyns[key][var_type.base_type]:
             self._dyns[key][var_type.base_type][level] = {
-                var_type.max_size: []
+                var_type.size: []
             }
 
-        if var_type.max_size not in self._dyns[key][var_type.base_type][level]:
-            self._dyns[key][var_type.base_type][level][var_type.max_size] = []
+        if var_type.size not in self._dyns[key][var_type.base_type][level]:
+            self._dyns[key][var_type.base_type][level][var_type.size] = []
 
         # TODO: check if a variable already exist
-        self._dyns[key][var_type.base_type][level][var_type.max_size].append(name)
+        self._dyns[key][var_type.base_type][level][var_type.size].append(name)
         self._var_id_map[var_type.name] = self.next_id(var_type)
 
         if isinstance(var_type.base_type, FixedList):
-            for i in range(var_type.size):
+            for i in range(var_type.current_size):
                 self._register_list_items(f"{name}[{i}]", level, var_type.base_type, key)
 
     def _remove_function_dyn_array_level(self, level: int, key):
@@ -82,16 +82,16 @@ class VarTracker:
         """
         if var_type.base_type not in self._dyns[self.GLOBAL_KEY]:
             self._dyns[self.GLOBAL_KEY][var_type.base_type] = {
-                var_type.max_size: []
+                var_type.size: []
             }
-        if var_type.max_size not in self._dyns[self.GLOBAL_KEY][var_type.base_type]:
-            self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.max_size] = []
+        if var_type.size not in self._dyns[self.GLOBAL_KEY][var_type.base_type]:
+            self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.size] = []
 
         # TODO: check if a variable already exist
-        self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.max_size].append(name)
+        self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.size].append(name)
         self._var_id_map[var_type.name] = self.next_id(var_type)
         if isinstance(var_type.base_type, FixedList):
-            for i in range(var_type.size):
+            for i in range(var_type.current_size):
                 self._register_global_list(f"{name}[{i}]", var_type.base_type)
 
     def _get_global_dyn_arrays(self, var_type: DynArray, assignee=False):
@@ -107,7 +107,7 @@ class VarTracker:
 
         for t in types:
             for s in self._dyns[self.GLOBAL_KEY].get(t, {}):
-                if (s <= var_type.max_size and not assignee) or (s >= var_type.max_size and assignee):
+                if (s <= var_type.size and not assignee) or (s >= var_type.size and assignee):
                     allowed_vars.extend(self._dyns[self.GLOBAL_KEY][t][s])
         allowed_vars = [f"self.{v}" for v in allowed_vars]
 
@@ -135,7 +135,7 @@ class VarTracker:
                     continue
                 for s in self._dyns[key][t][l]:
                     # size
-                    if (s <= var_type.max_size and not assignee) or (s >= var_type.max_size and assignee):
+                    if (s <= var_type.size and not assignee) or (s >= var_type.size and assignee):
                         allowed_vars.extend(self._dyns[key][t][l][s])
 
         return allowed_vars
