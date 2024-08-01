@@ -362,7 +362,8 @@ class TypedConverter:
 
         input_params, input_types, _ = self._visit_input_parameters(init.input_params)
         function_name = "__init__"
-        self.function_inputs[function_name] = input_types
+        if len(input_types) > 0:
+            self.function_inputs[function_name] = input_types
         # self._func_tracker.register_function(function_name)
 
         self._block_level_count = 1
