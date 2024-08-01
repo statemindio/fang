@@ -21,6 +21,19 @@ data = [
     )
 ]
 
+data_zeros = [
+    ([t.Int()], [0]),
+    ([t.String(30), t.Bytes(10)], ['""', b'']),
+    ([t.Decimal()], [Decimal('0.0')]),
+    (
+        [t.FixedList(1, t.Address()), t.String(100)],
+        [
+            ['0x0000000000000000000000000000000000000000'],
+            '""'
+        ]
+    )
+]
+
 
 @pytest.mark.parametrize("types, expected", data)
 def test_input_generator_default(types, expected):
@@ -28,6 +41,13 @@ def test_input_generator_default(types, expected):
     random.seed(1337)
 
     igen = InputGenerator(InputStrategy.DEFAULT)
+    generated_value = igen.generate(types)
+    assert generated_value == expected
+
+
+@pytest.mark.parametrize("types, expected", data_zeros)
+def test_input_generator_zero(types, expected):
+    igen = InputGenerator(InputStrategy.ZEROS)
     generated_value = igen.generate(types)
     assert generated_value == expected
 
