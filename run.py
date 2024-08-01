@@ -38,6 +38,8 @@ qm = MultiQueueManager(queue_managers=[
 
 input_strategy = InputStrategy.DEFAULT
 input_generator = InputGenerator(input_strategy)
+# TODO: get from config
+inputs_per_function = 2
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -79,7 +81,11 @@ def TestOneProtoInput(msg):
 
     input_values = dict()
     for name, types in proto.function_inputs.items():
-        input_values[name] = input_generator.generate(types)
+        for i in range(inputs_per_function):
+            # Can also change generator strategy depending on `i`
+            if input_values.get(name, None) is None:
+                input_values[name] = []
+            input_values[name].append(input_generator.generate(types))
 
     input_values = json.dumps(input_values, cls=ExtendedEncoder)
     logger.debug("Generated inputs: %s", input_values)

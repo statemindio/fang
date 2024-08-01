@@ -24,7 +24,7 @@ compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
 # TODO: get level from config
 logger = logging.getLogger(f"runner_{compiler_key}")
 logging.basicConfig(
-    format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+    format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.DEBUG)
 logger.info("Starting %s runner", compiler_key)
 
 queue_name = 'queue3.10'
@@ -38,6 +38,9 @@ channel = qm.channel
 db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
 run_results_collection = db_["run_results"]
+
+# TODO: get from config
+inputs_per_function = 2
 
 
 def callback(ch, method, properties, body):
@@ -57,34 +60,43 @@ def callback(ch, method, properties, body):
 def handle_compilation(_contract_desc):
     input_values = json.loads(
         _contract_desc["function_input_values"], cls=ExtendedDecoder)
-    init_values = input_values.get("__init__", [])
+    init_values = input_values.get("__init__", [[]])
    # contract = deploy_contract(_contract_desc["generation_result"], init_values)
 
-    try:
-        contract = boa.loads(_contract_desc["generation_result"],
-                             *init_values, compiler_args={"settings": compiler_settings})
-    except Exception as e:
-        logger.debug("Deployment failed: %s", str(e))
-        # returning as a list, depends on verifier, might change
-        return [dict(deploy_error=str(e))]
+    results = []
+    for iv in init_values:
+        logger.debug("Constructor values: %s", iv)
+        try:
+            contract = boa.loads(_contract_desc["generation_result"],
+                                 *iv, compiler_args={"settings": compiler_settings})
+        except Exception as e:
+            logger.debug("Deployment failed: %s", str(e))
+            # returning as a list, depends on verifier, might change
+            results.append(dict(deploy_error=str(e)))
+            continue
 
-    _r = []
-    externals = [c for c in dir(contract) if c.startswith('func')]
-    internals = [c for c in dir(contract.internal) if c.startswith('func')]
-    for fn in externals:
-        function_call_res = execution_result(contract, fn, input_values[fn])
-        _r.append(function_call_res)
-    for fn in internals:
-        function_call_res = execution_result(
-            contract, fn, input_values[fn], internal=True)
-        _r.append(function_call_res)
+        _r = dict()
+        externals = [c for c in dir(contract) if c.startswith('func')]
+        internals = [c for c in dir(contract.internal) if c.startswith('func')]
+        for fn in externals:
+            function_call_res = []
+            for i in range(inputs_per_function):
+                function_call_res.append(execution_result(
+                    contract, fn, input_values[fn][i]))
+            _r[fn] = function_call_res
+        for fn in internals:
+            function_call_res = []
+            for i in range(inputs_per_function):
+                function_call_res.append(execution_result(
+                    contract, fn, input_values[fn][i], internal=True))
+            _r[fn] = function_call_res
 
-    fn = "__default__"
-    if fn in dir(contract):
-        function_call_res = execution_result(contract, fn, [])
-        _r.append(function_call_res)
-
-    return _r
+        fn = "__default__"
+        if fn in dir(contract):
+            function_call_res = execution_result(contract, fn, [])
+            _r[fn] = [function_call_res]
+        results.append(_r)
+    return results
 
 
 def execution_result(_contract, fn, _input_values, internal=False):
@@ -95,14 +107,15 @@ def execution_result(_contract, fn, _input_values, internal=False):
         else:
             computation, res = getattr(_contract, fn)(*_input_values)
         logger.debug("%s result: %s", fn, res)
-        _function_call_res = compose_result(_contract, fn, computation, res)
+        _function_call_res = compose_result(_contract, computation, res)
     except Exception as e:
         res = str(e)
-        _function_call_res = dict(name=fn, runtime_error=res)
+        logger.debug("%s caught error: %s", fn, res)
+        _function_call_res = dict(runtime_error=res)
     return _function_call_res
 
 
-def compose_result(_contract, name, comp, ret) -> dict:
+def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
     state = [str(comp.state.get_storage(bytes.fromhex(
         _contract.address[2:]), i)) for i in range(10)]
@@ -113,7 +126,7 @@ def compose_result(_contract, name, comp, ret) -> dict:
     consumed_gas = comp.get_gas_used()
     # The order of function calls is the same for all runners
     # Adding the name just to know what result is checked
-    return dict(name=name, state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
+    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
 
 
 while True:
