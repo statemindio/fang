@@ -9,7 +9,6 @@ class VarTracker:
     """
     Manages variables, tracks its ID and provides access to variables up to a certain level of block.
     """
-    GLOBAL_KEY = "__global__"
     FUNCTION_KEY = "__function__"
     READONLY_KEY = "__readonly__"
 
@@ -26,7 +25,6 @@ class VarTracker:
         }
         # scope -> base_type -> level -> size
         self._dyns = {
-            self.GLOBAL_KEY: {},
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
         }
@@ -80,19 +78,7 @@ class VarTracker:
         :param name: name of the new variable
         :param var_type:
         """
-        if var_type.base_type not in self._dyns[self.GLOBAL_KEY]:
-            self._dyns[self.GLOBAL_KEY][var_type.base_type] = {
-                var_type.size: []
-            }
-        if var_type.size not in self._dyns[self.GLOBAL_KEY][var_type.base_type]:
-            self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.size] = []
-
-        # TODO: check if a variable already exist
-        self._dyns[self.GLOBAL_KEY][var_type.base_type][var_type.size].append(name)
-        self._var_id_map[var_type.name] = self.next_id(var_type)
-        if isinstance(var_type.base_type, FixedList):
-            for i in range(var_type.current_size):
-                self._register_global_list(f"{name}[{i}]", var_type.base_type)
+        self._register_function_dyn_array(name, 0, var_type, True)
 
     def _get_global_dyn_arrays(self, var_type: DynArray, assignee=False):
         """
@@ -100,15 +86,8 @@ class VarTracker:
         :param var_type:
         :return: list of allowed global variables
         """
-        allowed_vars = []
-        types = [var_type.base_type]
-        if var_type.base_type is None:
-            types = list(self._dyns[self.GLOBAL_KEY].keys())
 
-        for t in types:
-            for s in self._dyns[self.GLOBAL_KEY].get(t, {}):
-                if (s <= var_type.size and not assignee) or (s >= var_type.size and assignee):
-                    allowed_vars.extend(self._dyns[self.GLOBAL_KEY][t][s])
+        allowed_vars = self._get_function_dyn_arrays(0, var_type, True, assignee)
         allowed_vars = [f"self.{v}" for v in allowed_vars]
 
         return allowed_vars
@@ -131,7 +110,7 @@ class VarTracker:
         for t in types:
             for l in self._dyns[key].get(t, {}):
                 # level
-                if l > level:
+                if (level > 0 and l == 0) or l > level:
                     continue
                 for s in self._dyns[key][t][l]:
                     # size
@@ -146,10 +125,7 @@ class VarTracker:
 
         if name[:5] == "self.":
             name = name[5:]
-            for t in self._dyns[self.GLOBAL_KEY]:
-                for s in self._dyns[self.GLOBAL_KEY][t]:
-                    if name in self._dyns[self.GLOBAL_KEY][t][s]:
-                        return t
+            level = 0
 
         for t in self._dyns[key]:
             for l in self._dyns[key][t]:
