@@ -9,14 +9,7 @@ from utils import fill_address
 
 class BytesRandomGen:
     def generate(self, input_type):
-        # TODO: it must be checked whether hex representation is allowed for bytes array
-        # FIXME: this is the previous implementation which is not necessary fit to Bytes[m] array
-        val = random.randint(0, 2 ** 256 - 1)  # TO-DO: check range of random.randint
-        hex_val = hex(val)[2: input_type.m+2]
-        # return "0x" + os.urandom(m).hex()
-        if len(hex_val) % 2 != 0:
-            hex_val = '0' + hex_val
-        return f"b\"{hex_val}\""
+        return random.randbytes(input_type.m)
 
 
 class BytesMRandomGen:
@@ -50,7 +43,7 @@ class StringRandomGen:
         if l > input_type.m:
             l = input_type.m
         s = ''.join(random.choices(string.ascii_letters + string.digits, k=l)) # TODO: i think can use more chars
-        return f'"{s}"'
+        return f"{s}"
 
 
 class AddressRandomGen:
@@ -62,3 +55,37 @@ class AddressRandomGen:
 class DecimalRandomGen:
     def generate(self, input_type):
         return random.randint(0, 2 ** 168 - 1) / 10 ** 10 - (2 ** 167 / 10 ** 10)
+
+class BytesZeroGen:
+    def generate(self, input_type):
+        return b''
+
+
+class BytesMZeroGen:
+    def generate(self, input_type):
+        return "0x" + '00' * input_type.m
+
+
+class IntZeroGen:
+    def generate(self, input_type):
+        return 0
+
+
+class BoolZeroGen:
+    def generate(self, input_type):
+        return False
+
+
+class StringZeroGen:
+    def generate(self, input_type):
+        return ""
+
+
+class AddressZeroGen:
+    def generate(self, input_type):
+        return '0x0000000000000000000000000000000000000000'
+
+
+class DecimalZeroGen:
+    def generate(self, input_type):
+        return 0.0
