@@ -43,7 +43,7 @@ class StringRandomGen:
         if l > input_type.m:
             l = input_type.m
         s = ''.join(random.choices(string.ascii_letters + string.digits, k=l)) # TODO: i think can use more chars
-        return f'"{s}"'
+        return f"{s}"
 
 
 class AddressRandomGen:
@@ -78,7 +78,7 @@ class BoolZeroGen:
 
 class StringZeroGen:
     def generate(self, input_type):
-        return '""'
+        return ""
 
 
 class AddressZeroGen:
