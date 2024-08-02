@@ -17,7 +17,7 @@ with atheris.instrument_imports():
     import vyper
     from converters.typed_converters import TypedConverter
 
-__version__ = "0.1.2"  # same version as images' one
+__version__ = "0.1.3"  # same version as images' one
 
 conf = Config()
 # TODO: get level from config
