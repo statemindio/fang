@@ -45,7 +45,7 @@ inputs_per_function = 2
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
-    # print(data["_id"])
+
     logger.debug("Compiling contract id: %s", data["_id"])
 
     result = handle_compilation(data)
@@ -56,12 +56,14 @@ def callback(ch, method, properties, body):
     run_results_collection.update_one({"generation_id": data["_id"]},
                                       {"$set": {f"result_{compiler_key}": result}})
 
-
+# Init values might affect state, so for every init_values bundle
+# We run function payloads separately
+# Though same applies for regular functions too
+# Every call after the first one will work with already affected state
 def handle_compilation(_contract_desc):
     input_values = json.loads(
         _contract_desc["function_input_values"], cls=ExtendedDecoder)
     init_values = input_values.get("__init__", [[]])
-   # contract = deploy_contract(_contract_desc["generation_result"], init_values)
 
     results = []
     for iv in init_values:
@@ -71,7 +73,6 @@ def handle_compilation(_contract_desc):
                                  *iv, compiler_args={"settings": compiler_settings})
         except Exception as e:
             logger.debug("Deployment failed: %s", str(e))
-            # returning as a list, depends on verifier, might change
             results.append(dict(deploy_error=str(e)))
             continue
 
@@ -112,7 +113,7 @@ def execution_result(_contract, fn, _input_values, internal=False):
         _function_call_res = dict(runtime_error=res)
     return _function_call_res
 
-
+# TODO: Perhaps we can save immutables info
 def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
     state = [str(comp.state.get_storage(bytes.fromhex(
