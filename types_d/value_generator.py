@@ -9,14 +9,7 @@ from utils import fill_address
 
 class BytesRandomGen:
     def generate(self, input_type):
-        # TODO: it must be checked whether hex representation is allowed for bytes array
-        # FIXME: this is the previous implementation which is not necessary fit to Bytes[m] array
-        val = random.randint(0, 2 ** 256 - 1)  # TO-DO: check range of random.randint
-        hex_val = hex(val)[2: input_type.m+2]
-        # return "0x" + os.urandom(m).hex()
-        if len(hex_val) % 2 != 0:
-            hex_val = '0' + hex_val
-        return f"b\"{hex_val}\""
+        return random.randbytes(input_type.m)
 
 
 class BytesMRandomGen:
@@ -65,8 +58,7 @@ class DecimalRandomGen:
 
 class BytesZeroGen:
     def generate(self, input_type):
-        #hex_val = '0' * input_type.m
-        return f"b''"
+        return b''
 
 
 class BytesMZeroGen:

@@ -10,7 +10,7 @@ from json_encoders import ExtendedEncoder, ExtendedDecoder
 
 data = [
     ([t.Int()], [84747631942840761409198475171043116002924132430274400095798688737583350222083]),
-    ([t.String(30), t.Bytes(10)], ['"JTWuNw9yRV1wAN3FP3zTtbvhpk0Q5L"', b'2p\t\x802']),
+    ([t.String(30), t.Bytes(10)], ['"JTWuNw9yRV1wAN3FP3zTtbvhpk0Q5L"', b'\xf6_y\x9au\x9d\xcdC\xd2\xcd']),
     ([t.Decimal()], [Decimal('6258789235018001536341366667573813313536')]),
     (
         [t.FixedList(1, t.Address()), t.String(100)],

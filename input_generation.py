@@ -50,7 +50,7 @@ class InputGenerator:
             return decimal.Decimal(value)
         if isinstance(typ, types.BytesM):
             return bytes.fromhex(value[2:])
-        if type(typ) == types.Bytes:
-            return bytes.fromhex(value[2:-1])
+        #if type(typ) == types.Bytes:
+        #    return bytes.fromhex(value[2:-1])
         return value
         # Shouldn't catch types_d.String but not sure
