@@ -228,9 +228,7 @@ class TypedConverter:
                 return None
             return variable
 
-        allowed_vars = self._var_tracker.get_global_vars(
-            current_type
-        ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
+        allowed_vars = self._var_tracker.get_all_allowed_vars(level, current_type)
 
         if not assignment and level is not None:
             read_only_vars = self._var_tracker.get_readonly_variables(level, current_type)

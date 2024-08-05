@@ -23,6 +23,7 @@ class VarTracker:
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
         }
+        # should extend to bytes and strings
         # scope -> base_type -> level -> size
         self._dyns = {
             self.FUNCTION_KEY: {},
@@ -57,7 +58,8 @@ class VarTracker:
 
         if isinstance(var_type.base_type, FixedList):
             for i in range(var_type.current_size):
-                self._register_list_items(f"{name}[{i}]", level, var_type.base_type, key)
+                self._register_list_items(
+                    f"{name}[{i}]", level, var_type.base_type, key)
 
     def _remove_function_dyn_array_level(self, level: int, key):
         """
@@ -70,15 +72,6 @@ class VarTracker:
             if level not in self._dyns[key][vyper_type]:
                 continue
             self._dyns[key][vyper_type][level] = {}
-
-    def _get_global_dyn_arrays(self, var_type: DynArray, assignee=False):
-        """
-
-        :param var_type:
-        :return: list of allowed global variables
-        """
-
-        return self._get_function_dyn_arrays(0, var_type, True, assignee)
 
     def _get_function_dyn_arrays(self, level: int, var_type: DynArray, mutable: bool, assignee=False):
         """
@@ -190,7 +183,8 @@ class VarTracker:
         if level == 0 and mutability == VarDecl.Mutability.REGULAR:
             self.register_global_variable(name, var_type)
         else:
-            self.register_function_variable(name, level, var_type, mutability == VarDecl.Mutability.REGULAR)
+            self.register_function_variable(
+                name, level, var_type, mutability == VarDecl.Mutability.REGULAR)
 
         return name
 
@@ -214,7 +208,8 @@ class VarTracker:
 
         self._init_var_list(base_type, self._lists, key, level)
 
-        self._lists[key][base_type.vyper_type][level].append((name, var_type.size))
+        self._lists[key][base_type.vyper_type][level].append(
+            (name, var_type.size))
 
     # TODO: dynArray must include .pop as list item
     def _get_list_items(self, level: int, var_type: BaseType, mutable: bool):
@@ -229,7 +224,8 @@ class VarTracker:
         allowed_lists = []
 
         for i in range(0, level + 1):
-            allowed_lists.extend(self._lists[key].get(var_type.vyper_type, {}).get(i, []))
+            allowed_lists.extend(self._lists[key].get(
+                var_type.vyper_type, {}).get(i, []))
 
         # TODO: optimize
         allowed_vars = []
@@ -237,14 +233,6 @@ class VarTracker:
             allowed_vars.extend([f"{l}[{i}]" for i in range(s)])
 
         return allowed_vars
-
-    def _get_global_list_items(self, var_type: BaseType):
-        """
-        :param var_type list's base type:
-        :return: list of allowed global list variables
-        """
-
-        return self._get_list_items(0, var_type, True)
 
     def _remove_list_items(self, level: int, key):
         """
@@ -294,12 +282,14 @@ class VarTracker:
         allowed_vars = []
 
         if isinstance(var_type, DynArray):
-            allowed_vars = self._get_function_dyn_arrays(level, var_type, False)
+            allowed_vars = self._get_function_dyn_arrays(
+                level, var_type, False)
             return allowed_vars
 
         allowed_vars.extend(self._get_list_items(level, var_type, False))
         for i in range(level + 1):
-            allowed_vars.extend(self._vars[self.READONLY_KEY].get(var_type.vyper_type, {}).get(i, []))
+            allowed_vars.extend(self._vars[self.READONLY_KEY].get(
+                var_type.vyper_type, {}).get(i, []))
         return allowed_vars
 
     def get_all_allowed_vars(self, level: int, var_type: BaseType, **kwargs):
@@ -313,11 +303,13 @@ class VarTracker:
         allowed_vars = []
 
         if isinstance(var_type, DynArray):
-            allowed_vars.extend(self._get_function_dyn_arrays(level, var_type, True, kwargs.get("assignee", False)))
+            allowed_vars.extend(self._get_function_dyn_arrays(
+                level, var_type, True, kwargs.get("assignee", False)))
             return allowed_vars
 
         for i in range(0, level + 1):
-            allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(i, []))
+            allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(
+                var_type.vyper_type, {}).get(i, []))
 
         allowed_vars.extend(self._get_list_items(level, var_type, True))
 
@@ -330,11 +322,13 @@ class VarTracker:
         :return: list of allowed global variables
         """
         if isinstance(var_type, DynArray):
-            allowed_vars = self._get_function_dyn_arrays(0, var_type, True, kwargs.get("assignee", False))
+            allowed_vars = self._get_function_dyn_arrays(
+                0, var_type, True, kwargs.get("assignee", False))
             return allowed_vars
 
-        #allowed_vars = [f"self.{v}" for v in self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, [])]
+        # allowed_vars = [f"self.{v}" for v in self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, [])]
         # This is a pointer, it will modify self._vars
-        allowed_vars = self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, []).copy()
+        allowed_vars = self._vars[self.FUNCTION_KEY].get(
+            var_type.vyper_type, {}).get(0, []).copy()
         allowed_vars.extend(self._get_list_items(0, var_type, True))
         return allowed_vars
