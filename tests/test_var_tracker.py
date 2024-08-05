@@ -70,7 +70,7 @@ def test_var_tracker_add_function_variable_and_dynamic_array(var_tracker):
     assert var_tracker.get_all_allowed_vars(3, list_type_4) == ["self.bar0", "self.bar1", "foo1"]
     assert var_tracker.get_all_allowed_vars(3, all_types) == ["self.bar0", "self.bar1", "self.bar2", "foo0", "foo1",
                                                               "baz0"]
-    assert var_tracker.get_dyn_array_base_type("baz0", 3, mutable) == Decimal()
+    assert var_tracker.get_dyn_array_base_type("baz0", mutable) == Decimal()
 
 
 def test_var_tracker_add_function_variable_and_dynamic_array_list(var_tracker):
@@ -135,7 +135,7 @@ def test_var_tracker_add_global_and_function_variables_and_list(var_tracker):
     var_tracker.register_function_variable("qux0", 1, list_type, mutable)
     var_tracker.register_function_variable("qux1", 1, list_type, mutable)
     var_tracker.register_function_variable("qux2", 3, list_type, mutable)
-    
+
     assert var_tracker.get_global_vars(list_type) == ["self.g_baz0", "self.g_baz1"]
     assert var_tracker.get_all_allowed_vars(1, list_type) == ["self.g_baz0", "self.g_baz1", "qux0", "qux1"]
     assert var_tracker.get_all_allowed_vars(4, list_type) == ["self.g_baz0", "self.g_baz1", "qux0", "qux1", "qux2"]

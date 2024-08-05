@@ -1118,8 +1118,7 @@ class TypedConverter:
 
         if variable_name is None:
             return
-
-        variable_type = self._var_tracker.get_dyn_array_base_type(variable_name, self._block_level_count, True)
+        variable_type = self._var_tracker.get_dyn_array_base_type(variable_name, True)
         self.type_stack.append(variable_type)
         expression_result = self.visit_typed_expression(stmt.expr, variable_type)
         self.type_stack.pop()

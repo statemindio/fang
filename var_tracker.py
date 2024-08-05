@@ -3,6 +3,7 @@ import copy
 from types_d.base import BaseType
 from types_d.types import FixedList, DynArray
 from vyperProtoNew_pb2 import VarDecl
+from collections import defaultdict
 
 
 class VarTracker:
@@ -79,7 +80,7 @@ class VarTracker:
         """
 
         allowed_vars = self._get_function_dyn_arrays(0, var_type, True, assignee)
-        allowed_vars = [f"self.{v}" for v in allowed_vars]
+        #allowed_vars = [f"self.{v}" for v in allowed_vars]
 
         return allowed_vars
 
@@ -110,18 +111,13 @@ class VarTracker:
 
         return allowed_vars
 
-    # can use set as container?
-    def get_dyn_array_base_type(self, name, level: int, mutable: bool):
+    # i think level might be cause bugs
+    # the variable can be in the lower block
+    def get_dyn_array_base_type(self, name, mutable: bool):
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
-
-        if name[:5] == "self.":
-            name = name[5:]
-            level = 0
 
         for t in self._dyns[key]:
             for l in self._dyns[key][t]:
-                if l > level:
-                    continue
                 for s in self._dyns[key][t][l]:
                     if name in self._dyns[key][t][l][s]:
                         return t
@@ -165,6 +161,9 @@ class VarTracker:
         :param mutable:
         """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
+
+        if level == 0 and mutable:
+            name = f"self.{name}"
 
         if isinstance(var_type, FixedList):
             self._register_list_items(name, level, var_type, key)
@@ -251,7 +250,8 @@ class VarTracker:
         :return: list of allowed global list variables
         """
 
-        return [f"self.{v}" for v in self._get_list_items(0, var_type, True)]
+        #return [f"self.{v}" for v in self._get_list_items(0, var_type, True)]
+        return self._get_list_items(0, var_type, True)
 
     def _remove_list_items(self, level: int, key):
         """
@@ -340,6 +340,8 @@ class VarTracker:
             allowed_vars = self._get_global_dyn_arrays(var_type, kwargs.get("assignee", False))
             return allowed_vars
 
-        allowed_vars = [f"self.{v}" for v in self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, [])]
+        #allowed_vars = [f"self.{v}" for v in self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, [])]
+        # This is a pointer, it will modify self._vars
+        allowed_vars = self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, []).copy()
         allowed_vars.extend(self._get_global_list_items(var_type))
         return allowed_vars
