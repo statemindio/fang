@@ -135,6 +135,10 @@ def test_var_tracker_add_global_and_function_variables_and_list(var_tracker):
     var_tracker.register_function_variable("qux0", 1, list_type, mutable)
     var_tracker.register_function_variable("qux1", 1, list_type, mutable)
     var_tracker.register_function_variable("qux2", 3, list_type, mutable)
+    
+    assert var_tracker.get_global_vars(list_type) == ["self.g_baz0", "self.g_baz1"]
+    assert var_tracker.get_all_allowed_vars(1, list_type) == ["self.g_baz0", "self.g_baz1", "qux0", "qux1"]
+    assert var_tracker.get_all_allowed_vars(4, list_type) == ["self.g_baz0", "self.g_baz1", "qux0", "qux1", "qux2"]
 
     assert var_tracker.get_global_vars(var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
                                                      "self.g_baz0[0]", "self.g_baz0[1]",

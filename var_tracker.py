@@ -71,15 +71,6 @@ class VarTracker:
                 continue
             self._dyns[key][vyper_type][level] = {}
 
-    # TODO: must handle size changes somehow (pop, append)
-    def _register_global_dyn_array(self, name, var_type: DynArray):
-        """
-        Sets a new global variable
-        :param name: name of the new variable
-        :param var_type:
-        """
-        self._register_function_dyn_array(name, 0, var_type, True)
-
     def _get_global_dyn_arrays(self, var_type: DynArray, assignee=False):
         """
 
@@ -187,7 +178,7 @@ class VarTracker:
         # TODO: check if a variable already exist
         self._vars[key][var_type.vyper_type][level].append(name)
         self._var_id_map[var_type.name] = self.next_id(var_type)
-        if not mutable and level == 0:
+        if level == 0:
             self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
     def create_and_register_variable(
@@ -216,19 +207,7 @@ class VarTracker:
         :param name: name of the new variable
         :param var_type:
         """
-        if isinstance(var_type, FixedList):
-            self._register_global_list(name, var_type)
-
-        if isinstance(var_type, DynArray):
-            self._register_global_dyn_array(name, var_type)
-            return
-
-        # TODO: check if a variable already exist
-        if not isinstance(var_type, FixedList):
-            self.register_function_variable(name, 0, var_type, True)
-        else:
-            self._var_id_map[var_type.name] = self.next_id(var_type)
-        self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
+        self.register_function_variable(name, 0, var_type, True)
 
     def _register_list_items(self, name, level, var_type: FixedList, key):
         """
@@ -265,15 +244,6 @@ class VarTracker:
             allowed_vars.extend([f"{l}[{i}]" for i in range(s)])
 
         return allowed_vars
-
-    def _register_global_list(self, name, var_type: FixedList):
-        """
-        Saves list data of a new global variable
-        :param name: name of the new variable
-        :param var_type:
-        """
-
-        self._register_list_items(name, 0, var_type, self.FUNCTION_KEY)
 
     def _get_global_list_items(self, var_type: BaseType):
         """
