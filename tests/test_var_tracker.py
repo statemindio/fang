@@ -143,14 +143,15 @@ def test_var_tracker_add_global_and_function_variables_and_list(var_tracker):
     assert var_tracker.get_global_vars(var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
                                                      "self.g_baz0[0]", "self.g_baz0[1]",
                                                      "self.g_baz1[0]", "self.g_baz1[1]"]
+
     assert var_tracker.get_all_allowed_vars(1, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
-                                                             "self.g_baz0[0]", "self.g_baz0[1]",
-                                                             "self.g_baz1[0]", "self.g_baz1[1]", "foo0",
+                                                             "foo0", "self.g_baz0[0]", "self.g_baz0[1]",
+                                                             "self.g_baz1[0]", "self.g_baz1[1]",
                                                              "qux0[0]", "qux0[1]", "qux1[0]", "qux1[1]"]
     assert var_tracker.get_all_allowed_vars(4, var_type) == ["self.g_bar0", "self.g_bar2", "self.g_bar1", "self.foo1",
-                                                             "self.g_baz0[0]", "self.g_baz0[1]",
+                                                             "foo0", "foo2", "self.g_baz0[0]", "self.g_baz0[1]",
                                                              "self.g_baz1[0]", "self.g_baz1[1]",
-                                                             "foo0", "foo2", "qux0[0]", "qux0[1]", "qux1[0]", "qux1[1]",
+                                                             "qux0[0]", "qux0[1]", "qux1[0]", "qux1[1]",
                                                              "qux2[0]", "qux2[1]"]
 
 
