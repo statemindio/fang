@@ -90,6 +90,12 @@ message BoolExpression {
     DecimalBoolBinOp decBoolBinOp = 4;
     VarRef varRef = 6;
     RawCall raw_call = 7;
+    ConvertFromInt convert_int = 8;
+    DecimalExpression convert_decimal = 9;
+    AddressExpression convert_address = 10;
+    ConvertFromBytesM convert_bytesm = 11;
+    BytesExpression convert_bytes = 12;
+    StringExpression convert_string = 13;
     //    Convert convert = 7;
   }
   Literal lit = 5;
@@ -102,6 +108,9 @@ message AddressExpression {
     VarRef varRef = 4;
     CreateCopyOf cco = 5;
     EcRecover ecRec = 6;
+    ConvertFromInt convert_int = 7;
+    ConvertFromBytesM convert_bytesm = 8;
+    BytesExpression convert_bytes = 9;
     //    Convert convert = 5;
   }
   Literal lit = 3;
@@ -149,22 +158,46 @@ message DecimalUnOp {
   DecimalExpression expr = 1;
 }
 
+// No enums yet
+// Enums can be converted to and from uint256 only.
 message IntExpression {
   Literal lit = 1;
   oneof expr {
     IntBinOp binOp = 2;
     IntUnOp unOp = 3;
     VarRef varRef = 4;
-    //    Convert convert = 5;
+    ConvertFromInt convert_int = 5;
+    DecimalExpression convert_decimal = 6;
+    BoolExpression convert_bool = 7;
+    AddressExpression convert_address = 8;
+    ConvertFromBytesM convert_bytesm = 9;
+    BytesExpression convert_bytes = 10;
   }
 }
+
+message ConvertFromInt {
+  IntExpression exp = 1;
+  Int i = 2;
+}
+
+message ConvertFromBytesM {
+  BytesMExpression exp = 1;
+  BytesM bM = 2;
+}
+
 
 message BytesMExpression {
   Literal lit = 3;
   oneof expr {
     Sha256 sha = 1;
-    VarRef varRef = 4;
-    Keccak256 keccak = 2;
+    VarRef varRef = 2;
+    Keccak256 keccak = 4;
+    ConvertFromInt convert_int = 5;
+    DecimalExpression convert_decimal = 6;
+    BoolExpression convert_bool = 7;
+    AddressExpression convert_address = 8;
+    ConvertFromBytesM convert_bytesm = 9;
+    BytesExpression convert_bytes = 10;
     //    Convert convert = 5;
   }
 }
@@ -175,6 +208,7 @@ message BytesExpression {
     RawCall raw_call = 2;
     //    Convert convert = 2;
     ConcatBytes concat = 4;
+    StringExpression convert_string = 5;
   }
   Literal lit = 3;
 }
@@ -184,6 +218,7 @@ message StringExpression {
     VarRef varRef = 1;
     //    Convert convert = 2;
     ConcatString concat = 2;
+    BytesExpression convert_bytes = 4;
   }
   Literal lit = 3;
 }
@@ -193,6 +228,10 @@ message DecimalExpression {
     DecimalBinOp binOp = 1;
     DecimalUnOp unOp = 2;
     VarRef varRef = 4;
+    ConvertFromInt convert_int = 5;
+    BoolExpression convert_bool = 6;
+    ConvertFromBytesM convert_bytesm = 7;
+    BytesExpression convert_bytes = 8;
     //    Convert convert = 5;
   }
   Literal lit = 3;

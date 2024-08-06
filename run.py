@@ -17,7 +17,7 @@ with atheris.instrument_imports():
     import vyper
     from converters.typed_converters import TypedConverter
 
-__version__ = "0.1.2"  # same version as images' one
+__version__ = "0.1.3"  # same version as images' one
 
 conf = Config()
 # TODO: get level from config
@@ -38,6 +38,8 @@ qm = MultiQueueManager(queue_managers=[
 
 input_strategy = InputStrategy.DEFAULT
 input_generator = InputGenerator(input_strategy)
+# TODO: get from config
+inputs_per_function = 2
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -74,16 +76,22 @@ def TestOneProtoInput(msg):
     except Exception as e:
         data["error_type"] = type(e).__name__
         data["error_message"] = str(e)
-    ins_res = c_log.insert_one(data)
 
     logger.debug("Compilation result: %s", data)
 
     input_values = dict()
     for name, types in proto.function_inputs.items():
-        input_values[name] = input_generator.generate(types)
+        for i in range(inputs_per_function):
+            # Can also change generator strategy depending on `i`
+            if input_values.get(name, None) is None:
+                input_values[name] = []
+            input_values[name].append(input_generator.generate(types))
 
     input_values = json.dumps(input_values, cls=ExtendedEncoder)
     logger.debug("Generated inputs: %s", input_values)
+
+    data["function_input_values"] = input_values
+    ins_res = c_log.insert_one(data)
 
     message = {
         "_id": str(ins_res.inserted_id),
@@ -94,6 +102,8 @@ def TestOneProtoInput(msg):
     }
     qm.publish(**message)
 
+    # Creating the result entry, so there's no race condition in runners
+    db_client["run_results"].insert_one({'generation_id': str(ins_res.inserted_id)})
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(

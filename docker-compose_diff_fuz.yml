@@ -1,7 +1,7 @@
 version: '3'
 services:
   generator:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3-dev
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3
     command:
       - python3.10
       - run.py
@@ -26,8 +26,8 @@ services:
       - queue_opt_gas
     ports:
       - "15672:15672"
-  compiler_optimization_gas:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3-dev
+  runner_optimization_gas:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3
     environment:
       PYTHONPATH: /app
       SERVICE_NAME: opt_gas
@@ -36,7 +36,7 @@ services:
       - queue_optimization_gas
     command:
       - python3.10
-      - tests/integration_runner/compile.py
+      - tests/integration_runner/runner.py
     networks:
       - db
       - queue_opt_gas
@@ -50,7 +50,7 @@ services:
       - queue_opt_codesize
     ports:
       - "15673:15672"
-  compiler_optimization_codesize:
+  runner_optimization_codesize:
     image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3-dev
     environment:
       PYTHONPATH: /app
@@ -60,23 +60,10 @@ services:
       - queue_optimization_codesize
     command:
       - python3.10
-      - tests/integration_runner/compile.py
+      - tests/integration_runner/runner.py
     networks:
       - db
       - queue_opt_codesize
-    volumes:
-      - ./config.yml:/app/config.yml
-  runner:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3-dev
-    environment:
-      PYTHONPATH: /app
-    depends_on:
-      - mongodb
-    command:
-      - python3.10
-      - runners/simple_runner.py
-    networks:
-      - db
     volumes:
       - ./config.yml:/app/config.yml
   verifier:
