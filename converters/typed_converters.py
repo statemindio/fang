@@ -228,7 +228,7 @@ class TypedConverter:
                 return None
             return variable
 
-        allowed_vars = self._var_tracker.get_all_allowed_vars(level, current_type)
+        allowed_vars = self._var_tracker.get_mutable_variables(level, current_type)
 
         if not assignment and level is not None:
             read_only_vars = self._var_tracker.get_readonly_variables(level, current_type)
@@ -600,7 +600,7 @@ class TypedConverter:
         output_vars = []
         result = ""
         for t in func_obj.output_parameters:
-            allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t, assignee=True)
+            allowed_vars = self._var_tracker.get_mutable_variables(self._block_level_count, t, assignee=True)
             variable = None
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)

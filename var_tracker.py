@@ -279,20 +279,9 @@ class VarTracker:
         :param var_type:
         :return: list of allowed readonly variables
         """
-        allowed_vars = []
+        return self._get_vars(var_type, level, False)
 
-        if isinstance(var_type, DynArray):
-            allowed_vars = self._get_function_dyn_arrays(
-                level, var_type, False)
-            return allowed_vars
-
-        allowed_vars.extend(self._get_list_items(level, var_type, False))
-        for i in range(level + 1):
-            allowed_vars.extend(self._vars[self.READONLY_KEY].get(
-                var_type.vyper_type, {}).get(i, []))
-        return allowed_vars
-
-    def get_all_allowed_vars(self, level: int, var_type: BaseType, **kwargs):
+    def get_mutable_variables(self, level: int, var_type: BaseType, **kwargs):
         """
 
         :param level:
@@ -300,20 +289,7 @@ class VarTracker:
         :return: list of allowed variables. It's a united of the global variables and function variables
         allowed on the given level
         """
-        allowed_vars = []
-
-        if isinstance(var_type, DynArray):
-            allowed_vars.extend(self._get_function_dyn_arrays(
-                level, var_type, True, kwargs.get("assignee", False)))
-            return allowed_vars
-
-        for i in range(0, level + 1):
-            allowed_vars.extend(self._vars[self.FUNCTION_KEY].get(
-                var_type.vyper_type, {}).get(i, []))
-
-        allowed_vars.extend(self._get_list_items(level, var_type, True))
-
-        return allowed_vars
+        return self._get_vars(var_type, level, True, **kwargs)
 
     def get_global_vars(self, var_type: BaseType, **kwargs):
         """
@@ -321,14 +297,21 @@ class VarTracker:
         :param var_type:
         :return: list of allowed global variables
         """
+        return self._get_vars(var_type, 0, True, **kwargs)
+
+    def _get_vars(self, var_type: BaseType, level: int, mutable, **kwargs):
+        key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
+        allowed_vars = []
+
         if isinstance(var_type, DynArray):
-            allowed_vars = self._get_function_dyn_arrays(
-                0, var_type, True, kwargs.get("assignee", False))
+            allowed_vars.extend(self._get_function_dyn_arrays(
+                level, var_type, mutable, kwargs.get("assignee", False)))
             return allowed_vars
 
-        # allowed_vars = [f"self.{v}" for v in self._vars[self.FUNCTION_KEY].get(var_type.vyper_type, {}).get(0, [])]
-        # This is a pointer, it will modify self._vars
-        allowed_vars = self._vars[self.FUNCTION_KEY].get(
-            var_type.vyper_type, {}).get(0, []).copy()
-        allowed_vars.extend(self._get_list_items(0, var_type, True))
+        for i in range(0, level + 1):
+            allowed_vars.extend(self._vars[key].get(
+                var_type.vyper_type, {}).get(i, []))
+
+        allowed_vars.extend(self._get_list_items(level, var_type, mutable))
+
         return allowed_vars
