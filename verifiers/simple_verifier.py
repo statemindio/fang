@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 
@@ -54,26 +53,39 @@ def verify_two_results(_res0, _res1):
     return d
 
 
-def verify_results(_results):
-    compilers = list(_results["results"].keys())
+def verify_results(_conf: Config, data):
+    compilers = target_fields(_conf)
+    results = []
+    for func_name, deployments in data.items():
+        for i, depl in enumerate(deployments):
+            for compilers_res in depl:
+                for j, _res in compilers_res:
+                    if j == len(compilers_res) - 1:
+                        break
+                    d = verify_two_results(_res, _res[j + 1])
+                    results.append({
+                        "compilers": (compilers[j], compilers[j + 1]),
+                        "function": func_name,
+                        "deployment": i,
+                        "results": d
+                    })
+    return results
 
-    func_results = []
-    for _res in zip(*[_results["results"][compiler_key] for compiler_key in compilers]):
-        logger.debug(f"Function result: {_res}")
 
-        # each item of `r` is a list of comparisons of a function
-        r = []
+def target_fields(_conf: Config) -> list:
+    return [f"result_{c['name']}" for c in _conf.compilers]
 
-        for i, _func_res in enumerate(_res):
-            if i == len(_res) - 1:
-                break
-            d = verify_two_results(_func_res, _res[i + 1])
-            r.append({
-                "compilers": (compilers[i], compilers[i + 1]),
-                "results": d
-            })
-        func_results.append(r)
-    return func_results
+
+def ready_to_handle(_conf: Config, _res) -> bool:
+    fields = target_fields(_conf)
+    return all(f in _res for f in fields)
+
+
+def reshape_data(_conf, _res):
+    result = {}
+    # TODO: implement
+
+    return result
 
 
 if __name__ == '__main__':
@@ -90,7 +102,12 @@ if __name__ == '__main__':
         for res in unhandled_results:
             logger.info(f"Handling result: {res['generation_id']}")
             logger.debug(res)
-            _r = verify_results(res)
+            if not ready_to_handle(conf, res):
+                logger.debug("%s is not ready yet", res["generation_id"])
+                continue
+
+            reshaped_res = reshape_data(conf, res)
+            _r = verify_results(conf, reshaped_res)
             verification_results.append({"generation_id": res["generation_id"], "results": _r})
 
         if len(verification_results) != 0:
