@@ -117,7 +117,8 @@ def is_valid(_conf, _res):
     for f in fields:
         if len(_res[f][0]) == 0:
             return False
-        if "deploy_error" in _res[f][0]
+        if "deploy_error" in _res[f][0]:
+            # TODO: deploy errors are supposed to be compared and handled as well
             return False
     return True
 
