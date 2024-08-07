@@ -35,7 +35,18 @@ def return_value_verifier(value0, value1):
         raise VerifierException(f"Return Value discrepancy: {loaded_value0} | {loaded_value1}")
 
 
+def runtime_error_handler(_res0, _res1):
+    # TODO: compare errors of both results
+    pass
+
+
+RUNTIME_ERROR = "runtime_error"
+
+
 def verify_two_results(_res0, _res1):
+    if RUNTIME_ERROR in _res0 or RUNTIME_ERROR in _res1:
+        runtime_error_handler(_res0, _res1)
+        return {}
     verifiers = {
         "Storage": (storage_verifier, (_res0["state"], _res1["state"])),
         "Memory": (memory_verifier, (_res0["memory"], _res1["memory"])),
@@ -82,10 +93,33 @@ def ready_to_handle(_conf: Config, _res) -> bool:
 
 
 def reshape_data(_conf, _res):
+    compilers = target_fields(_conf)
     result = {}
-    # TODO: implement
+
+    for i, compiler in enumerate(compilers):
+        compiler_data = compilers[compiler]
+        for j, depl in enumerate(compiler_data):
+            for func_name, results in depl.items():
+                if func_name not in results:
+                    result[func_name] = []
+                if j > len(result[func_name]) - 1:
+                    result[func_name].append([])
+                for k, r in enumerate(results):
+                    if k > len(result[func_name][j]) - 1:
+                        result[func_name][j].append([])
+                    result[func_name][j][k].append(r)
 
     return result
+
+
+def is_valid(_conf, _res):
+    fields = target_fields(_conf)
+    for f in fields:
+        if len(_res[f][0]) == 0:
+            return False
+        if "deploy_error" in _res[f][0]
+            return False
+    return True
 
 
 if __name__ == '__main__':
@@ -106,6 +140,8 @@ if __name__ == '__main__':
                 logger.debug("%s is not ready yet", res["generation_id"])
                 continue
 
+            if not is_valid(conf, res):
+                continue
             reshaped_res = reshape_data(conf, res)
             _r = verify_results(conf, reshaped_res)
             verification_results.append({"generation_id": res["generation_id"], "results": _r})
