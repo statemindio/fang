@@ -35,6 +35,14 @@ class Config:
     def compilers(self):
         return self.__config_source["compilers"]
 
+    @property
+    def input_strategies(self):
+        return self.__config_source["input_strategies"]
+
+    @property
+    def verbosity(self):
+        return self.__config_source["verbosity"]
+
     def get_compiler_params_by_name(self, name):
         for comp in self.__config_source["compilers"]:
             if comp["name"] == name:

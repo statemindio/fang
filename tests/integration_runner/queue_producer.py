@@ -5,11 +5,13 @@ import logging
 
 import pika
 
+from config import Config
 from db import get_mongo_client
 
-# TODO: get level from config
+conf = Config()
+logger_level = getattr(logging, conf.verbosity)
 logger = logging.getLogger("queue_producer")
-logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
 
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
