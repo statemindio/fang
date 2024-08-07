@@ -8,7 +8,7 @@ class InputStrategy(Enum):
 
 class InputGenerator:
 
-    def __init__(self, strategy: InputStrategy):
+    def __init__(self, strategy: InputStrategy = InputStrategy.DEFAULT):
         # set up type generators
         self.default = {
             types.Int: value_generator.IntRandomGen(),
@@ -53,4 +53,9 @@ class InputGenerator:
         #if type(typ) == types.Bytes:
         #    return bytes.fromhex(value[2:-1])
         return value
-        # Shouldn't catch types_d.String but not sure
+
+    def change_strategy(self, strategy: InputStrategy):
+        if strategy is InputStrategy.ZEROS:
+            self.gens = self.zeroes
+        else:
+            self.gens = self.default
