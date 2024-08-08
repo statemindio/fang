@@ -1,7 +1,7 @@
 import copy
 
 from types_d.base import BaseType
-from types_d.types import FixedList, DynArray
+from types_d.types import FixedList, DynArray, Bytes, String
 from vyperProtoNew_pb2 import VarDecl
 
 
@@ -29,8 +29,12 @@ class VarTracker:
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
         }
+        self._bytes = {
+            self.FUNCTION_KEY: {},
+            self.READONLY_KEY: {}
+        }
 
-    def _register_function_dyn_array(self, name, level, var_type: DynArray, mutable: bool):
+    def _register_dyn_array(self, name, level, var_type: DynArray, mutable: bool):
         """
         Sets a new variable to the passed `level`
         :param name: name of the new variable
@@ -40,40 +44,51 @@ class VarTracker:
         """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
 
-        if var_type.base_type not in self._dyns[key]:
-            self._dyns[key][var_type.base_type] = {
-                level: {}
-            }
-        if level not in self._dyns[key][var_type.base_type]:
-            self._dyns[key][var_type.base_type][level] = {
-                var_type.size: []
-            }
-
-        if var_type.size not in self._dyns[key][var_type.base_type][level]:
-            self._dyns[key][var_type.base_type][level][var_type.size] = []
-
-        # TODO: check if a variable already exist
-        self._dyns[key][var_type.base_type][level][var_type.size].append(name)
-        self._var_id_map[var_type.name] = self.next_id(var_type)
+        index_type = var_type.base_type
+        type_size = var_type.size
+        self._register_dyns(self._dyns, index_type, type_size, name, level, var_type, key)
 
         if isinstance(var_type.base_type, FixedList):
             for i in range(var_type.current_size):
                 self._register_list_items(
                     f"{name}[{i}]", level, var_type.base_type, key)
 
-    def _remove_function_dyn_array_level(self, level: int, key):
+    def _register_bytes_or_string(self, name, level, var_type: DynArray, mutable: bool):
+        key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
+
+        index_type = type(var_type)
+        type_size = var_type.m
+        self._register_dyns(self._bytes, index_type, type_size, name, level, var_type, key)
+
+    def _register_dyns(self, _dict, index_type, var_size, name, level, var_type: DynArray, key):
+        if index_type not in _dict[key]:
+            _dict[key][index_type] = {
+                level: {}
+            }
+        if level not in _dict[key][index_type]:
+            _dict[key][index_type][level] = {
+                var_size: []
+            }
+
+        if var_size not in _dict[key][index_type][level]:
+            _dict[key][index_type][level][var_size] = []
+
+        # TODO: check if a variable already exist
+        _dict[key][index_type][level][var_size].append(name)
+
+    def _remove_dyns_level(self, level: int, key):
         """
         Removes the specified level's variables
         :param level:
         :param mutable:
         """
+        for _dict in (self._dyns, self._bytes):
+            for vyper_type in _dict[key]:
+                if level not in _dict[key][vyper_type]:
+                    continue
+                _dict[key][vyper_type][level] = {}
 
-        for vyper_type in self._dyns[key]:
-            if level not in self._dyns[key][vyper_type]:
-                continue
-            self._dyns[key][vyper_type][level] = {}
-
-    def _get_function_dyn_arrays(self, level: int, var_type: DynArray, mutable: bool, assignee=False):
+    def _get_dyn_arrays(self, level: int, var_type: DynArray, mutable: bool, assignee=False):
         """
 
         :param level:
@@ -82,24 +97,35 @@ class VarTracker:
         allowed on the given level
         """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
-
         types = [var_type.base_type]
+        # get all DynArrays to append() or pop()
         if var_type.base_type is None:
             types = list(self._dyns[key].keys())
+        size = var_type.size
 
+        return self._get_dyns(self._dyns, level, types, size, key, assignee=assignee)
+
+    def _get_bytes_or_string(self, level: int, var_type: DynArray, mutable: bool, assignee=False):
+        key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
+        types = [type(var_type)]
+        size = var_type.m
+        return self._get_dyns(self._bytes, level, types, size, key, assignee=assignee)
+
+    def _get_dyns(self, _dict: dict, level: int, types, size, key, assignee=False):
         allowed_vars = []
+
         for t in types:
-            for l in self._dyns[key].get(t, {}):
+            for l in _dict[key].get(t, {}):
                 # level
                 if l > level:
                     continue
-                for s in self._dyns[key][t][l]:
+                for s in _dict[key][t][l]:
                     # size
-                    if (s <= var_type.size and not assignee) or (s >= var_type.size and assignee):
-                        allowed_vars.extend(self._dyns[key][t][l][s])
-
+                    if (s <= size and not assignee) or (s >= size and assignee):
+                        allowed_vars.extend(_dict[key][t][l][s])
         return allowed_vars
 
+    # get DynArray by name for append statement
     def get_dyn_array_base_type(self, name, mutable: bool):
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
 
@@ -147,6 +173,11 @@ class VarTracker:
         :param var_type:
         :param mutable:
         """
+        self._var_id_map[var_type.name] = self.next_id(var_type)
+        # Doesnt do this line if Bytes, String or DynArray
+        if level == 0:
+            self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
+
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
 
         if level == 0 and mutable:
@@ -156,16 +187,17 @@ class VarTracker:
             self._register_list_items(name, level, var_type, key)
 
         if isinstance(var_type, DynArray):
-            self._register_function_dyn_array(name, level, var_type, mutable)
+            self._register_dyn_array(name, level, var_type, mutable)
+            return
+
+        if type(var_type) == Bytes or type(var_type) == String:
+            self._register_bytes_or_string(name, level, var_type, mutable)
             return
 
         self._init_var_list(var_type, self._vars, key, level)
 
         # TODO: check if a variable already exist
         self._vars[key][var_type.vyper_type][level].append(name)
-        self._var_id_map[var_type.name] = self.next_id(var_type)
-        if level == 0:
-            self._global_var_id_map[var_type.name] = self._var_id_map[var_type.name]
 
     def create_and_register_variable(
             self, var_type: BaseType,
@@ -258,7 +290,7 @@ class VarTracker:
                 continue
             self._vars[key][vyper_type][level] = []
 
-        self._remove_function_dyn_array_level(level, key)
+        self._remove_dyns_level(level, key)
         self._remove_list_items(level, key)
 
     def reset_function_variables(self):
@@ -269,6 +301,12 @@ class VarTracker:
                         if level == 0:
                             continue
                         _vars[key][vyper_type][level] = []
+            for _vars in (self._dyns, self._bytes):
+                for vyper_type, level_vars in _vars[key].items():
+                    for level, variables in level_vars.items():
+                        if level == 0:
+                            continue
+                        _vars[key][vyper_type][level] = {}
 
         self._var_id_map = copy.copy(self._global_var_id_map)
 
@@ -304,7 +342,12 @@ class VarTracker:
         allowed_vars = []
 
         if isinstance(var_type, DynArray):
-            allowed_vars.extend(self._get_function_dyn_arrays(
+            allowed_vars.extend(self._get_dyn_arrays(
+                level, var_type, mutable, kwargs.get("assignee", False)))
+            return allowed_vars
+
+        if type(var_type) == Bytes or type(var_type) == String:
+            allowed_vars.extend(self._get_bytes_or_string(
                 level, var_type, mutable, kwargs.get("assignee", False)))
             return allowed_vars
 

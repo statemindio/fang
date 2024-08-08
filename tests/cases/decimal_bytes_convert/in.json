@@ -29,7 +29,7 @@
       "input_params": [
         {
           "barr": {
-            "max_len": 31
+            "max_len": 33
           }
         }
       ],

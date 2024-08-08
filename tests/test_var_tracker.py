@@ -1,6 +1,6 @@
 import pytest
 
-from types_d import Int, Decimal, FixedList, DynArray
+from types_d import Int, Decimal, FixedList, DynArray, Bytes
 from var_tracker import VarTracker
 from config import MAX_LIST_SIZE
 
@@ -54,6 +54,7 @@ def test_var_tracker_add_function_variable_and_dynamic_array(var_tracker):
     list_type_4 = DynArray(3, var_type)
     list_type_5 = DynArray(2, var_type)
 
+    # alias of register_function_variable(name, 0, type, True)
     var_tracker.register_global_variable("bar0", list_type_0)
     var_tracker.register_global_variable("bar1", list_type_1)
     var_tracker.register_global_variable("bar2", list_type_2)
@@ -255,3 +256,50 @@ def test_var_tracker_index(var_tracker):
     assert var_tracker.next_id(var_type_int128) == 8
     assert var_tracker.current_id(var_type_decimal) == 4
     assert var_tracker.next_id(var_type_decimal) == 5
+
+
+def test_var_reset_function_variables(var_tracker):
+    var_type_uint256 = Int()
+    var_type_bytes10 = Bytes(10)
+    var_type_uint256_da = DynArray(2, var_type_uint256)
+    mutable = True
+
+    var_tracker.register_global_variable("g_bar_uint256", var_type_uint256)
+    var_tracker.register_global_variable("g_bar_bytes10", var_type_bytes10)
+    var_tracker.register_global_variable("g_bar_uint256_da", var_type_uint256_da)
+    var_tracker.register_function_variable("foo_uint256_0", 1, var_type_uint256, mutable)
+    var_tracker.register_function_variable("foo_bytes10_1", 1, var_type_bytes10, mutable)
+    var_tracker.register_function_variable("foo_uint256_da", 1, var_type_uint256_da, mutable)
+
+    assert var_tracker.get_global_vars(var_type_uint256) == ["self.g_bar_uint256",
+                                                             "self.g_bar_uint256_da[0]",
+                                                             "self.g_bar_uint256_da[1]"]
+    assert var_tracker.get_mutable_variables(2, var_type_uint256) == ["self.g_bar_uint256",
+                                                                      "foo_uint256_0", 
+                                                                      "self.g_bar_uint256_da[0]", 
+                                                                      "self.g_bar_uint256_da[1]",
+                                                                      "foo_uint256_da[0]",
+                                                                      "foo_uint256_da[1]"]
+
+    assert var_tracker.get_global_vars(var_type_bytes10) == ["self.g_bar_bytes10"]
+    assert var_tracker.get_mutable_variables(2, var_type_bytes10) == ["self.g_bar_bytes10",
+                                                                      "foo_bytes10_1"]
+
+    assert var_tracker.get_global_vars(var_type_uint256_da) == ["self.g_bar_uint256_da"]
+    assert var_tracker.get_mutable_variables(2, var_type_uint256_da) == ["self.g_bar_uint256_da",
+                                                                         "foo_uint256_da"]
+
+    var_tracker.reset_function_variables()
+
+    assert var_tracker.get_global_vars(var_type_uint256) == ["self.g_bar_uint256",
+                                                             "self.g_bar_uint256_da[0]", 
+                                                             "self.g_bar_uint256_da[1]"]
+    assert var_tracker.get_mutable_variables(2, var_type_uint256) == ["self.g_bar_uint256",
+                                                                      "self.g_bar_uint256_da[0]", 
+                                                                      "self.g_bar_uint256_da[1]"]
+
+    assert var_tracker.get_global_vars(var_type_bytes10) == ["self.g_bar_bytes10"]
+    assert var_tracker.get_mutable_variables(2, var_type_bytes10) == ["self.g_bar_bytes10"]
+
+    assert var_tracker.get_global_vars(var_type_uint256_da) == ["self.g_bar_uint256_da"]
+    assert var_tracker.get_mutable_variables(2, var_type_uint256_da) == ["self.g_bar_uint256_da"]

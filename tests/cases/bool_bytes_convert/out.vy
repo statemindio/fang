@@ -6,7 +6,7 @@ def func_0(x_BYTES_0: Bytes[32]):
 
 @external
 @pure
-def func_1(x_BYTES_1: Bytes[31]):
+def func_1(x_BYTES_1: Bytes[33]):
     x_BOOL_1: bool = convert(b"0", bool)
 
 

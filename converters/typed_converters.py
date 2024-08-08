@@ -934,7 +934,8 @@ class TypedConverter:
             # 32 is max size for int conversions; var must take all sizes below anyway
             # currently takes only exact sizes
             if isinstance(current_type, Bytes):
-                input_type = Bytes(current_type.m)  # BytesM and Bytes
+                size = min(current_type.m, 32)
+                input_type = Bytes(size)  # BytesM and Bytes
             else:
                 input_type = Bytes(32)
             return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
