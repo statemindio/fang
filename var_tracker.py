@@ -23,8 +23,9 @@ class VarTracker:
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
         }
-        # should extend to bytes and strings
-        # scope -> base_type -> level -> size
+        # DynArrays, Bytes and Strings are stored separately due to
+        # var1: Bytes[b] = ...
+        # var2: Bytes[a] = var1, where a > b
         self._dyns = {
             self.FUNCTION_KEY: {},
             self.READONLY_KEY: {}
@@ -35,13 +36,6 @@ class VarTracker:
         }
 
     def _register_dyn_array(self, name, level, var_type: DynArray, mutable: bool):
-        """
-        Sets a new variable to the passed `level`
-        :param name: name of the new variable
-        :param level:
-        :param var_type:
-        :param mutable:
-        """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
 
         index_type = var_type.base_type
@@ -77,11 +71,6 @@ class VarTracker:
         _dict[key][index_type][level][var_size].append(name)
 
     def _remove_dyns_level(self, level: int, key):
-        """
-        Removes the specified level's variables
-        :param level:
-        :param mutable:
-        """
         for _dict in (self._dyns, self._bytes):
             for vyper_type in _dict[key]:
                 if level not in _dict[key][vyper_type]:
@@ -89,13 +78,6 @@ class VarTracker:
                 _dict[key][vyper_type][level] = {}
 
     def _get_dyn_arrays(self, level: int, var_type: DynArray, mutable: bool, assignee=False):
-        """
-
-        :param level:
-        :param var_type:
-        :return: list of allowed variables. It's a united of the global variables and function variables
-        allowed on the given level
-        """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
         types = [var_type.base_type]
         # get all DynArrays to append() or pop()
@@ -127,6 +109,11 @@ class VarTracker:
 
     # get DynArray by name for append statement
     def get_dyn_array_base_type(self, name, mutable: bool):
+        """
+        Finds a DynArray with provided `name`
+        :param name: name of the new variable
+        :param mutable:
+        """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
 
         for t in self._dyns[key]:
@@ -204,6 +191,13 @@ class VarTracker:
             level: int = 0,
             mutability: VarDecl.Mutability = VarDecl.Mutability.REGULAR
     ) -> str:
+        """
+        Creates and registers a variable
+        :param var_type:
+        :param level:
+        :param mutable:
+        :return: the name of a created variable
+        """
         prefixes = {
             0: "x",
             1: "C",
@@ -231,10 +225,6 @@ class VarTracker:
     def _register_list_items(self, name, level, var_type: FixedList, key):
         """
         Saves list data of a new variable to the passed `level`
-        :param name: name of the new variable
-        :param level:
-        :param var_type:
-        :param mutable:
         """
         base_type = var_type.base_type
 
@@ -247,10 +237,6 @@ class VarTracker:
     def _get_list_items(self, level: int, var_type: BaseType, mutable: bool):
         """
         Returns list elements according to saved data upto `level`
-        :param name: name of the new variable
-        :param level:
-        :param var_type:
-        :param mutable:
         """
         key = self.FUNCTION_KEY if mutable else self.READONLY_KEY
         allowed_lists = []
@@ -267,11 +253,6 @@ class VarTracker:
         return allowed_vars
 
     def _remove_list_items(self, level: int, key):
-        """
-        Removes the specified level's list data
-        :param level:
-        :param mutable:
-        """
         for vyper_type in self._lists[key]:
             if level not in self._lists[key][vyper_type]:
                 continue
@@ -294,6 +275,9 @@ class VarTracker:
         self._remove_list_items(level, key)
 
     def reset_function_variables(self):
+        """
+        Removes all variables with level > 0
+        """
         for key in (self.READONLY_KEY, self.FUNCTION_KEY):
             for _vars in (self._vars, self._lists):
                 for vyper_type, level_vars in _vars[key].items():
@@ -321,17 +305,17 @@ class VarTracker:
 
     def get_mutable_variables(self, level: int, var_type: BaseType, **kwargs):
         """
-
+        Returns mutable variables upto `level`
         :param level:
         :param var_type:
-        :return: list of allowed variables. It's a united of the global variables and function variables
+        :return: list of allowed variables, including global
         allowed on the given level
         """
         return self._get_vars(var_type, level, True, **kwargs)
 
     def get_global_vars(self, var_type: BaseType, **kwargs):
         """
-
+        Returns global variables (level = 0, mutable = True)
         :param var_type:
         :return: list of allowed global variables
         """
