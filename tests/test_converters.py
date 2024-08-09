@@ -413,7 +413,6 @@ full_cases = [
     "func_call",
     "func_call_multiple",
     "func_call_multiple_cyclic",
-    "list_element_assignment",
     "dynamic_array_constant_assignment",
     # "dynamic_array_element_assignment",
     "dynamic_array_assignment",

@@ -228,9 +228,7 @@ class TypedConverter:
                 return None
             return variable
 
-        allowed_vars = self._var_tracker.get_global_vars(
-            current_type
-        ) if level is None else self._var_tracker.get_all_allowed_vars(level, current_type)
+        allowed_vars = self._var_tracker.get_mutable_variables(level, current_type)
 
         if not assignment and level is not None:
             read_only_vars = self._var_tracker.get_readonly_variables(level, current_type)
@@ -277,35 +275,26 @@ class TypedConverter:
     def __var_decl_global(self, variable):
         current_type = self.visit_type(variable)
         self.type_stack.append(current_type)
-        idx = self._var_tracker.next_id(current_type)
-
-        prefixes = {
-            0: "x",
-            1: "C",
-            2: "IM"
-        }
-
-        var_name = f"{prefixes[variable.mut]}_{current_type.name}_{str(idx)}"
-        result = var_name + ": "
+        result = ": "
 
         # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == VarDecl.Mutability.REGULAR:
             result += current_type.vyper_type
-            self._var_tracker.register_global_variable(var_name, current_type)
+            var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
         else:
             if variable.mut == VarDecl.Mutability.CONSTANT:
                 self._is_constant = True
             value = self.visit_typed_expression(variable.expr, current_type)
             self._is_constant = False
 
-            self._var_tracker.register_function_variable(var_name, 0, current_type, False)
-
+            var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
             if variable.mut == VarDecl.Mutability.CONSTANT:
                 result += f"constant({current_type.vyper_type})"
                 result = f"{result} = {value}"
             else:
                 result += f"immutable({current_type.vyper_type})"
                 self._immutable_exp.append((var_name, value))
+        result = f"{var_name}{result}"
 
         self.type_stack.pop()
         return result
@@ -357,7 +346,6 @@ class TypedConverter:
         self._var_tracker.remove_function_level(self._block_level_count, True)
         self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         reentrancy = ""
         if function.HasField("ret") and self._mutability_level > PURE:
@@ -384,7 +372,6 @@ class TypedConverter:
         self._var_tracker.remove_function_level(self._block_level_count, True)
         self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         mutability = "@payable\n" if init.mut else ""
 
@@ -404,7 +391,6 @@ class TypedConverter:
         self._var_tracker.remove_function_level(self._block_level_count, True)
         self._var_tracker.remove_function_level(self._block_level_count, False)
         self._block_level_count = 0
-        self._var_tracker.remove_function_level(self._block_level_count, True)
 
         output_str = ", ".join(o_type.vyper_type for o_type in self._function_output)
         if len(self._function_output) > 1:
@@ -598,12 +584,6 @@ class TypedConverter:
 
         return f"{self.code_offset}raw_log({topics}, {data})"
 
-    def __create_variable(self, var_type):
-        idx = self._var_tracker.next_id(var_type)
-        name = f"x_{var_type.name}_{idx}"
-        self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
-        return name
-
     def _visit_func_call(self, func_call):
 
         func_num = func_call.func_num % len(self._func_tracker)
@@ -615,7 +595,7 @@ class TypedConverter:
         output_vars = []
         result = ""
         for t in func_obj.output_parameters:
-            allowed_vars = self._var_tracker.get_all_allowed_vars(self._block_level_count, t, assignee=True)
+            allowed_vars = self._var_tracker.get_mutable_variables(self._block_level_count, t, assignee=True)
             variable = None
             if len(allowed_vars) > 0:
                 variable = random.choice(allowed_vars)
@@ -624,7 +604,7 @@ class TypedConverter:
                 if variable in global_vars and self._mutability_level < NON_PAYABLE:
                     self._mutability_level = NON_PAYABLE
             else:
-                variable = self.__create_variable(t)
+                variable = self._var_tracker.create_and_register_variable(t, self._block_level_count)
                 result = f"{result}{self.code_offset}{variable}: {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
         result += f"{self.code_offset}"
@@ -949,7 +929,8 @@ class TypedConverter:
             # 32 is max size for int conversions; var must take all sizes below anyway
             # currently takes only exact sizes
             if isinstance(current_type, Bytes):
-                input_type = Bytes(current_type.m)  # BytesM and Bytes
+                size = min(current_type.m, 32)
+                input_type = Bytes(size)  # BytesM and Bytes
             else:
                 input_type = Bytes(32)
             return self.__visit_conversion(expr.convert_bytes, current_type, input_type)
@@ -1131,8 +1112,7 @@ class TypedConverter:
 
         if variable_name is None:
             return
-
-        variable_type = self._var_tracker.get_dyn_array_base_type(variable_name, self._block_level_count, True)
+        variable_type = self._var_tracker.get_dyn_array_base_type(variable_name, True)
         self.type_stack.append(variable_type)
         expression_result = self.visit_typed_expression(stmt.expr, variable_type)
         self.type_stack.pop()
@@ -1225,7 +1205,7 @@ class TypedConverter:
             self.type_stack.pop()
 
             if response is None:
-                response = self.__create_variable(req_type)
+                response = self._var_tracker.create_and_register_variable(req_type, self._block_level_count)
                 bytes_decl += f"{self.code_offset}{response}: {req_type.vyper_type}"
         elif expr_size != 0:
             result += f", max_outsize={expr_size}"
@@ -1256,7 +1236,7 @@ class TypedConverter:
             result += ", revert_on_failure=False"
             status = self._visit_var_ref(None, self._block_level_count, True)
             if status is None:
-                status = self.__create_variable(req_type)
+                status = self._var_tracker.create_and_register_variable(req_type, self._block_level_count)
                 bool_decl += f"{self.code_offset}{status}: {req_type.vyper_type}"
         elif expr_bool:
             result += ", revert_on_failure=False"
