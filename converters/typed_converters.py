@@ -580,6 +580,9 @@ class TypedConverter:
         return self._visit_assignment(statement.assignment)
 
     def _visit_raw_log(self, raw_log):
+        if self._mutability_level < NON_PAYABLE:
+            self._mutability_level = NON_PAYABLE
+
         MAX_RAW_LOG_TOPICS = 4
         topic_amount = (raw_log.topic_amount - 1) % MAX_RAW_LOG_TOPICS + 1
 
