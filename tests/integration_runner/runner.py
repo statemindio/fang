@@ -52,7 +52,7 @@ def callback(ch, method, properties, body):
     queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                 {"$set": {f"compiled_{compiler_key}": True}})
     run_results_collection.update_one({"generation_id": data["_id"]},
-                                      {"$set": {f"result_{compiler_key}": result}})
+                                      {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
 
 # Init values might affect state, so for every init_values bundle
 # We run function payloads separately
