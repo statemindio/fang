@@ -583,12 +583,6 @@ class TypedConverter:
 
         return f"{self.code_offset}raw_log({topics}, {data})"
 
-    def __create_variable(self, var_type):
-        idx = self._var_tracker.next_id(var_type)
-        name = f"x_{var_type.name}_{idx}"
-        self._var_tracker.register_function_variable(name, self._block_level_count, var_type, True)
-        return name
-
     def _visit_func_call(self, func_call):
 
         func_num = func_call.func_num % len(self._func_tracker)
@@ -609,7 +603,7 @@ class TypedConverter:
                 if variable in global_vars and self._mutability_level < NON_PAYABLE:
                     self._mutability_level = NON_PAYABLE
             else:
-                variable = self.__create_variable(t)
+                variable = self._var_tracker.create_and_register_variable(t, self._block_level_count)
                 result = f"{result}{self.code_offset}{variable}: {t.vyper_type} = empty({t.vyper_type})\n"
             output_vars.append(variable)
         result += f"{self.code_offset}"
@@ -1210,7 +1204,7 @@ class TypedConverter:
             self.type_stack.pop()
 
             if response is None:
-                response = self.__create_variable(req_type)
+                response = self._var_tracker.create_and_register_variable(req_type, self._block_level_count)
                 bytes_decl += f"{self.code_offset}{response}: {req_type.vyper_type}"
         elif expr_size != 0:
             result += f", max_outsize={expr_size}"
@@ -1241,7 +1235,7 @@ class TypedConverter:
             result += ", revert_on_failure=False"
             status = self._visit_var_ref(None, self._block_level_count, True)
             if status is None:
-                status = self.__create_variable(req_type)
+                status = self._var_tracker.create_and_register_variable(req_type, self._block_level_count)
                 bool_decl += f"{self.code_offset}{status}: {req_type.vyper_type}"
         elif expr_bool:
             result += ", revert_on_failure=False"
