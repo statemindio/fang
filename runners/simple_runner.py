@@ -1,8 +1,6 @@
-import contextlib
 import json
-import pickle
-import time
 import logging
+import time
 from collections import defaultdict
 
 import boa
@@ -54,11 +52,16 @@ def compose_result(_contract, comp, ret) -> dict:
 
     consumed_gas = comp.get_gas_used()
 
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret))
+    return dict(
+        state=state,
+        memory=memory,
+        consumed_gas=consumed_gas,
+        return_value=str(ret)  # FIXME: come up with a better way to serialize some values(e.g. Decimal and large int's)
+    )
 
 
 def save_results(res):
-    to_save = [{"generation_id": gid, "results": _results} for gid, _results in res.items()]
+    to_save = [{"generation_id": gid, "results": _results, "is_handled": False} for gid, _results in res.items()]
     if len(to_save) == 0:
         logger.debug("No results to save...")
         return
@@ -159,14 +162,18 @@ if __name__ == "__main__":
     reference_amount = len(collections)
 
     while True:
-        interim_results = defaultdict(list)
+        interim_results = defaultdict(dict)
         for provider in contracts_providers:
             contracts = provider.get_contracts()
             logger.info("Amount of contracts: %s", len(contracts))
             for contract_desc in contracts:
                 logger.info("Handling compilation: %s", contract_desc["_id"])
                 r = handle_compilation(contract_desc)
-                interim_results[contract_desc["generation_id"]].append({provider.name: r})
+                if r is None:
+                    # TODO: save error of handling to db
+                    logger.error("handling error: %s", contract_desc["generation_id"])
+                    continue
+                interim_results[contract_desc["generation_id"]][provider.name] = r
             logger.debug("Interim results: %s", interim_results)
         results = dict((_id, res) for _id, res in interim_results.items() if len(res) == reference_amount)
         logger.debug("Results: %s", results)

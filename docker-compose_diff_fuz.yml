@@ -66,6 +66,19 @@ services:
       - queue_opt_codesize
     volumes:
       - ./config.yml:/app/config.yml
+  verifier:
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.3-dev
+    environment:
+      PYTHONPATH: /app
+    depends_on:
+      - mongodb
+    command:
+      - python3.10
+      - verifiers/simple_verifier.py
+    networks:
+      - db
+    volumes:
+      - ./config.yml:/app/config.yml
 
   mongodb:
     image: mongo
