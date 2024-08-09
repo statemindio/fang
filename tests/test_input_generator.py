@@ -93,7 +93,7 @@ def test_handle_compilation():
     compilation_result = handle_compilation(compilation_obj)
     assert compilation_result == [
         {'state': ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0'], 'memory': '', 'consumed_gas': 48,
-         'return_value': 'null'}]
+         'return_value': 'None'}]
 
 
 json_data = [
