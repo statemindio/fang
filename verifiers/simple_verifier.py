@@ -69,22 +69,23 @@ def verify_results(_conf: Config, data):
     results = []
     for func_name, deployments in data.items():
         for i, depl in enumerate(deployments):
-            for compilers_res in depl:
-                for j, _res in compilers_res:
+            for k, compilers_res in enumerate(depl):
+                for j, _res in enumerate(compilers_res):
                     if j == len(compilers_res) - 1:
                         break
-                    d = verify_two_results(_res, _res[j + 1])
+                    d = verify_two_results(_res, compilers_res[j + 1])
                     results.append({
                         "compilers": (compilers[j], compilers[j + 1]),
                         "function": func_name,
                         "deployment": i,
+                        "params_set": k,
                         "results": d
                     })
     return results
 
 
 def target_fields(_conf: Config) -> list:
-    return [f"result_{c['name']}" for c in _conf.compilers]
+    return [f"result_0_3_10_{c['name']}" for c in _conf.compilers]
 
 
 def ready_to_handle(_conf: Config, _res) -> bool:
@@ -97,10 +98,10 @@ def reshape_data(_conf, _res):
     result = {}
 
     for i, compiler in enumerate(compilers):
-        compiler_data = compilers[compiler]
+        compiler_data = _res[compiler]
         for j, depl in enumerate(compiler_data):
             for func_name, results in depl.items():
-                if func_name not in results:
+                if func_name not in result:
                     result[func_name] = []
                 if j > len(result[func_name]) - 1:
                     result[func_name].append([])
