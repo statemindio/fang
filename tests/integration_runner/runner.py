@@ -21,10 +21,10 @@ compiler_params = conf.get_compiler_params_by_name(compiler_name)
 
 compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
 
-# TODO: get level from config
+logger_level = getattr(logging, conf.verbosity)
 logger = logging.getLogger(f"runner_{compiler_key}")
 logging.basicConfig(
-    format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.DEBUG)
+    format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
 logger.info("Starting %s runner", compiler_key)
 
 queue_name = 'queue3.10'
@@ -39,9 +39,7 @@ db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
 run_results_collection = db_["run_results"]
 
-# TODO: get from config
-inputs_per_function = 2
-
+inputs_per_function = len(conf.input_strategies)
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
@@ -92,8 +90,9 @@ def handle_compilation(_contract_desc):
 
         fn = "__default__"
         if fn in dir(contract):
-            function_call_res = execution_result(contract, fn, [])
-            _r[fn] = [function_call_res]
+            function_call_res = [execution_result(contract, fn, [])
+                                 for i in range(inputs_per_function)]
+            _r[fn] = function_call_res
         results.append(_r)
     return results
 

@@ -141,9 +141,9 @@ def handle_compilation(_contract_desc):
 if __name__ == "__main__":
     conf = Config()
 
-    # TODO: get level from config
+    logger_level = getattr(logging, conf.verbosity)
     logger = logging.getLogger("runner")
-    logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
 
     db_contracts = get_mongo_client(conf.db["host"], conf.db["port"])
 

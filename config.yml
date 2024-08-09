@@ -14,3 +14,6 @@ compilers:
 db:
   host: mongodb
   port: 27017
+input_strategies: [1, 2]
+# for logging level reference https://docs.python.org/3/library/logging.html#logging-levels
+verbosity: DEBUG

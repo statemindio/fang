@@ -20,9 +20,10 @@ with atheris.instrument_imports():
 __version__ = "0.1.3"  # same version as images' one
 
 conf = Config()
-# TODO: get level from config
+# might throw an error if verbosity is not a correct logging level
+logger_level = getattr(logging, conf.verbosity)
 logger = logging.getLogger("generator")
-logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
 logger.info("Starting version %s", __version__)
 
 db_client = get_mongo_client(conf.db["host"], conf.db["port"])
@@ -36,10 +37,7 @@ qm = MultiQueueManager(queue_managers=[
     )
     for q_params in conf.compiler_queues])
 
-input_strategy = InputStrategy.DEFAULT
-input_generator = InputGenerator(input_strategy)
-# TODO: get from config
-inputs_per_function = 2
+input_generator = InputGenerator()
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -81,8 +79,9 @@ def TestOneProtoInput(msg):
 
     input_values = dict()
     for name, types in proto.function_inputs.items():
-        for i in range(inputs_per_function):
-            # Can also change generator strategy depending on `i`
+        for i in conf.input_strategies:
+            input_generator.change_strategy(InputStrategy(i))
+
             if input_values.get(name, None) is None:
                 input_values[name] = []
             input_values[name].append(input_generator.generate(types))

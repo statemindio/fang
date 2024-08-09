@@ -22,9 +22,9 @@ if compiler_params is None:
 
 compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
 
-# TODO: get level from config
+logger_level = getattr(logging, conf.verbosity)
 logger = logging.getLogger(f"compiler_{compiler_key}")
-logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
 
 queue_name = 'queue3.10'
 qm = QueueManager(compiler_params["queue"]["host"], int(compiler_params["queue"]["port"]), queue_name, logger)
