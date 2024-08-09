@@ -60,7 +60,6 @@ def verify_two_results(_res0, _res1):
             d[name] = None
         except VerifierException as e:
             d[name] = str(e)
-            continue
     return d
 
 
