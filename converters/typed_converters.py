@@ -7,7 +7,8 @@ from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedLis
 from types_d.base import BaseType
 from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
-from .function_converter import FunctionConverter, ParametersConverter
+from .function_converter import FunctionConverter
+from .parameters_converter import ParametersConverter
 from .utils import extract_type, _has_field
 from vyperProtoNew_pb2 import VarDecl
 from proto_helpers import ConvertFromTypeMessageHelper
