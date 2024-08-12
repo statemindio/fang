@@ -101,12 +101,7 @@ class FunctionConverter:
         return order
 
     def setup_order(self, functions):
-        self._func_amount = len(functions) if len(functions) <= MAX_FUNCTIONS else MAX_FUNCTIONS
-        for i, function in zip(range(self._func_amount), functions):
-            function_name = self._generate_function_name()
-            _, input_types, _ = self._params_converter.visit_input_parameters(function.input_params)
-            output_types = self._params_converter.visit_output_parameters(function.output_params)
-            self._func_tracker.register_function(function_name, function.mut, function.vis, input_types, output_types)
+        self._func_amount = len(self._func_tracker)
 
         for i, function in zip(range(self._func_amount), functions):
             for statement in function.block.statements:

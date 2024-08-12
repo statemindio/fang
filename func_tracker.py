@@ -79,6 +79,17 @@ class FuncTracker:
     def __len__(self):
         return len(self._functions)
 
+    def _generate_function_name(self):
+        _id = self.next_id
+        return f"func_{_id}"
+
+    def register_functions(self, functions, max_functions):
+        for func in functions:
+            if len(self._functions) >= max_functions:
+                break
+            name = self._generate_function_name()
+            self.register_function(name, func.mut, func.vis, [], [])
+
     def register_function(
             self,
             name,

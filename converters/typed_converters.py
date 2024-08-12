@@ -1,7 +1,7 @@
 import random
 from collections import defaultdict
 
-from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
+from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE, MAX_FUNCTIONS
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
@@ -145,21 +145,25 @@ class TypedConverter:
             self.result += self.visit_init(self.contract.init)
             self.result += "\n"
 
+        self._func_tracker.register_functions(self.contract.functions, MAX_FUNCTIONS)
+
         input_names = []
 
         func_order = self._func_converter.setup_order(self.contract.functions)
         self._function_call_map = self._func_converter.call_tree
 
-        self._var_tracker.reset_function_variables()
+        #self._var_tracker.reset_function_variables()
         for func_id in func_order:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
             _, types, names = self._visit_input_parameters(func.input_params)
+            func_obj.input_parameters = types
+            func_obj.output_parameters = self._visit_output_parameters(func.output_params)
             self.function_inputs[func_obj._name] = types
             input_names.append(names)
             self.visit_func(func_obj, func)
 
-        self._var_tracker.reset_function_variables()
+        #self._var_tracker.reset_function_variables()
 
         for func_obj in self._func_tracker:
             names = input_names[func_order.index(func_obj.id)]
