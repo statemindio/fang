@@ -28,8 +28,9 @@ logging.basicConfig(
 logger.info("Starting %s runner", compiler_key)
 
 queue_name = 'queue3.10'
-qm = QueueManager(compiler_params["queue"]["host"], int(
-    compiler_params["queue"]["port"]), queue_name, logger)
+queue_params = conf.compiler_queues[compiler_params["queue"]]
+qm = QueueManager(queue_params["host"], int(
+    queue_params["port"]), queue_name, logger)
 compiler_settings = Settings(optimize=OptimizationLevel.from_string(
     compiler_params["exec_params"]["optimization"]))
 
