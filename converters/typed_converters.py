@@ -116,7 +116,7 @@ class TypedConverter:
         self.result = ""
         self.function_inputs = {}
         self._var_tracker = VarTracker()
-        self._func_tracker = FuncTracker()
+        self._func_tracker = FuncTracker(MAX_FUNCTIONS)
         self._block_level_count = 0
         self._mutability_level = 0
         self._function_output = []

@@ -2,11 +2,12 @@ import pytest
 
 from func_tracker import FuncTracker
 from vyperProtoNew_pb2 import Func
-
+# should take from config or create separate for tests?
+from config import MAX_FUNCTIONS
 
 @pytest.fixture
 def func_tracker():
-    return FuncTracker()
+    return FuncTracker(MAX_FUNCTIONS)
 
 
 def test_func_tracker_register(func_tracker):
@@ -15,7 +16,7 @@ def test_func_tracker_register(func_tracker):
     visibility = Func.Visibility.EXTERNAL
     input_parameters = []
     output_parameters = []
-    func_tracker.register_function(name, mutability, visibility, input_parameters, output_parameters)
+    func_tracker._register_function(name, mutability, visibility, input_parameters, output_parameters)
 
     expected_name = f"self.{name}"
 

@@ -66,9 +66,10 @@ class Function:
 
 
 class FuncTracker:
-    def __init__(self):
+    def __init__(self, max_functions):
         self._id = -1
         self._functions = []
+        self._max_functions = max_functions
 
     def __getitem__(self, item):
         return self._functions[item]
@@ -85,10 +86,12 @@ class FuncTracker:
 
     def register_functions(self, functions):
         for func in functions:
+            if len(self._functions) >= self._max_functions:
+                break
             name = self._generate_function_name()
-            self.register_function(name, func.mut, func.vis, [], [])
+            self._register_function(name, func.mut, func.vis, [], [])
 
-    def register_function(
+    def _register_function(
             self,
             name,
             mutability,
