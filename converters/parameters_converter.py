@@ -1,5 +1,5 @@
 from .utils import extract_type
-from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
+from config import MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 from vyperProtoNew_pb2 import VarDecl
 
 

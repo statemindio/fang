@@ -146,7 +146,7 @@ class TypedConverter:
             self.result += self.visit_init(self.contract.init)
             self.result += "\n"
 
-        self._func_tracker.register_functions(self.contract.functions, MAX_FUNCTIONS)
+        self._func_tracker.register_functions(self.contract.functions[:MAX_FUNCTIONS])
 
         input_names = []
 
