@@ -13,7 +13,6 @@ from db import get_mongo_client
 from json_encoders import ExtendedEncoder, ExtendedDecoder
 from queue_managers import QueueManager
 
-
 compiler_name = os.environ.get("SERVICE_NAME")
 
 conf = Config("./config.yml")
@@ -27,13 +26,8 @@ logging.basicConfig(
     format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
 logger.info("Starting %s runner", compiler_key)
 
-queue_name = 'queue3.10'
-qm = QueueManager(compiler_params["queue"]["host"], int(
-    compiler_params["queue"]["port"]), queue_name, logger)
 compiler_settings = Settings(optimize=OptimizationLevel.from_string(
     compiler_params["exec_params"]["optimization"]))
-
-channel = qm.channel
 
 db_ = get_mongo_client(conf.db["host"], conf.db["port"])
 queue_collection = db_["compilation_log"]
@@ -41,18 +35,9 @@ run_results_collection = db_["run_results"]
 
 inputs_per_function = len(conf.input_strategies)
 
-def callback(ch, method, properties, body):
-    data = json.loads(body)
+run_with_queue = conf.use_queue
 
-    logger.debug("Compiling contract id: %s", data["_id"])
-
-    result = handle_compilation(data)
-    logger.debug("Compilation and execution result: %s", result)
-
-    queue_collection.update_one({"_id": ObjectId(data["_id"])},
-                                {"$set": {f"compiled_{compiler_key}": True}})
-    run_results_collection.update_one({"generation_id": data["_id"]},
-                                      {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
+logger.info("Using queue %s", run_with_queue)
 
 # Init values might affect state, so for every init_values bundle
 # We run function payloads separately
@@ -127,10 +112,45 @@ def compose_result(_contract, comp, ret) -> dict:
     return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
 
 
-while True:
+def callback(ch, method, properties, body):
+    data = json.loads(body)
+    execute_and_save(data)
+
+
+def execute_and_save(data):
+    logger.debug("Compiling contract id: %s", data["_id"])
+
+    result = handle_compilation(data)
+    logger.debug("Compilation and execution result: %s", result)
+
+    queue_collection.update_one({"_id": ObjectId(data["_id"])},
+                                {"$set": {f"compiled_{compiler_key}": True}})
+    run_results_collection.update_one({"generation_id": data["_id"]},
+                                      {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
+
+
+def run_queue_data():
     try:
         channel.basic_consume(
             queue_name, on_message_callback=callback, auto_ack=True)
         channel.start_consuming()
     except (pika.exceptions.StreamLostError, pika.exceptions.ChannelWrongStateError):
         pass
+
+
+def run_db_data():
+    runner_targets = queue_collection.find({f"compiled_{compiler_key}" : False})
+
+    for data in runner_targets:
+        execute_and_save(data)
+
+if run_with_queue:
+    queue_name = 'queue3.10'
+    qm = QueueManager(compiler_params["queue"]["host"], int(
+        compiler_params["queue"]["port"]), queue_name, logger)
+    channel = qm.channel
+
+run = run_queue_data if run_with_queue else run_db_data
+
+while True:
+    run()
