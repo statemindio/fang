@@ -41,7 +41,6 @@ class IntLiteralGen:
         return low_limit, upper_limit
 
     def generate(self, n, signed, value):
-        # FIXME: the current implementation doesn't consider a concrete kind of int
         low, up = self._get_value_boundaries(n, signed)
         value = value % (up - low + 1) + low
         return str(value)
