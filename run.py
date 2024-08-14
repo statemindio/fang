@@ -44,6 +44,7 @@ if run_with_queue:
 
 input_generator = InputGenerator()
 
+
 @atheris.instrument_func
 def TestOneProtoInput(msg):
     data = {
@@ -95,6 +96,9 @@ def TestOneProtoInput(msg):
     logger.debug("Generated inputs: %s", input_values)
 
     data["function_input_values"] = input_values
+    compiler_version = f"{vyper.__version__.replace('.', '_')}"
+    for c in conf.compilers:
+        data[f"compiled_{compiler_version}_{c['name']}"] = False
     ins_res = c_log.insert_one(data)
 
     if run_with_queue:
@@ -106,12 +110,10 @@ def TestOneProtoInput(msg):
             "generator_version": __version__,
         }
         qm.publish(**message)
-    else:
-        compiler_version = f"{vyper.__version__.replace('.', '_')}"
-        for c in conf.compilers:
-            data[f"compiled_{compiler_version}_{c['name']}"] = False
+    # else:
     # Creating the result entry, so there's no race condition in runners
     db_client["run_results"].insert_one({'generation_id': str(ins_res.inserted_id)})
+
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(

@@ -125,8 +125,9 @@ def execute_and_save(data):
 
     queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                 {"$set": {f"compiled_{compiler_key}": True}})
-    run_results_collection.update_one({"generation_id": data["_id"]},
-                                      {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
+    updated = run_results_collection.update_one({"generation_id": str(data["_id"])},
+                                                {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
+    logger.debug("Updated result: %s", updated)
 
 
 def run_queue_data():
