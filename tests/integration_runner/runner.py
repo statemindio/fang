@@ -39,6 +39,7 @@ run_with_queue = conf.use_queue
 
 logger.info("Using queue %s", run_with_queue)
 
+
 # Init values might affect state, so for every init_values bundle
 # We run function payloads separately
 # Though same applies for regular functions too
@@ -70,8 +71,8 @@ def handle_compilation(_contract_desc):
         for fn in internals:
             function_call_res = []
             _r[fn] = [execution_result(
-                      contract, fn, input_values[fn][i], internal=True)
-                      for i in range(inputs_per_function)]
+                contract, fn, input_values[fn][i], internal=True)
+                for i in range(inputs_per_function)]
 
         fn = "__default__"
         if fn in dir(contract):
@@ -97,6 +98,7 @@ def execution_result(_contract, fn, _input_values, internal=False):
         _function_call_res = dict(runtime_error=res)
     return _function_call_res
 
+
 # TODO: Perhaps we can save immutables info
 def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
@@ -109,7 +111,8 @@ def compose_result(_contract, comp, ret) -> dict:
     consumed_gas = comp.get_gas_used()
     # The order of function calls is the same for all runners
     # Adding the name just to know what result is checked
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
+    return dict(state=state, memory=memory, consumed_gas=consumed_gas,
+                return_value=json.dumps(ret, cls=ExtendedEncoder))
 
 
 def callback(ch, method, properties, body):
@@ -140,10 +143,11 @@ def run_queue_data():
 
 
 def run_db_data():
-    runner_targets = queue_collection.find({f"compiled_{compiler_key}" : False})
+    runner_targets = queue_collection.find({f"compiled_{compiler_key}": False})
 
     for data in runner_targets:
         execute_and_save(data)
+
 
 if run_with_queue:
     queue_name = 'queue3.10'
