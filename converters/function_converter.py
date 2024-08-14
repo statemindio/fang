@@ -1,54 +1,14 @@
 import copy
 from collections import defaultdict
 
-from config import MAX_FUNCTIONS, MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
-from vyperProtoNew_pb2 import Func, VarDecl
-from .utils import extract_type
-
-
-class ParametersConverter:
-    def __init__(self, var_tracker):
-        self._var_tracker = var_tracker
-        self._types_provider = extract_type
-
-    def visit_input_parameters(self, input_params):
-        result = ""
-        input_types = []
-        names = []
-        for i, input_param in enumerate(input_params):
-            param_type = self._types_provider(input_param)
-            input_types.append(param_type)
-
-            name = self._var_tracker.create_and_register_variable(param_type, 1, VarDecl.Mutability.IMMUTABLE)
-            names.append(name)
-
-            if i > 0:
-                result = f"{result}, "
-            result = f"{result}{name}: {param_type.vyper_type}"
-
-            if i + 1 == MAX_FUNCTION_INPUT:
-                break
-
-        return result, input_types, names
-
-    def visit_output_parameters(self, output_params):
-        output_types = []
-        for i, output_param in enumerate(output_params):
-            param_type = self._types_provider(output_param)
-            output_types.append(param_type)
-
-            if i + 1 == MAX_FUNCTION_OUTPUT:
-                break
-        return output_types
-
+from vyperProtoNew_pb2 import Func
 
 class FunctionConverter:
-    def __init__(self, func_tracker, params_converter):
+    def __init__(self, func_tracker):
         self._call_tree = defaultdict(list)
         self._sanitized_tree = defaultdict(list)
         self._func_amount = 0
         self._func_tracker = func_tracker
-        self._params_converter = params_converter
 
     @property
     def call_tree(self):
@@ -101,12 +61,7 @@ class FunctionConverter:
         return order
 
     def setup_order(self, functions):
-        self._func_amount = len(functions) if len(functions) <= MAX_FUNCTIONS else MAX_FUNCTIONS
-        for i, function in zip(range(self._func_amount), functions):
-            function_name = self._generate_function_name()
-            _, input_types, _ = self._params_converter.visit_input_parameters(function.input_params)
-            output_types = self._params_converter.visit_output_parameters(function.output_params)
-            self._func_tracker.register_function(function_name, function.mut, function.vis, input_types, output_types)
+        self._func_amount = len(self._func_tracker)
 
         for i, function in zip(range(self._func_amount), functions):
             for statement in function.block.statements:
