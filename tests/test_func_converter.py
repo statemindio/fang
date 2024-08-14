@@ -14,7 +14,8 @@ def test__find_func():
         json_message = inp_json.read()
     mes = Parse(json_message, Contract())
     typed_converter = TypedConverter(mes)
-    func_conv = FunctionConverter(typed_converter._func_tracker, typed_converter._params_converter)
+    func_conv = FunctionConverter(typed_converter._func_tracker)
+    typed_converter._func_tracker.register_functions(mes.functions)
     order = func_conv.setup_order(mes.functions)
 
     assert func_conv._call_tree == {0: [1], 1: [], 2: [1]}

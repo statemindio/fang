@@ -1,13 +1,14 @@
 import random
 from collections import defaultdict
 
-from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE
+from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE, MAX_FUNCTIONS
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
 from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
-from .function_converter import FunctionConverter, ParametersConverter
+from .function_converter import FunctionConverter
+from .parameters_converter import ParametersConverter
 from .utils import extract_type, _has_field
 from vyperProtoNew_pb2 import VarDecl
 from proto_helpers import ConvertFromTypeMessageHelper
@@ -115,7 +116,7 @@ class TypedConverter:
         self.result = ""
         self.function_inputs = {}
         self._var_tracker = VarTracker()
-        self._func_tracker = FuncTracker()
+        self._func_tracker = FuncTracker(MAX_FUNCTIONS)
         self._block_level_count = 0
         self._mutability_level = 0
         self._function_output = []
@@ -124,7 +125,7 @@ class TypedConverter:
         self._function_call_map = defaultdict(list)
         self._current_func = None
         self._params_converter = ParametersConverter(self._var_tracker)
-        self._func_converter = FunctionConverter(self._func_tracker, self._params_converter)
+        self._func_converter = FunctionConverter(self._func_tracker)
         self._is_constant = False
 
     def visit(self):
@@ -144,24 +145,28 @@ class TypedConverter:
             self.result += self.visit_init(self.contract.init)
             self.result += "\n"
 
+        self._func_tracker.register_functions(self.contract.functions)
+
         input_names = []
 
         func_order = self._func_converter.setup_order(self.contract.functions)
         self._function_call_map = self._func_converter.call_tree
 
-        self._var_tracker.reset_function_variables()
+        #self._var_tracker.reset_function_variables()
         for func_id in func_order:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
 
             _, types, names = self._visit_input_parameters(func.input_params)
+            func_obj.input_parameters = types
+            func_obj.output_parameters = self._visit_output_parameters(func.output_params)
             self._function_output = self._visit_output_parameters(func.output_params)
 
             self.function_inputs[func_obj._name] = types
             input_names.append(names)
             self.visit_func(func_obj, func)
 
-        self._var_tracker.reset_function_variables()
+        #self._var_tracker.reset_function_variables()
 
         for func_obj in self._func_tracker:
             names = input_names[func_order.index(func_obj.id)]
