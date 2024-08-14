@@ -125,7 +125,7 @@ class TypedConverter:
         self._function_call_map = defaultdict(list)
         self._current_func = None
         self._params_converter = ParametersConverter(self._var_tracker)
-        self._func_converter = FunctionConverter(self._func_tracker, self._params_converter)
+        self._func_converter = FunctionConverter(self._func_tracker)
         self._is_constant = False
 
     def visit(self):

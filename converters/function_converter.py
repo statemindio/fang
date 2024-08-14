@@ -4,12 +4,11 @@ from collections import defaultdict
 from vyperProtoNew_pb2 import Func
 
 class FunctionConverter:
-    def __init__(self, func_tracker, params_converter):
+    def __init__(self, func_tracker):
         self._call_tree = defaultdict(list)
         self._sanitized_tree = defaultdict(list)
         self._func_amount = 0
         self._func_tracker = func_tracker
-        self._params_converter = params_converter
 
     @property
     def call_tree(self):
