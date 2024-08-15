@@ -95,10 +95,6 @@ def TestOneProtoInput(msg):
 
     message = {
         "_id": str(ins_res.inserted_id),
-        "generation_result": proto.result,
-        "function_input_values": input_values,
-        "json_msg": MessageToJson(msg),
-        "generator_version": __version__,
     }
     qm.publish(**message)
 

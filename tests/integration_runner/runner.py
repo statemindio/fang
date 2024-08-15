@@ -47,6 +47,7 @@ def callback(ch, method, properties, body):
 
     logger.debug("Compiling contract id: %s", data["_id"])
 
+    data = queue_collection.find_one({"_id": ObjectId(data["_id"])})
     result = handle_compilation(data)
     logger.debug("Compilation and execution result: %s", result)
 
