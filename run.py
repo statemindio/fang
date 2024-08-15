@@ -17,7 +17,7 @@ with atheris.instrument_imports():
     import vyper
     from converters.typed_converters import TypedConverter
 
-__version__ = "0.1.3"  # same version as images' one
+__version__ = "0.1.5"  # same version as images' one
 
 conf = Config()
 # might throw an error if verbosity is not a correct logging level
