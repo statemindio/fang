@@ -81,12 +81,10 @@ def handle_compilation(_contract_desc):
         externals = [c for c in dir(contract) if c.startswith('func')]
         internals = [c for c in dir(contract.internal) if c.startswith('func')]
         for fn in externals:
-            function_call_res = []
             _r[fn] = [execution_result(contract, fn, input_values[fn][i])
                       for i in range(inputs_per_function)]
 
         for fn in internals:
-            function_call_res = []
             _r[fn] = [execution_result(
                 contract, fn, input_values[fn][i], internal=True)
                 for i in range(inputs_per_function)]
