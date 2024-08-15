@@ -25,7 +25,8 @@ class QueueManager:
         try:
             return pika.BlockingConnection(pika.ConnectionParameters(
                 host=self.host,
-                port=self.port
+                port=self.port,
+                heartbeat=0
             ))
         except pika.exceptions.AMQPConnectionError as e:
             attempt = self._attempts_counter
