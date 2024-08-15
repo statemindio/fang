@@ -28,16 +28,22 @@ logger.info("Starting version %s", __version__)
 
 db_client = get_mongo_client(conf.db["host"], conf.db["port"])
 
-qm = MultiQueueManager(queue_managers=[
-    QueueManager(
-        q_params["host"],
-        q_params["port"],
-        q_params["queue_name"],
-        logger
-    )
-    for q_params in conf.compiler_queues])
+run_with_queue = conf.use_queue
+
+logger.info("Using queue %s", run_with_queue)
+
+if run_with_queue:
+    qm = MultiQueueManager(queue_managers=[
+        QueueManager(
+            q_params["host"],
+            q_params["port"],
+            q_params["queue_name"],
+            logger
+        )
+        for q_params in conf.compiler_queues])
 
 input_generator = InputGenerator()
+
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -90,19 +96,24 @@ def TestOneProtoInput(msg):
     logger.debug("Generated inputs: %s", input_values)
 
     data["function_input_values"] = input_values
+    compiler_version = f"{vyper.__version__.replace('.', '_')}"
+    for c in conf.compilers:
+        data[f"compiled_{compiler_version}_{c['name']}"] = False
     ins_res = c_log.insert_one(data)
 
-    message = {
-        "_id": str(ins_res.inserted_id),
-        "generation_result": proto.result,
-        "function_input_values": input_values,
-        "json_msg": MessageToJson(msg),
-        "generator_version": __version__,
-    }
-    qm.publish(**message)
-
+    if run_with_queue:
+        message = {
+            "_id": str(ins_res.inserted_id),
+            "generation_result": proto.result,
+            "function_input_values": input_values,
+            "json_msg": MessageToJson(msg),
+            "generator_version": __version__,
+        }
+        qm.publish(**message)
+    # else:
     # Creating the result entry, so there's no race condition in runners
     db_client["run_results"].insert_one({'generation_id': str(ins_res.inserted_id)})
+
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(

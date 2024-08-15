@@ -43,6 +43,10 @@ class Config:
     def verbosity(self):
         return self.__config_source["verbosity"]
 
+    @property
+    def use_queue(self):
+        return self.__config_source["use_queue"]
+
     def get_compiler_params_by_name(self, name):
         for comp in self.__config_source["compilers"]:
             if comp["name"] == name:
