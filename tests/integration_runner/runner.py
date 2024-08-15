@@ -138,5 +138,6 @@ if __name__ == '__main__':
         channel.basic_consume(
             queue_name, on_message_callback=callback)
         channel.start_consuming()
-    except (pika.exceptions.StreamLostError, pika.exceptions.ChannelWrongStateError):
-        pass
+    except pika.exceptions.AMQPError:
+        logger.info("AMQP error. Failing...")
+        exit(1)
