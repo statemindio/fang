@@ -141,7 +141,6 @@ class TypedConverter:
         if self.result != "":
             self.result += "\n"
 
-        # TODO: if immutable must be init
         if self.contract.init.flag or len(self._immutable_exp):
             self.result += self.visit_init(self.contract.init)
             self.result += "\n"
@@ -157,9 +156,12 @@ class TypedConverter:
         for func_id in func_order:
             func_obj = self._func_tracker[func_id]
             func = self.contract.functions[func_id]
+
             _, types, names = self._visit_input_parameters(func.input_params)
             func_obj.input_parameters = types
             func_obj.output_parameters = self._visit_output_parameters(func.output_params)
+            self._function_output = self._visit_output_parameters(func.output_params)
+
             self.function_inputs[func_obj._name] = types
             input_names.append(names)
             self.visit_func(func_obj, func)
@@ -172,6 +174,7 @@ class TypedConverter:
             self.result += "\n"
 
         if self.contract.HasField("def_func"):
+            self._function_output = self._visit_output_parameters(self.contract.def_func.output_params)
             self.result += self.visit_default_func(self.contract.def_func)
             self.result += "\n"
 
@@ -217,8 +220,6 @@ class TypedConverter:
                 expr_val = base_type.generate()
                 value += f", {expr_val}"
 
-        # current_type.adjust_size(list_size)
-
         return f"[{value}]"
 
     def _visit_var_ref(self, expr, level=None, assignment=False):
@@ -255,9 +256,6 @@ class TypedConverter:
 
     def visit_typed_expression(self, expr, current_type):
         handler, attr = self._expression_handlers[current_type.name]
-        # let handler adjust list size
-        # if isinstance(current_type, FixedList):
-        #    return handler(getattr(expr, attr), current_type)
         return handler(getattr(expr, attr))
 
     def __var_decl(self, expr, current_type):
@@ -282,7 +280,6 @@ class TypedConverter:
         self.type_stack.append(current_type)
         result = ": "
 
-        # TODO: somehow must change size, if has been written to afterwards
         if variable.mut == VarDecl.Mutability.REGULAR:
             result += current_type.vyper_type
             var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
@@ -343,9 +340,6 @@ class TypedConverter:
         self._mutability_level = 0
         self._current_func = function_obj
 
-        # FIXME: have to leave it to keep `return` statement properly
-        self._function_output = self._visit_output_parameters(function.output_params)
-
         self._block_level_count = 1
         block = self._visit_block(function.block)
         self._var_tracker.remove_function_level(self._block_level_count, True)
@@ -369,7 +363,6 @@ class TypedConverter:
         function_name = "__init__"
         if len(input_types) > 0:
             self.function_inputs[function_name] = input_types
-        # self._func_tracker.register_function(function_name)
 
         self._block_level_count = 1
         block = self._visit_init_immutables()
@@ -388,7 +381,6 @@ class TypedConverter:
         self._mutability_level = 0
         visibility = "@external"
 
-        self._function_output = self._visit_output_parameters(function.output_params)
         function_name = "__default__"
 
         self._block_level_count = 1
@@ -668,21 +660,19 @@ class TypedConverter:
         # if len(self._function_output) == 0:
         #   return ""
 
-        # TODO: dunno how to enumerate non repeated message
-        iter_map = {
-            0: return_p.one,
-            1: return_p.two,
-            2: return_p.three,
-            3: return_p.four,
-            4: return_p.five
-        }
+        payloads = [
+            return_p.one,
+            return_p.two,
+            return_p.three,
+            return_p.four,
+            return_p.five
+        ]
 
         result = "return "
         # must be len(ReturnPayload) >= len(output_params)
-        for i in range(len(self._function_output)):
-            # TODO: probably this should be done somewhere else
-            self.type_stack.append(self._function_output[i])
-            expression_result = self.visit_typed_expression(iter_map[i], self._function_output[i])
+        for type_, payload in zip(self._function_output, payloads):
+            self.type_stack.append(type_)
+            expression_result = self.visit_typed_expression(payload, type_)
             self.type_stack.pop()
             result += f"{expression_result},"
 
@@ -779,23 +769,8 @@ class TypedConverter:
         current_type = self.type_stack[len(self.type_stack) - 1]
         return current_type.generate_literal(getattr(lit, LITERAL_ATTR_MAP[current_type.name]))
 
-    # @classmethod
-    # def _get_from_type(cls, conv_expr):
-    #     # TODO: implement
-    #     pass
-
-    # def _visit_convert(self, conv_expr):
-    #     # TODO: the conversion path is supposed to go through more difficult way
-    #     current_type = self.type_stack[len(self.type_stack) - 1]
-    #     source_type = self._get_from_type(conv_expr)
-    #     value = self.visit_typed_expression(conv_expr.value, source_type)
-    #     result = f"convert({value}, {current_type.vyper_type})"
-    #     return result
 
     def _visit_bool_expression(self, expr):
-        # if expr.HasField("convert"):
-        #     result = self._visit_convert(expr.convert)
-        #     return result
         current_type = self.type_stack[-1]
         if expr.HasField("boolBinOp"):
             bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
@@ -843,7 +818,6 @@ class TypedConverter:
                 result = f"({result})"
             return result
         if expr.HasField("varRef"):
-            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
@@ -856,10 +830,8 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_int_expression(self, expr):
-        # if expr.HasField("convert"):
-        #     result = self._visit_convert(expr.convert)
-        #     return result
         current_type = self.type_stack[len(self.type_stack) - 1]
+
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
@@ -885,7 +857,6 @@ class TypedConverter:
                     result = f"({result})"
             return result
         if expr.HasField("varRef"):
-            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
@@ -963,28 +934,22 @@ class TypedConverter:
         return f"convert({result}, {current_type.vyper_type})"
 
     def _visit_bytes_m_expression(self, expr):
-        # if expr.HasField("convert"):
-        #     result = self._visit_convert(expr.convert)
-        #     return result
-        # TODO: perhaps with added convert might be removed
         current_type = self.type_stack[len(self.type_stack) - 1]
         if expr.HasField("sha"):
-            # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             name = "sha256"
             result = self._visit_hash256(expr.sha, name)
-
+            # the length of current BytesM might me less than 32, hence the result must be converted
             if current_type.m != 32:
                 result = f"convert({result}, {current_type.vyper_type})"
             return result
         if expr.HasField("keccak"):
-            # FIXME: length of current BytesM might me less than 32, If so, the result of `sha256` must be converted
             name = "keccak256"
             result = self._visit_hash256(expr.keccak, name)
+            # the length of current BytesM might me less than 32, hence the result must be converted
             if current_type.m != 32:
                 result = f"convert({result}, {current_type.vyper_type})"
             return result
         if expr.HasField("varRef"):
-            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
@@ -1001,7 +966,7 @@ class TypedConverter:
             self.type_stack.pop()
             return f"{result}{value})"
         if expr.HasField("bVal"):
-            # TODO: Bytes length can be arbitrary, almost same as DynArray assign
+            # TODO: replace constant with config provided value
             self.type_stack.append(Bytes(100))
             value = self._visit_bytes_expression(expr.bVal)
             self.type_stack.pop()
@@ -1012,9 +977,6 @@ class TypedConverter:
         return f"{result}{value})"
 
     def _visit_decimal_expression(self, expr):
-        # if expr.HasField("convert"):
-        #     result = self._visit_convert(expr.convert)
-        #     return result
         if expr.HasField("binOp"):
             bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
             self.op_stack.append(bin_op)
@@ -1034,7 +996,6 @@ class TypedConverter:
                 result = f"({result})"
             return result
         if expr.HasField("varRef"):
-            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
@@ -1046,12 +1007,8 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_bytes_expression(self, expr):
-        # if expr.HasField("convert"):
-        #     result = self._visit_convert(expr.convert)
-        #     return result
         current_type = self.type_stack[len(self.type_stack) - 1]
         if expr.HasField("varRef"):
-            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
@@ -1069,11 +1026,7 @@ class TypedConverter:
         return self.create_literal(expr.lit)
 
     def _visit_string_expression(self, expr):
-        # if expr.HasField("convert"):
-        #     result = self._visit_convert(expr.convert)
-        #     return result
         if expr.HasField("varRef"):
-            # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:
                 return result
@@ -1109,7 +1062,6 @@ class TypedConverter:
 
         return result
 
-    # FIXME: will adjust sizes in list expressions -> generates wrong expression
     def _visit_append_stmt(self, stmt):
         # None type as key for all available dynamic arrays
         current_type = DynArray(MAX_LIST_SIZE, None)
@@ -1192,7 +1144,7 @@ class TypedConverter:
         self.type_stack.pop()
         result = f"raw_call({to},"
 
-        # FIXME: arbitrary size for bytes & strings
+        # FIXME: replace constant with config provided value
         self.type_stack.append(Bytes(100))
         data = self._visit_bytes_expression(rc.data)
         self.type_stack.pop()
