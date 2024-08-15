@@ -4,11 +4,6 @@ import time
 from config import Config
 from db import get_mongo_client
 
-# TODO: get level from config
-logger = logging.getLogger("verifier")
-logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logging.DEBUG)
-
-
 class VerifierException(Exception):
     pass
 
@@ -125,6 +120,11 @@ def is_valid(_conf, _res):
 
 if __name__ == '__main__':
     conf = Config()
+
+    logger_level = getattr(logging, conf.verbosity)
+    logger = logging.getLogger("verifier")
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
+
     db_client = get_mongo_client(conf.db["host"], conf.db["port"])
     results_collection = db_client["run_results"]
     verification_results_collection = db_client["verification_results"]

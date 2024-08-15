@@ -37,7 +37,6 @@ def extract_type(instance):
         max_len = max_len if max_len < MAX_BYTESTRING_SIZE else MAX_BYTESTRING_SIZE
         current_type = Bytes(max_len)
     elif _has_field(instance, "list"):
-        # TODO: handle size in class?
         list_len = 1 if instance.list.n == 0 else instance.list.n
         list_len = list_len if instance.list.n < MAX_LIST_SIZE else MAX_LIST_SIZE
 
