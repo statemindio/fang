@@ -134,6 +134,7 @@ if __name__ == '__main__':
         logger.debug(f"Unhandled results received: {unhandled_results}")
 
         verification_results = []
+        handled_ids = []
         for res in unhandled_results:
             logger.info(f"Handling result: {res['generation_id']}")
             logger.debug(res)
@@ -146,13 +147,13 @@ if __name__ == '__main__':
             reshaped_res = reshape_data(conf, res)
             _r = verify_results(conf, reshaped_res)
             verification_results.append({"generation_id": res["generation_id"], "results": _r})
+            handled_ids.append(res["_id"])
 
         if len(verification_results) != 0:
             verification_results_collection.insert_many(verification_results)
 
-        if len(unhandled_results) != 0:
             results_collection.update_many(
-                {"_id": {"$in": [r["_id"] for r in unhandled_results]}},
+                {"_id": {"$in": handled_ids}},
                 {"$set": {"is_handled": True}}
             )
         time.sleep(5)
