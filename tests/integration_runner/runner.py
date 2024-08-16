@@ -53,7 +53,7 @@ def callback(ch, method, properties, body):
 
     queue_collection.update_one({"_id": ObjectId(data["_id"])},
                                 {"$set": {f"compiled_{compiler_key}": True}})
-    run_results_collection.update_one({"generation_id": data["_id"]},
+    run_results_collection.update_one({"generation_id": str(data["_id"])},
                                       {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
