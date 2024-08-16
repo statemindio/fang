@@ -13,7 +13,6 @@ from db import get_mongo_client
 from json_encoders import ExtendedEncoder, ExtendedDecoder
 from queue_managers import QueueManager
 
-
 compiler_name = os.environ.get("SERVICE_NAME")
 
 conf = Config("./config.yml")
@@ -28,8 +27,9 @@ logging.basicConfig(
 logger.info("Starting %s runner", compiler_key)
 
 queue_name = 'queue3.10'
-qm = QueueManager(compiler_params["queue"]["host"], int(
-    compiler_params["queue"]["port"]), queue_name, logger)
+queue_params = conf.compiler_queues[compiler_params["queue"]]
+qm = QueueManager(queue_params["host"], int(
+    queue_params["port"]), queue_name, logger)
 compiler_settings = Settings(optimize=OptimizationLevel.from_string(
     compiler_params["exec_params"]["optimization"]))
 
@@ -41,11 +41,13 @@ run_results_collection = db_["run_results"]
 
 inputs_per_function = len(conf.input_strategies)
 
+
 def callback(ch, method, properties, body):
     data = json.loads(body)
 
     logger.debug("Compiling contract id: %s", data["_id"])
 
+    data = queue_collection.find_one({"_id": ObjectId(data["_id"])})
     result = handle_compilation(data)
     logger.debug("Compilation and execution result: %s", result)
 
@@ -53,6 +55,8 @@ def callback(ch, method, properties, body):
                                 {"$set": {f"compiled_{compiler_key}": True}})
     run_results_collection.update_one({"generation_id": data["_id"]},
                                       {"$set": {f"result_{compiler_key}": result, "is_handled": False}})
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 # Init values might affect state, so for every init_values bundle
 # We run function payloads separately
@@ -78,15 +82,13 @@ def handle_compilation(_contract_desc):
         externals = [c for c in dir(contract) if c.startswith('func')]
         internals = [c for c in dir(contract.internal) if c.startswith('func')]
         for fn in externals:
-            function_call_res = []
             _r[fn] = [execution_result(contract, fn, input_values[fn][i])
                       for i in range(inputs_per_function)]
 
         for fn in internals:
-            function_call_res = []
             _r[fn] = [execution_result(
-                      contract, fn, input_values[fn][i], internal=True)
-                      for i in range(inputs_per_function)]
+                contract, fn, input_values[fn][i], internal=True)
+                for i in range(inputs_per_function)]
 
         fn = "__default__"
         if fn in dir(contract):
@@ -112,6 +114,7 @@ def execution_result(_contract, fn, _input_values, internal=False):
         _function_call_res = dict(runtime_error=res)
     return _function_call_res
 
+
 # TODO: Perhaps we can save immutables info
 def compose_result(_contract, comp, ret) -> dict:
     # now we dump first ten slots only
@@ -124,13 +127,16 @@ def compose_result(_contract, comp, ret) -> dict:
     consumed_gas = comp.get_gas_used()
     # The order of function calls is the same for all runners
     # Adding the name just to know what result is checked
-    return dict(state=state, memory=memory, consumed_gas=consumed_gas, return_value=json.dumps(ret, cls=ExtendedEncoder))
+    return dict(state=state, memory=memory, consumed_gas=consumed_gas,
+                return_value=json.dumps(ret, cls=ExtendedEncoder))
 
 
-while True:
+if __name__ == '__main__':
     try:
+        channel.basic_qos(prefetch_count=1)
         channel.basic_consume(
-            queue_name, on_message_callback=callback, auto_ack=True)
+            queue_name, on_message_callback=callback)
         channel.start_consuming()
-    except (pika.exceptions.StreamLostError, pika.exceptions.ChannelWrongStateError):
-        pass
+    except pika.exceptions.AMQPError:
+        logger.info("AMQP error. Failing...")
+        exit(1)

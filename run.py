@@ -17,7 +17,7 @@ with atheris.instrument_imports():
     import vyper
     from converters.typed_converters import TypedConverter
 
-__version__ = "0.1.3"  # same version as images' one
+__version__ = "0.1.5"  # same version as images' one
 
 conf = Config()
 # might throw an error if verbosity is not a correct logging level
@@ -35,9 +35,10 @@ qm = MultiQueueManager(queue_managers=[
         q_params["queue_name"],
         logger
     )
-    for q_params in conf.compiler_queues])
+    for q_params in conf.compiler_queues.values()])
 
 input_generator = InputGenerator()
+
 
 @atheris.instrument_func
 def TestOneProtoInput(msg):
@@ -94,15 +95,12 @@ def TestOneProtoInput(msg):
 
     message = {
         "_id": str(ins_res.inserted_id),
-        "generation_result": proto.result,
-        "function_input_values": input_values,
-        "json_msg": MessageToJson(msg),
-        "generator_version": __version__,
     }
     qm.publish(**message)
 
     # Creating the result entry, so there's no race condition in runners
     db_client["run_results"].insert_one({'generation_id': str(ins_res.inserted_id)})
+
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(
