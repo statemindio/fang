@@ -1,7 +1,7 @@
 version: '3'
 services:
   generator:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5-dev
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5
     command:
       - python3.10
       - run.py
@@ -30,7 +30,7 @@ services:
     deploy:
       replicas: 3
     restart: always
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5-dev
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5
     environment:
       PYTHONPATH: /app
       SERVICE_NAME: opt_gas
@@ -57,7 +57,7 @@ services:
     deploy:
       replicas: 3
     restart: always
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5-dev
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5
     environment:
       PYTHONPATH: /app
       SERVICE_NAME: opt_codesize
@@ -73,7 +73,7 @@ services:
     volumes:
       - ./config.yml:/app/config.yml
   verifier:
-    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5-dev
+    image: registry.statemind.io/vyper-fuzzer-generator:v0.1.5
     environment:
       PYTHONPATH: /app
     depends_on:
