@@ -5,14 +5,16 @@ from google.protobuf.json_format import Parse
 from converters.function_converter import FunctionConverter
 from converters.typed_converters import TypedConverter
 from func_tracker import FuncTracker
-from vyperProtoNew_pb2 import Contract
+
+from proto_loader import import_proto
+proto = import_proto()
 
 
 def test__find_func():
     current_dir = os.path.dirname(__file__)
     with open(f"{current_dir}/cases/func_call_multiple_cyclic_deep/in.json", "r") as inp_json:
         json_message = inp_json.read()
-    mes = Parse(json_message, Contract())
+    mes = Parse(json_message, proto.Contract())
     typed_converter = TypedConverter(mes)
     func_conv = FunctionConverter(typed_converter._func_tracker)
     typed_converter._func_tracker.register_functions(mes.functions)

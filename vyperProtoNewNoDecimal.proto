@@ -1,0 +1,738 @@
+syntax = "proto3";
+
+message Int {
+  uint32 n = 1;
+  bool sign = 2;
+}
+
+message Bool {}
+
+message BytesM {
+  uint32 m = 1;
+}
+
+message String {
+  uint32 max_len = 1;
+}
+
+message Address {}
+
+message ByteArray {
+  uint32 max_len = 1;
+}
+
+message VarRef {
+  oneof type {
+    Bool b = 2;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+    FixedList list = 9;
+    DynArray dyn = 10;
+  }
+  Int i = 1;
+  uint32 varnum = 8;
+}
+
+message BoolBinOp {
+  enum BOp {
+    AND = 0;
+    OR = 1;
+    EQ = 2;
+    INEQ = 3;
+  }
+  BOp op = 1;
+  BoolExpression left = 2;
+  BoolExpression right = 3;
+}
+
+message IntBoolBinOp {
+  enum BOp {
+    EQ = 0;
+    INEQ = 1;
+    LESS = 2;
+    LESSEQ = 3;
+    GREATER = 4;
+    GREATEREQ = 5;
+  }
+  BOp op = 1;
+  IntExpression left = 2;
+  IntExpression right = 3;
+}
+
+message BoolUnOp {
+  BoolExpression expr = 1;
+}
+
+message BoolExpression {
+  oneof expr {
+    BoolBinOp boolBinOp = 1;
+    BoolUnOp boolUnOp = 2;
+    IntBoolBinOp intBoolBinOp = 3;
+    VarRef varRef = 6;
+    RawCall raw_call = 7;
+    ConvertFromInt convert_int = 8;
+    AddressExpression convert_address = 10;
+    ConvertFromBytesM convert_bytesm = 11;
+    BytesExpression convert_bytes = 12;
+    StringExpression convert_string = 13;
+    //    Convert convert = 7;
+  }
+  Literal lit = 5;
+}
+
+message AddressExpression {
+  oneof expr {
+    CreateMinimalProxy cmp = 1;
+    CreateFromBlueprint cfb = 2;
+    VarRef varRef = 4;
+    CreateCopyOf cco = 5;
+    EcRecover ecRec = 6;
+    ConvertFromInt convert_int = 7;
+    ConvertFromBytesM convert_bytesm = 8;
+    BytesExpression convert_bytes = 9;
+    //    Convert convert = 5;
+  }
+  Literal lit = 3;
+}
+
+message IntBinOp {
+  enum BOp {
+    ADD = 0;
+    SUB = 1;
+    MUL = 2;
+    DIV = 3;
+    MOD = 4;
+    EXP = 5;
+    BIT_AND = 6;
+    BIT_OR = 7;
+    BIT_XOR = 8;
+    LEFT_SHIFT = 9;
+    RIGHT_SHIFT = 10;
+  }
+
+  BOp op = 1;
+  IntExpression left = 2;
+  IntExpression right = 3;
+}
+
+message IntUnOp {
+  IntExpression expr = 1;
+}
+
+// No enums yet
+// Enums can be converted to and from uint256 only.
+message IntExpression {
+  Literal lit = 1;
+  oneof expr {
+    IntBinOp binOp = 2;
+    IntUnOp unOp = 3;
+    VarRef varRef = 4;
+    ConvertFromInt convert_int = 5;
+    BoolExpression convert_bool = 7;
+    AddressExpression convert_address = 8;
+    ConvertFromBytesM convert_bytesm = 9;
+    BytesExpression convert_bytes = 10;
+  }
+}
+
+message ConvertFromInt {
+  IntExpression exp = 1;
+  Int i = 2;
+}
+
+message ConvertFromBytesM {
+  BytesMExpression exp = 1;
+  BytesM bM = 2;
+}
+
+message BytesMExpression {
+  Literal lit = 3;
+  oneof expr {
+    Sha256 sha = 1;
+    VarRef varRef = 2;
+    Keccak256 keccak = 4;
+    ConvertFromInt convert_int = 5;
+    BoolExpression convert_bool = 7;
+    AddressExpression convert_address = 8;
+    ConvertFromBytesM convert_bytesm = 9;
+    BytesExpression convert_bytes = 10;
+    //    Convert convert = 5;
+  }
+}
+
+message BytesExpression {
+  oneof expr {
+    VarRef varRef = 1;
+    RawCall raw_call = 2;
+    //    Convert convert = 2;
+    ConcatBytes concat = 4;
+    StringExpression convert_string = 5;
+  }
+  Literal lit = 3;
+}
+
+message StringExpression {
+  oneof expr {
+    VarRef varRef = 1;
+    //    Convert convert = 2;
+    ConcatString concat = 2;
+    BytesExpression convert_bytes = 4;
+  }
+  Literal lit = 3;
+}
+
+message TypedExpression {
+  AddressExpression addrExp = 1;
+  BoolExpression boolExp = 2;
+  BytesMExpression bmExp = 3;
+  BytesExpression bExp = 4;
+  StringExpression strExp = 5;
+  IntExpression intExp = 7;
+  FixedListAddress addrList = 9;
+  FixedListBool boolList = 10;
+  FixedListBytesM bmList = 11;
+  FixedListInt intList = 12;
+  DynArrayAddress addrDyn = 14;
+  DynArrayBool boolDyn = 15;
+  DynArrayBytesM bmDyn = 16; 
+  DynArrayInt intDyn = 17;
+  DynArrayString strDyn = 19;
+  DynArrayByteArray bytesDyn = 20;
+  DynArrayListAddress ladrDyn = 21;
+  DynArrayListBool lboolByn = 23;
+  DynArrayListBytesM lbmDyn = 24;
+  DynArrayListInt lintDyn = 25;
+}
+
+// must have atleast one member
+message FixedListAddress{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  AddressExpression rexp = 1;
+  repeated AddressExpression exp = 2;
+}
+
+message FixedListBool{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BoolExpression rexp = 1;
+  repeated BoolExpression exp = 2;
+}
+
+message FixedListBytesM{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BytesMExpression rexp = 1;
+  repeated BytesMExpression exp = 2;
+}
+
+message FixedListInt{
+  oneof other {
+    VarRef varRef = 3;
+    EcAdd ecadd = 4;
+    EcMul ecmul = 5;
+  }
+  IntExpression rexp = 1;
+  repeated IntExpression exp = 2;
+}
+
+message DynArrayAddress{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  AddressExpression rexp = 1;
+  repeated AddressExpression exp = 2;
+}
+
+message DynArrayBool{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BoolExpression rexp = 1;
+  repeated BoolExpression exp = 2;
+}
+
+message DynArrayBytesM{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BytesMExpression rexp = 1;
+  repeated BytesMExpression exp = 2;
+}
+
+message DynArrayInt{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  IntExpression rexp = 1;
+  repeated IntExpression exp = 2;
+}
+
+message DynArrayString{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  StringExpression rexp = 1;
+  repeated StringExpression exp = 2;
+}
+
+message DynArrayByteArray{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  BytesExpression rexp = 1;
+  repeated BytesExpression exp = 2;
+}
+
+message DynArrayListAddress{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListAddress rexp = 1;
+  repeated FixedListAddress exp = 2;
+}
+
+message DynArrayListBool{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListBool rexp = 1;
+  repeated FixedListBool exp = 2;
+}
+
+message DynArrayListBytesM{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListBytesM rexp = 1;
+  repeated FixedListBytesM exp = 2;
+}
+
+message DynArrayListInt{
+  oneof other {
+    VarRef varRef = 3;
+  }
+  FixedListInt rexp = 1;
+  repeated FixedListInt exp = 2;
+}
+
+message Literal {
+  bool boolval = 2;
+  bytes bMval = 4;
+  string strval = 5;
+  uint64 addval = 6;
+  uint64 barrval = 7;
+  uint64 intval = 1; // check if we can make it just int
+}
+
+//message BinaryOp {
+//  enum BOp {
+//    ADD = 0;
+//    SUB = 1;
+//    MUL = 2;
+//    DIV = 3;
+//    MOD = 4;
+//    EXP = 5;
+//    AND = 6;
+//    OR = 7;
+//    EQ = 8;
+//    INEQ = 9;
+//    LESS = 10;
+//    LESSEQ = 11;
+//    GREATER = 12;
+//    GREATEREQ = 13;
+//    BIT_AND = 14;
+//    BIT_OR = 15;
+//    BIT_XOR = 16;
+//    LEFT_SHIFT = 17;
+//    RIGHT_SHIFT = 18;
+//  }
+//
+//  BOp op = 1;
+//  Expression left = 2;
+//  Expression right = 3;
+//}
+//
+//message UnaryOp {
+//  enum UOp {
+//    NOT = 0;
+//    MINUS = 1;
+//    BIT_NOT = 2;
+//    BALANCE = 3;
+//    CODEHASH = 4;
+//    CODESIZE = 5;
+//    IS_CONTRACT = 6;
+//    CODE = 7;
+//  }
+//
+//  UOp op = 1;
+//  Expression expr = 2;
+//}
+
+//message Expression {
+//  oneof expr_oneof {
+//    Literal cons = 2;
+//    BinaryOp binop = 3;
+//    UnaryOp unop = 4;
+//    // NullaryOp nop = 5;
+//    CreateMinimalProxy cr_min_proxy = 5;
+//    CreateFromBlueprint cr_bp = 6;
+//    Sha256 sha = 7;
+//  }
+//  VarRef varref = 1;
+//}
+
+message IfStmtCase {
+  BoolExpression cond = 1;
+  Block if_body = 2;
+}
+
+message IfStmt {
+  repeated IfStmtCase cases = 1;
+  optional Block else_case = 2;
+}
+
+message ForStmtRanged {
+  int32 start = 1;
+  int32 stop = 2;
+}
+
+// imo should be expression, but there are restrictions
+// ref_id for range(x, x + N)
+message ForStmtVariable {
+  optional VarRef ref_id = 1;
+  uint32 length = 2;
+}
+
+message ForStmt {
+  oneof for_oneof {
+    ForStmtVariable variable = 2;
+  }
+  ForStmtRanged ranged = 1;
+  Block body = 3;
+}
+
+message VarDecl {
+  enum Mutability {
+    REGULAR = 0;
+    CONSTANT = 1;
+    IMMUTABLE = 2;
+  }
+
+  oneof type {
+    Bool b = 2;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+    FixedList list = 10;
+    DynArray dyn = 11;
+  }
+  Int i = 1;
+  TypedExpression expr = 8;
+  Mutability mut = 9;
+}
+
+message AssignmentStatement {
+  VarRef ref_id = 1;
+  TypedExpression expr = 2;
+}
+
+message FuncCall {
+  uint32 func_num = 1;
+  ReturnPayload params = 2;
+}
+
+// probably add builtins to expression too
+message Statement {
+  oneof stmt_oneof {
+    VarDecl decl = 1;
+    ForStmt for_stmt = 3;
+    IfStmt if_stmt = 4;
+    FuncCall func_call = 7;
+    ContinueStatement cont_stmt = 8;
+    BreakStatement break_stmt = 9;
+    AssertStatement assert_stmt = 10;
+    AppendArray append_stmt = 11;
+    PopArray pop_stmt = 12;
+    SendStatement send_stmt = 13;
+    RawCall raw_call = 14;
+    RawLog raw_log = 15;
+  }
+  AssignmentStatement assignment = 2;
+}
+
+message RawLog {
+  FixedListBytesM topics = 1;
+  uint32 topic_amount = 2;
+
+  oneof data {
+    BytesExpression data_bs = 3;
+  }
+  BytesMExpression data_bm = 4;
+}
+
+message Block {
+  repeated Statement statements = 1;
+  ExitStatement exit_d = 2;
+}
+
+message Reentrancy {
+  string key = 1;
+}
+
+message FixedList{
+  oneof type {
+    Bool b = 2;
+    BytesM bM = 4;
+    Address adr = 5;
+  }
+  Int i = 1;
+  uint32 n = 6;
+}
+
+// ENUM aswell
+message DynArray{
+  oneof type {
+    Bool b = 2;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+    FixedList list = 9;
+  }
+  Int i = 1;
+  uint32 n = 10;
+}
+
+message FuncParam {
+  oneof type {
+    Bool b = 2;
+    BytesM bM = 4;
+    String s = 5;
+    Address adr = 6;
+    ByteArray barr = 7;
+    FixedList list = 8;
+    DynArray dyn = 9;
+  }
+  Int i = 1;
+}
+
+message Func {
+  enum Visibility {
+    EXTERNAL = 0;
+    INTERNAL = 1;
+  }
+
+  enum Mutability {
+    PURE = 0;
+    VIEW = 1;
+    NONPAYABLE = 2;
+    PAYABLE = 3;
+  }
+
+  Visibility vis = 1;
+  Mutability mut = 2;
+  optional Reentrancy ret = 3;
+  repeated FuncParam input_params = 4;
+  repeated FuncParam output_params = 5;
+  Block block = 6;
+}
+
+message ContractInit {
+  enum Mutability {
+    NONPAYABLE = 0;
+    PAYABLE = 1;
+  }
+
+  Mutability mut = 1;
+  repeated FuncParam input_params = 2;
+  Block block = 3;
+  bool flag = 4;
+}
+
+message DefaultFunc {
+  enum Mutability {
+    PURE = 0;
+    VIEW = 1;
+    NONPAYABLE = 2;
+    PAYABLE = 3;
+  }
+
+  Mutability mut = 2;
+  optional Reentrancy ret = 3;
+  repeated FuncParam output_params = 5;
+  Block block = 6;
+}
+
+message Contract {
+  repeated VarDecl decls = 1;
+  repeated Func functions = 2;
+  ContractInit init = 3;
+  optional DefaultFunc def_func = 4;
+}
+
+//message Convert {
+//  enum InputType {
+//    INT = 0;
+//  }
+//  InputType from_type = 1;
+//  TypedExpression value = 2;
+//}
+
+message CreateMinimalProxy {
+  AddressExpression target = 1;
+  optional IntExpression value = 2;
+  optional BytesMExpression salt = 3;
+}
+
+message CreateCopyOf {
+  AddressExpression target = 1;
+  optional IntExpression value = 2;
+  optional BytesMExpression salt = 3;
+}
+
+// ecrecover(hash: bytes32, v: uint256 | uint8, r: uint256 | bytes32, s: uint256 | bytes32)
+message EcRecover {
+  BytesMExpression hash = 1;
+  optional IntExpression v8 = 2;
+  IntExpression vi = 3;
+  optional BytesMExpression rb = 4;
+  IntExpression ri = 5;
+  optional BytesMExpression sb = 6;
+  IntExpression si = 7;
+}
+
+message CreateFromBlueprint {
+  message RawArgs {
+    BytesExpression arg = 1;
+    Literal flag = 2;
+  }
+  AddressExpression target = 1;
+  //  repeated Expression args = 2;  // TODO: come up with the case where no matter amount and types of expressions
+  optional RawArgs rawArgs = 3;
+  optional IntExpression value = 4;
+  optional IntExpression code_offset = 5;
+  optional BytesMExpression salt = 6;
+}
+
+message SendStatement {
+  AddressExpression to = 1;
+  IntExpression amount = 2;
+  optional IntExpression gas = 3;
+}
+
+message Selfdestruct {
+  AddressExpression to = 1;
+}
+
+message Sha256 {
+  oneof typed_value {
+    StringExpression strVal = 1;
+    BytesExpression bVal = 2;
+  }
+  BytesMExpression bmVal = 3;
+}
+
+message Keccak256 {
+  oneof typed_value {
+    StringExpression strVal = 1;
+    BytesExpression bVal = 2;
+  }
+  BytesMExpression bmVal = 3;
+}
+
+message ExitStatement {
+  bool flag = 1;
+  ReturnPayload payload = 2;
+  oneof exit_st {
+    Selfdestruct selfd = 3;
+    RaiseStatement raise_st = 4;
+    RawRevert raw_revert = 5;
+  }
+}
+
+message RaiseStatement {
+  StringExpression errval = 1;
+}
+
+message RawRevert {
+  BytesExpression data = 1;
+}
+
+message ReturnPayload {
+  TypedExpression one = 1;
+  TypedExpression two = 2;
+  TypedExpression three = 3;
+  TypedExpression four = 4;
+  TypedExpression five = 5;
+}
+
+message BreakStatement {}
+
+message ContinueStatement {}
+
+message AssertStatement {
+  BoolExpression cond = 1;
+  StringExpression reason = 2;
+}
+
+message AppendArray {
+  VarRef varRef = 1;
+  TypedExpression expr = 2;
+}
+
+message PopArray {
+  VarRef varRef = 1;
+}
+
+message RawCall {
+  AddressExpression to = 1;
+  BytesExpression data = 2;
+  Literal max_out = 3;
+  optional IntExpression gas = 4;
+  optional IntExpression value = 5;
+  Literal delegate = 6;
+  Literal static = 7;
+  Literal revert = 8;
+}
+
+message EcAdd {
+  FixedListInt x = 1;
+  FixedListInt y = 2;
+}
+
+message EcMul {
+  FixedListInt point = 1;
+  IntExpression scalar = 2;
+}
+
+message ConcatString {
+  StringTypeSize a = 1;
+  StringTypeSize b = 2;
+  repeated StringTypeSize c = 3;
+}
+
+message StringTypeSize {
+  StringExpression s = 1;
+  uint32 s_size = 2;
+}
+
+message ConcatBytes {
+  BytesTypesSize a = 1;
+  BytesTypesSize b = 2;
+  repeated BytesTypesSize c = 3;
+}
+
+message BytesTypesSize {
+  oneof bytes {
+    BytesMExpression b_bm = 1;
+  }
+  BytesExpression b_bs = 2;
+  uint32 s_size = 3;
+}

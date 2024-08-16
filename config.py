@@ -43,6 +43,10 @@ class Config:
     def verbosity(self):
         return self.__config_source["verbosity"]
 
+    @property
+    def proto_file(self):
+        return self.__config_source["proto_file"]
+
     def get_compiler_params_by_name(self, name):
         for comp in self.__config_source["compilers"]:
             if comp["name"] == name:

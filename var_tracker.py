@@ -2,8 +2,9 @@ import copy
 
 from types_d.base import BaseType
 from types_d.types import FixedList, DynArray, Bytes, String
-from vyperProtoNew_pb2 import VarDecl
 
+from proto_loader import import_proto
+proto = import_proto()
 
 class VarTracker:
     """
@@ -189,7 +190,7 @@ class VarTracker:
     def create_and_register_variable(
             self, var_type: BaseType,
             level: int = 0,
-            mutability: VarDecl.Mutability = VarDecl.Mutability.REGULAR
+            mutability: proto.VarDecl.Mutability = proto.VarDecl.Mutability.REGULAR
     ) -> str:
         """
         Creates and registers a variable
@@ -206,11 +207,11 @@ class VarTracker:
         idx = self.next_id(var_type)
         pre = prefixes[0] if level > 0 else prefixes[mutability]
         name = f"{pre}_{var_type.name}_{str(idx)}"
-        if level == 0 and mutability == VarDecl.Mutability.REGULAR:
+        if level == 0 and mutability == proto.VarDecl.Mutability.REGULAR:
             self.register_global_variable(name, var_type)
         else:
             self.register_function_variable(
-                name, level, var_type, mutability == VarDecl.Mutability.REGULAR)
+                name, level, var_type, mutability == proto.VarDecl.Mutability.REGULAR)
 
         return name
 

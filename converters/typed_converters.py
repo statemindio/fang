@@ -10,8 +10,11 @@ from var_tracker import VarTracker
 from .function_converter import FunctionConverter
 from .parameters_converter import ParametersConverter
 from .utils import extract_type, _has_field
-from vyperProtoNew_pb2 import VarDecl
+
 from proto_helpers import ConvertFromTypeMessageHelper
+
+from proto_loader import import_proto
+proto = import_proto()
 
 PURE = 0
 VIEW = 1
@@ -280,17 +283,17 @@ class TypedConverter:
         self.type_stack.append(current_type)
         result = ": "
 
-        if variable.mut == VarDecl.Mutability.REGULAR:
+        if variable.mut == proto.VarDecl.Mutability.REGULAR:
             result += current_type.vyper_type
             var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
         else:
-            if variable.mut == VarDecl.Mutability.CONSTANT:
+            if variable.mut == proto.VarDecl.Mutability.CONSTANT:
                 self._is_constant = True
             value = self.visit_typed_expression(variable.expr, current_type)
             self._is_constant = False
 
             var_name = self._var_tracker.create_and_register_variable(current_type, mutability=variable.mut)
-            if variable.mut == VarDecl.Mutability.CONSTANT:
+            if variable.mut == proto.VarDecl.Mutability.CONSTANT:
                 result += f"constant({current_type.vyper_type})"
                 result = f"{result} = {value}"
             else:
@@ -804,7 +807,7 @@ class TypedConverter:
             if len(self.op_stack) > 0:
                 result = f"({result})"
             return result
-        if expr.HasField("decBoolBinOp"):
+        if _has_field(expr, "decBoolBinOp"): # expr.HasField("decBoolBinOp"):
             self.type_stack.append(Decimal())
             bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)

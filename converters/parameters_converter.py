@@ -1,7 +1,8 @@
 from .utils import extract_type
 from config import MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
-from vyperProtoNew_pb2 import VarDecl
 
+from proto_loader import import_proto
+proto = import_proto()
 
 class ParametersConverter:
     def __init__(self, var_tracker):
@@ -16,7 +17,7 @@ class ParametersConverter:
             param_type = self._types_provider(input_param)
             input_types.append(param_type)
 
-            name = self._var_tracker.create_and_register_variable(param_type, 1, VarDecl.Mutability.IMMUTABLE)
+            name = self._var_tracker.create_and_register_variable(param_type, 1, proto.VarDecl.Mutability.IMMUTABLE)
             names.append(name)
 
             if i > 0:

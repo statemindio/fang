@@ -5,11 +5,12 @@ from google.protobuf.json_format import Parse
 
 from converters.typed_converters import TypedConverter
 from types_d import Address, BytesM, String
-from vyperProtoNew_pb2 import Contract, CreateMinimalProxy, CreateCopyOf, Sha256, Keccak256, Func
 
+from proto_loader import import_proto
+proto = import_proto()
 
 def convert_message(message: str) -> TypedConverter:
-    mes = Parse(message, Contract())
+    mes = Parse(message, proto.Contract())
     conv = TypedConverter(mes)
     conv.visit()
     return conv
@@ -256,19 +257,19 @@ def test_visit_create_min_proxy_or_copy_of():
     }
 }"""
 
-    methods = [(CreateMinimalProxy(), "create_minimal_proxy_to"), (CreateCopyOf(), "create_copy_of")]
+    methods = [(proto.CreateMinimalProxy(), "create_minimal_proxy_to"), (proto.CreateCopyOf(), "create_copy_of")]
 
     address_type = Address()
     conv.type_stack.append(address_type)
     conv._var_tracker.register_global_variable("var0", address_type)
 
-    for proto, name in methods:
-        mes = Parse(json_message, proto)
+    for proto_msg, name in methods:
+        mes = Parse(json_message, proto_msg)
         expected = f"{name}(self.var0)"
         res = conv.visit_create_min_proxy_or_copy_of(mes, name)
         assert res == expected
 
-hashing = [(Sha256(), "sha256"), (Keccak256(), "keccak256")]
+hashing = [(proto.Sha256(), "sha256"), (proto.Keccak256(), "keccak256")]
 
 def test_visit_hash256():
     mes = ""
@@ -472,7 +473,7 @@ def test_proto_converter(case_name):
     with open(f"{current_dir}/cases/{case_name}/out.vy", "r") as out_contract:
         expected = out_contract.read()
 
-    mes = Parse(json_message, Contract())
+    mes = Parse(json_message, proto.Contract())
     conv = TypedConverter(mes)
 
     import random

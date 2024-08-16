@@ -5,12 +5,14 @@ import atheris
 import atheris_libprotobuf_mutator
 from google.protobuf.json_format import MessageToJson
 
-import vyperProtoNew_pb2
 from config import Config
 from db import get_mongo_client
 from input_generation import InputGenerator, InputStrategy
 from json_encoders import ExtendedEncoder
 from queue_managers import QueueManager, MultiQueueManager
+
+from proto_loader import import_proto
+proto = import_proto()
 
 with atheris.instrument_imports():
     import sys
@@ -106,5 +108,5 @@ def TestOneProtoInput(msg):
 
 if __name__ == '__main__':
     atheris_libprotobuf_mutator.Setup(
-        sys.argv, TestOneProtoInput, proto=vyperProtoNew_pb2.Contract)
+        sys.argv, TestOneProtoInput, proto=proto.Contract)
     atheris.Fuzz()

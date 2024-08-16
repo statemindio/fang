@@ -1,7 +1,9 @@
 from typing import Sequence
 
 from types_d.base import BaseType
-from vyperProtoNew_pb2 import Func
+
+from proto_loader import import_proto
+proto = import_proto()
 
 
 class Function:
@@ -57,7 +59,7 @@ class Function:
         mutability = self.MUTABILITY_MAPPING[self.mutability]
         signature = self.render_signature(input_parameters)
         body = self.body
-        if self.visibility == Func.Visibility.EXTERNAL:
+        if self.visibility == proto.Func.Visibility.EXTERNAL:
             visibility = "@external"
         else:
             visibility = "@internal"
