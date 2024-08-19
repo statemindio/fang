@@ -44,8 +44,8 @@ class Config:
         return self.__config_source["verbosity"]
 
     @property
-    def proto_file(self):
-        return self.__config_source["proto_file"]
+    def extra_flags(self):
+        return self.__config_source["extra_flags"]
 
     def get_compiler_params_by_name(self, name):
         for comp in self.__config_source["compilers"]:

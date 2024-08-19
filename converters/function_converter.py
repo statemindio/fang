@@ -1,8 +1,7 @@
 import copy
 from collections import defaultdict
 
-from proto_loader import import_proto
-proto = import_proto()
+import proto_loader as proto
 
 class FunctionConverter:
     def __init__(self, func_tracker):

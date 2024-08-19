@@ -3,8 +3,7 @@ import pytest
 from func_tracker import FuncTracker
 from config import MAX_FUNCTIONS
 
-from proto_loader import import_proto
-proto = import_proto()
+import proto_loader as proto
 
 @pytest.fixture
 def func_tracker():

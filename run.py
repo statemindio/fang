@@ -11,8 +11,7 @@ from input_generation import InputGenerator, InputStrategy
 from json_encoders import ExtendedEncoder
 from queue_managers import QueueManager, MultiQueueManager
 
-from proto_loader import import_proto
-proto = import_proto()
+import proto_loader as proto
 
 with atheris.instrument_imports():
     import sys

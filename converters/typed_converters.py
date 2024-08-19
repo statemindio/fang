@@ -13,8 +13,7 @@ from .utils import extract_type, _has_field
 
 from proto_helpers import ConvertFromTypeMessageHelper
 
-from proto_loader import import_proto
-proto = import_proto()
+import proto_loader as proto
 
 PURE = 0
 VIEW = 1

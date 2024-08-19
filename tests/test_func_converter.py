@@ -6,8 +6,7 @@ from converters.function_converter import FunctionConverter
 from converters.typed_converters import TypedConverter
 from func_tracker import FuncTracker
 
-from proto_loader import import_proto
-proto = import_proto()
+import proto_loader as proto
 
 
 def test__find_func():

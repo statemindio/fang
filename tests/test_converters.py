@@ -6,8 +6,7 @@ from google.protobuf.json_format import Parse
 from converters.typed_converters import TypedConverter
 from types_d import Address, BytesM, String
 
-from proto_loader import import_proto
-proto = import_proto()
+import proto_loader as proto
 
 def convert_message(message: str) -> TypedConverter:
     mes = Parse(message, proto.Contract())

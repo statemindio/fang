@@ -1,7 +1,12 @@
-import importlib
 from config import Config
+import vyper
 
-def import_proto():
-    conf = Config()
-    proto_file = conf.proto_file
-    return importlib.import_module(proto_file)
+conf = Config()
+if vyper.__version__ == '0.3.10':
+    from vyperProtoNew_pb2 import *
+# 0.3.10 and 0.4.0 w decimals are the same for now
+# but will diverge
+elif '--enable-decimals' in conf.extra_flags and vyper.__version__ == '0.4.0':
+    from vyperProtoNew_pb2 import *
+elif vyper.__version__ == '0.4.0':
+    from vyperProtoNewNoDecimal_pb2 import *
