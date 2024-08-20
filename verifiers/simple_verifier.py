@@ -54,6 +54,7 @@ def verify_two_results(_res0, _res1):
             verifier(*params)
             d[name] = None
         except VerifierException as e:
+            logger.error(str(e))
             d[name] = str(e)
     return d
 
@@ -79,7 +80,7 @@ def verify_results(_conf: Config, data):
 
 
 def target_fields(_conf: Config) -> list:
-    return [f"result_0_3_10_{c['name']}" for c in _conf.compilers]
+    return [f"result_0_4_0_{c['name']}" for c in _conf.compilers]
 
 
 def ready_to_handle(_conf: Config, _res) -> bool:
@@ -124,7 +125,8 @@ if __name__ == '__main__':
     logger_level = getattr(logging, conf.verbosity)
     logger = logging.getLogger("verifier")
     logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
-
+    logger.info("Starting verification")
+    
     db_client = get_mongo_client(conf.db["host"], conf.db["port"])
     results_collection = db_client["run_results"]
     verification_results_collection = db_client["verification_results"]
@@ -135,7 +137,7 @@ if __name__ == '__main__':
 
         verification_results = []
         for res in unhandled_results:
-            logger.info(f"Handling result: {res['generation_id']}")
+            logger.debug(f"Handling result: {res['generation_id']}")
             logger.debug(res)
             if not ready_to_handle(conf, res):
                 logger.debug("%s is not ready yet", res["generation_id"])

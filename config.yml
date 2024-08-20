@@ -1,20 +1,20 @@
 compilers:
-  - name: opt_gas
+  - name: venom
     queue:
-      host: queue_optimization_gas
+      host: localhost
       port: 5672
     exec_params:
-      optimization: gas
-  - name: opt_codesize
+      venom: True
+  - name: default
     queue:
-      host: queue_optimization_codesize
-      port: 5672
+      host: localhost
+      port: 5673
     exec_params:
-      optimization: codesize
+      venom: False
 db:
-  host: mongodb
+  host: localhost
   port: 27017
-input_strategies: [1, 2]
+input_strategies: [1]
 # for logging level reference https://docs.python.org/3/library/logging.html#logging-levels
-verbosity: DEBUG
-extra_flags: [--enable-decimals]
+verbosity: INFO
+extra_flags: []

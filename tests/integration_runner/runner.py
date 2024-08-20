@@ -30,8 +30,15 @@ logger.info("Starting %s runner", compiler_key)
 queue_name = 'queue3.10'
 qm = QueueManager(compiler_params["queue"]["host"], int(
     compiler_params["queue"]["port"]), queue_name, logger)
-compiler_settings = Settings(optimize=OptimizationLevel.from_string(
-    compiler_params["exec_params"]["optimization"]))
+
+#compiler_settings = Settings(optimize=OptimizationLevel.from_string(
+#    compiler_params["exec_params"]["optimization"]))
+comp_settings = {}
+if compiler_params["exec_params"]["venom"]:
+    comp_settings["experimental_codegen"] = True
+
+if 'enable_decimals' in conf.extra_flags:
+    comp_settings["enable_decimals"] = True
 
 channel = qm.channel
 
@@ -68,7 +75,7 @@ def handle_compilation(_contract_desc):
         logger.debug("Constructor values: %s", iv)
         try:
             contract = boa.loads(_contract_desc["generation_result"],
-                                 *iv, compiler_args={"settings": compiler_settings})
+                                 *iv, compiler_args=comp_settings)
         except Exception as e:
             logger.debug("Deployment failed: %s", str(e))
             results.append(dict(deploy_error=str(e)))

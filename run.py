@@ -16,7 +16,8 @@ import proto_loader as proto
 with atheris.instrument_imports():
     import sys
     import vyper
-    from converters.typed_converters import TypedConverter
+    #from converters.typed_converters import TypedConverter
+    from converters.typed_converters_4 import NaginiConverter
 
 __version__ = "0.1.3"  # same version as images' one
 
@@ -56,7 +57,7 @@ def TestOneProtoInput(msg):
     c_log = db_client["compilation_log"]
     f_log = db_client['failure_log']
     try:
-        proto = TypedConverter(msg)
+        proto = NaginiConverter(msg)
         proto.visit()
     except Exception as e:
         converter_error = {
