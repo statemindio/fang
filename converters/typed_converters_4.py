@@ -51,7 +51,7 @@ class NaginiConverter(TypedConverter):
 
     # https://github.com/vyperlang/vyper/pull/3769
     def _visit_reentrancy(self, ret):
-        return "@nonreentrant"
+        return "@nonreentrant\n"
 
     # https://github.com/vyperlang/vyper/pull/2937
     def _visit_int_expression(self, expr):

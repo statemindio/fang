@@ -1,11 +1,11 @@
 compilers:
-  - name: venom
+  - name: adder
     queue:
       host: localhost
       port: 5672
     exec_params:
-      venom: True
-  - name: default
+      venom: False
+  - name: nagini
     queue:
       host: localhost
       port: 5673
