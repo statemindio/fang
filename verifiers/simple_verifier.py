@@ -139,20 +139,19 @@ def check_deploy_errors(_conf, _res):
             if deploy_errors[j][-1] is not None:
                 has_error = True
 
-    results = []
+    deploy_results = []
     for i, errors in enumerate(deploy_errors):
         for j, error in enumerate(errors):
-            if j == len(deploy_errors) - 1:
+            if j == len(errors) - 1:
                 break
             verify_result = verify_and_catch(compilation_error_handler, 
-                                                (deploy_errors[j], deploy_errors[j+1]))
-            results.append({
+                                                (errors[j], errors[j+1]))
+            deploy_results.append({
                 "compilers": (fields[j], fields[j + 1]),
                 "deployment": i,
                 "results": verify_result
             })
-
-    return has_error, results
+    return has_error, deploy_results
 
 
 if __name__ == '__main__':
