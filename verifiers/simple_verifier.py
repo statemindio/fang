@@ -35,7 +35,21 @@ def runtime_error_handler(_res0, _res1):
     pass
 
 
+def compilation_error_handler(_res0, _res1):
+    if _res0 != _res1:
+        raise VerifierException(f"Compilation error discrepancy: {_res0} | {_res1}")
+
 RUNTIME_ERROR = "runtime_error"
+
+
+def verify_and_catch(verifier, params):
+    try:
+        verifier(*params)
+        err = None
+    except VerifierException as e:
+        logger.error(str(e))
+        err = str(e)
+    return err
 
 
 def verify_two_results(_res0, _res1):
@@ -50,12 +64,7 @@ def verify_two_results(_res0, _res1):
     }
     d = {}
     for name, (verifier, params) in verifiers.items():
-        try:
-            verifier(*params)
-            d[name] = None
-        except VerifierException as e:
-            logger.error(str(e))
-            d[name] = str(e)
+        d[name] = verify_and_catch(verifier, params)
     return d
 
 
@@ -111,12 +120,38 @@ def reshape_data(_conf, _res):
 def is_valid(_conf, _res):
     fields = target_fields(_conf)
     for f in fields:
+        # contract is empty, regardless of inputs
         if len(_res[f][0]) == 0:
             return False
-        if "deploy_error" in _res[f][0]:
-            # TODO: deploy errors are supposed to be compared and handled as well
-            return False
     return True
+
+def check_deploy_errors(_conf, _res):
+    deploy_errors = []
+    fields = target_fields(_conf)
+
+    has_error = False
+    # reshaping: init->[compilers]
+    for f in fields:
+        for j, depl in enumerate(_res[f]):
+            if j > len(deploy_errors) - 1:
+                deploy_errors.append([])
+            deploy_errors[j].append(_res[f][j].get("deploy_error", None))
+            if deploy_errors[j][-1] is not None:
+                has_error = True
+
+    deploy_results = []
+    for i, errors in enumerate(deploy_errors):
+        for j, error in enumerate(errors):
+            if j == len(errors) - 1:
+                break
+            verify_result = verify_and_catch(compilation_error_handler, 
+                                                (errors[j], errors[j+1]))
+            deploy_results.append({
+                "compilers": (fields[j], fields[j + 1]),
+                "deployment": i,
+                "results": verify_result
+            })
+    return has_error, deploy_results
 
 
 if __name__ == '__main__':
@@ -126,7 +161,7 @@ if __name__ == '__main__':
     logger = logging.getLogger("verifier")
     logging.basicConfig(format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
     logger.info("Starting verification")
-    
+
     db_client = get_mongo_client(conf.db["host"], conf.db["port"])
     results_collection = db_client["run_results"]
     verification_results_collection = db_client["verification_results"]
@@ -137,7 +172,7 @@ if __name__ == '__main__':
 
         verification_results = []
         for res in unhandled_results:
-            logger.debug(f"Handling result: {res['generation_id']}")
+            logger.info(f"Handling result: {res['generation_id']}")
             logger.debug(res)
             if not ready_to_handle(conf, res):
                 logger.debug("%s is not ready yet", res["generation_id"])
@@ -145,6 +180,12 @@ if __name__ == '__main__':
 
             if not is_valid(conf, res):
                 continue
+
+            has_errors, results = check_deploy_errors(conf, res)
+            if has_errors:
+                verification_results.append({"generation_id": res["generation_id"], "results": results})
+                continue
+
             reshaped_res = reshape_data(conf, res)
             _r = verify_results(conf, reshaped_res)
             verification_results.append({"generation_id": res["generation_id"], "results": _r})
