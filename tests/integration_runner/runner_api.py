@@ -70,13 +70,13 @@ class RunnerBase:
                 function_call_res = []
                 _r[fn] = [self.execution_result(contract, fn, input_values[fn][i])
                           for i in range(self.inputs_per_function)]
-
+            """
             for fn in internals:
                 function_call_res = []
                 _r[fn] = [self.execution_result(
                     contract, fn, input_values[fn][i], internal=True)
                     for i in range(self.inputs_per_function)]
-            """
+            
             fn = "__default__"
             if fn in dir(contract):
                 function_call_res = [self.execution_result(contract, fn, [])
