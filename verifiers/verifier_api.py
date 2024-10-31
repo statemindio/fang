@@ -11,8 +11,8 @@ class VerifierBase:
 
     RUNTIME_ERROR = "runtime_error"
 
-    def __init__(self):
-        self.conf = Config()
+    def __init__(self, config_file=None):
+        self.conf = Config(config_file) if config_file is not None else Config()
         self.init_logger()
         self.init_db()
 
@@ -130,7 +130,7 @@ class VerifierBase:
         return all(f in _res for f in fields)
 
     def target_fields(self) -> list:
-        return [f"result_0_4_0_{c['name']}" for c in self.conf.compilers]
+        return [f"result_{c['name']}" for c in self.conf.compilers]
 
     def verify_two_results(self, _res0, _res1):
         if self.RUNTIME_ERROR in _res0 or self.RUNTIME_ERROR in _res1:

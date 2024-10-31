@@ -3,7 +3,6 @@ import os
 import logging
 
 import pika.exceptions
-import vyper
 import boa
 from bson.objectid import ObjectId
 
@@ -15,8 +14,8 @@ from json_encoders import ExtendedEncoder, ExtendedDecoder
 
 class RunnerBase:
 
-    def __init__(self):
-        self.conf = Config("./config.yml")
+    def __init__(self, config_file = None):
+        self.conf = Config(config_file) if config_file is not None else Config()
         self.inputs_per_function = len(self.conf.input_strategies)
         self.init_config()
         self.init_logger()
@@ -119,7 +118,7 @@ class RunnerBase:
         self.compiler_name = os.environ.get("SERVICE_NAME")
         self.compiler_params = self.conf.get_compiler_params_by_name(
             self.compiler_name)
-        self.compiler_key = f"{vyper.__version__.replace('.', '_')}_{self.compiler_name}"
+        self.compiler_key = f"{self.compiler_name}"
 
     def init_logger(self):
         logger_level = getattr(logging, self.conf.verbosity)
