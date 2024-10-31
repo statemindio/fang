@@ -20,36 +20,6 @@ VIEW = 1
 NON_PAYABLE = 2
 PAYABLE = 3
 
-BIN_OP_MAP = {
-    0: "+",
-    1: "-",
-    2: "*",
-    3: "/",
-    4: "%",
-    5: "**",
-    6: "&",
-    7: "|",
-    8: "^",
-    9: "<<",
-    10: ">>"
-}
-
-BIN_OP_BOOL_MAP = {
-    0: "and",
-    1: "or",
-    2: "==",
-    3: "!="
-}
-
-INT_BIN_OP_BOOL_MAP = {
-    0: "==",
-    1: "!=",
-    2: "<",
-    3: "<=",
-    4: ">",
-    5: ">="
-}
-
 LITERAL_ATTR_MAP = {
     "BOOL": "boolval",
     "DECIMAL": "decimalval",
@@ -84,6 +54,38 @@ class TypedConverter:
         "@nonpayable",
         "@payable"
     )
+
+    BIN_OP_MAP = {
+        0: "+",
+        1: "-",
+        2: "*",
+        3: "/",
+        4: "%",
+        5: "**",
+        6: "&",
+        7: "|",
+        8: "^",
+        9: "<<",
+        10: ">>"
+    }
+    INT_BIN_OP_MAP = BIN_OP_MAP
+    DECIMAL_BIN_OP_MAP = BIN_OP_MAP
+
+    BIN_OP_BOOL_MAP = {
+        0: "and",
+        1: "or",
+        2: "==",
+        3: "!="
+    }
+
+    INT_BIN_OP_BOOL_MAP = {
+        0: "==",
+        1: "!=",
+        2: "<",
+        3: "<=",
+        4: ">",
+        5: ">="
+    }
 
     def __init__(self, msg):
         self.contract = msg
@@ -775,7 +777,7 @@ class TypedConverter:
     def _visit_bool_expression(self, expr):
         current_type = self.type_stack[-1]
         if expr.HasField("boolBinOp"):
-            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.boolBinOp.op, self.BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_bool_expression(expr.boolBinOp.left)
             right = self._visit_bool_expression(expr.boolBinOp.right)
@@ -795,7 +797,7 @@ class TypedConverter:
         if expr.HasField("intBoolBinOp"):
             # TODO: here probably must be different kinds of Int
             self.type_stack.append(Int(256))
-            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.intBoolBinOp.op, self.INT_BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.intBoolBinOp.left)
             right = self._visit_int_expression(expr.intBoolBinOp.right)
@@ -808,7 +810,7 @@ class TypedConverter:
             return result
         if _has_field(expr, "decBoolBinOp"): # expr.HasField("decBoolBinOp"):
             self.type_stack.append(Decimal())
-            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.decBoolBinOp.op, self.INT_BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.decBoolBinOp.left)
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
@@ -835,7 +837,7 @@ class TypedConverter:
         current_type = self.type_stack[len(self.type_stack) - 1]
 
         if expr.HasField("binOp"):
-            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            bin_op = get_bin_op(expr.binOp.op, self.INT_BIN_OP_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.binOp.left)
             right = self._visit_int_expression(expr.binOp.right)
@@ -980,7 +982,7 @@ class TypedConverter:
 
     def _visit_decimal_expression(self, expr):
         if expr.HasField("binOp"):
-            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            bin_op = get_bin_op(expr.binOp.op, self.DECIMAL_BIN_OP_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.binOp.left)
             right = self._visit_decimal_expression(expr.binOp.right)

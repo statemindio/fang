@@ -1,29 +1,31 @@
 from .typed_converters import TypedConverter, get_bin_op
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 
-INT_BIN_OP_MAP = {
-    0: "+",
-    1: "-",
-    2: "*",
-    3: "//",
-    4: "%",
-    5: "**",
-    6: "&",
-    7: "|",
-    8: "^",
-    9: "<<",
-    10: ">>"
-}
-
-DECIMAL_BIN_OP_MAP = {
-    0: "+",
-    1: "-",
-    2: "*",
-    3: "/",
-    4: "%"
-}
-
 class NaginiConverter(TypedConverter):
+
+    # https://github.com/vyperlang/vyper/pull/2937
+    INT_BIN_OP_MAP = {
+        0: "+",
+        1: "-",
+        2: "*",
+        3: "//",
+        4: "%",
+        5: "**",
+        6: "&",
+        7: "|",
+        8: "^",
+        9: "<<",
+        10: ">>"
+    }
+
+    DECIMAL_BIN_OP_MAP = {
+        0: "+",
+        1: "-",
+        2: "*",
+        3: "/",
+        4: "%"
+    }
+
 
     def visit_init(self, init):
         self._mutability_level = 0
@@ -51,42 +53,8 @@ class NaginiConverter(TypedConverter):
 
     # https://github.com/vyperlang/vyper/pull/3769
     def _visit_reentrancy(self, ret):
-        return "@nonreentrant"
+        return "@nonreentrant\n"
 
-    # https://github.com/vyperlang/vyper/pull/2937
-    def _visit_int_expression(self, expr):
-        current_type = self.type_stack[len(self.type_stack) - 1]
-
-        if expr.HasField("binOp"):
-            bin_op = get_bin_op(expr.binOp.op, INT_BIN_OP_MAP)
-            self.op_stack.append(bin_op)
-            left = self._visit_int_expression(expr.binOp.left)
-            right = self._visit_int_expression(expr.binOp.right)
-
-            left, bin_op, right = current_type.check_binop_bounds(left, bin_op, right)
-            result = f"{left} {bin_op} {right}"
-            result = current_type.check_literal_bounds(result)
-
-            self.op_stack.pop()
-            if len(self.op_stack) > 0:
-                result = f"({result})"
-            return result
-
-        return super()._visit_int_expression(expr)
-
-    def _visit_decimal_expression(self, expr):
-        if expr.HasField("binOp"):
-            bin_op = get_bin_op(expr.binOp.op, DECIMAL_BIN_OP_MAP)
-            self.op_stack.append(bin_op)
-            left = self._visit_decimal_expression(expr.binOp.left)
-            right = self._visit_decimal_expression(expr.binOp.right)
-            result = f"{left} {bin_op} {right}"
-            self.op_stack.pop()
-            if len(self.op_stack) > 0:
-                result = f"({result})"
-            return result
-
-        return super()._visit_decimal_expression(expr)
 
     # https://github.com/vyperlang/vyper/pull/3596
     def _visit_for_stmt_ranged(self, for_stmt_ranged):
