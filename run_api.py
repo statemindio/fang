@@ -39,7 +39,7 @@ class GeneratorBase:
             "error_message": None,
             "generator_version": self.__version__,
         }
-        proto_converter = self.generate_source(msg)
+        proto_converter = self.generate_source(msg, self.converter)
 
         # add other compiler results 
         data["generation_result"] = proto_converter.result
@@ -94,9 +94,9 @@ class GeneratorBase:
         except Exception as e:
             return None, e
         """
-    def generate_source(self, msg):
+    def generate_source(self, msg, converter):
         try:
-            proto_converter = self.converter(msg)
+            proto_converter = converter(msg)
             proto_converter.visit()
         except Exception as e:
             converter_error = {
