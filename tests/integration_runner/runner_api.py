@@ -100,6 +100,7 @@ class RunnerBase:
             _function_call_res = dict(runtime_error=res)
         return _function_call_res
 
+    # add/remove the data
     def compose_result(self, _contract, comp, ret) -> dict:
         # now we dump first ten slots only
         state = [str(comp.state.get_storage(bytes.fromhex(
@@ -133,6 +134,7 @@ class RunnerBase:
                                int(self.compiler_params["queue"]["port"]), self.queue_name, self.logger)
         self.channel = self.qm.channel
 
+    # The boa interface might change
     def init_compiler_settings(self):
         self.comp_settings = {}
         if self.compiler_params["exec_params"]["venom"]:

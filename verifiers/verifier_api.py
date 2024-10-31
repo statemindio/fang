@@ -129,9 +129,11 @@ class VerifierBase:
         fields = self.target_fields()
         return all(f in _res for f in fields)
 
+    # Must match run_results_collection setting in the runner callback
     def target_fields(self) -> list:
         return [f"result_{c['name']}" for c in self.conf.compilers]
 
+    # Add new verifiers to the mapping
     def verify_two_results(self, _res0, _res1):
         if self.RUNTIME_ERROR in _res0 or self.RUNTIME_ERROR in _res1:
             self.runtime_error_handler(_res0, _res1)
@@ -156,6 +158,7 @@ class VerifierBase:
             err = str(e)
         return err
 
+    # To change the verification logic override functions below
     def storage_verifier(self, storage0, storage1):
         if storage0 != storage1:
             raise VerifierException(f"Storage discrepancy: {storage0} | {storage1}")
@@ -189,6 +192,7 @@ class VerifierBase:
             format='%(name)s:%(levelname)s:%(asctime)s:%(message)s', level=logger_level)
         self.logger.info("Starting verification")
 
+    # results_collection matches run_results_collection from runner
     def init_db(self):
         db_client = get_mongo_client(self.conf.db["host"], self.conf.db["port"])
         self.results_collection = db_client["run_results"]

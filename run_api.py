@@ -15,6 +15,8 @@ from queue_managers import QueueManager, MultiQueueManager
 import proto_loader as proto
 
 class GeneratorBase:
+
+    # Add new converters if necessary into new variables
     def __init__(self, proto_converter, config_file = None):
         self.__version__ = "0.1.3"
         self.conf = Config(config_file) if config_file is not None else Config()
@@ -31,6 +33,7 @@ class GeneratorBase:
         atheris.Fuzz()
 
     def TestOneProtoInput(self, msg):
+        # For diff fuzzing add generation_result_{name}
         data = {
             "json_msg": MessageToJson(msg),
             "generation_result": None,
@@ -41,9 +44,10 @@ class GeneratorBase:
         }
         proto_converter = self.generate_source(msg, self.converter)
 
-        # add other compiler results 
+        # For diff fuzzing other compiler results
         data["generation_result"] = proto_converter.result
-        
+
+        # Must be overridden
         c_result, c_error = self.compile_source(proto_converter.result)
         if c_error is None:
             data["compilation_result"] = c_result
@@ -59,6 +63,7 @@ class GeneratorBase:
 
         insert = self.compilation_log.insert_one(data)
 
+        # For diff fuzzing add the results
         message = {
             "_id": str(insert.inserted_id),
             "generation_result": proto_converter.result,
@@ -94,6 +99,8 @@ class GeneratorBase:
         except Exception as e:
             return None, e
         """
+
+    # Callable with converter as a parameter
     def generate_source(self, msg, converter):
         try:
             proto_converter = converter(msg)
