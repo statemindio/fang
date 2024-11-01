@@ -5,11 +5,10 @@ from config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE, MAX_FUNCTIONS
 from func_tracker import FuncTracker
 from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
 from types_d.base import BaseType
-from utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS
 from var_tracker import VarTracker
 from .function_converter import FunctionConverter
 from .parameters_converter import ParametersConverter
-from .utils import extract_type, _has_field
+from .utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS, extract_type, _has_field
 
 from proto_helpers import ConvertFromTypeMessageHelper
 

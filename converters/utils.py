@@ -1,7 +1,10 @@
+import math
+
 from config import MAX_LIST_SIZE, MAX_BYTESTRING_SIZE
 from types_d import Bool, Decimal, BytesM, String, Address, Bytes, FixedList, DynArray, Int
-from utils import get_nearest_multiple
 
+def get_nearest_multiple(num, mul):
+    return mul * math.ceil(num / mul)
 
 def _has_field(instance, field):
     try:
@@ -53,3 +56,103 @@ def extract_type(instance):
         current_type = Int(n, instance.i.sign)
 
     return current_type
+
+VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+INVALID_PREFIX = "0123456789"
+
+_PYTHON_RESERVED_KEYWORDS = {
+    "False",
+    "None",
+    "True",
+    "and",
+    "as",
+    "assert",
+    "async",
+    "await",
+    "break",
+    "class",
+    "continue",
+    "def",
+    "del",
+    "elif",
+    "else",
+    "except",
+    "finally",
+    "for",
+    "from",
+    "global",
+    "if",
+    "import",
+    "in",
+    "is",
+    "lambda",
+    "nonlocal",
+    "not",
+    "or",
+    "pass",
+    "raise",
+    "return",
+    "try",
+    "while",
+    "with",
+    "yield",
+}
+_PYTHON_RESERVED_KEYWORDS = {s.lower() for s in _PYTHON_RESERVED_KEYWORDS}
+
+# Cannot be used for variable or member naming
+RESERVED_KEYWORDS = _PYTHON_RESERVED_KEYWORDS | {
+    # decorators
+    "public",
+    "external",
+    "nonpayable",
+    "constant",
+    "immutable",
+    "transient",
+    "internal",
+    "payable",
+    "nonreentrant",
+    # "class" keywords
+    "interface",
+    "struct",
+    "event",
+    "enum",
+    # EVM operations
+    "unreachable",
+    # special functions (no name mangling)
+    "init",
+    "_init_",
+    "___init___",
+    "____init____",
+    "default",
+    "_default_",
+    "___default___",
+    "____default____",
+    # more control flow and special operations
+    "range",
+    # more special operations
+    "indexed",
+    # denominations
+    "ether",
+    "wei",
+    "finney",
+    "szabo",
+    "shannon",
+    "lovelace",
+    "ada",
+    "babbage",
+    "gwei",
+    "kwei",
+    "mwei",
+    "twei",
+    "pwei",
+    # sentinal constant values
+    # TODO remove when these are removed from the language
+    "zero_address",
+    "empty_bytes32",
+    "max_int128",
+    "min_int128",
+    "max_decimal",
+    "min_decimal",
+    "max_uint256",
+    "zero_wei",
+}

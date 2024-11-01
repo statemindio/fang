@@ -2,10 +2,7 @@ import os
 import random
 import string
 
-from vyper.utils import checksum_encode
-
-from utils import fill_address
-
+from .utils import fill_address, checksum_encode
 
 class BytesRandomGen:
     def generate(self, input_type):
