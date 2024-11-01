@@ -20,36 +20,6 @@ VIEW = 1
 NON_PAYABLE = 2
 PAYABLE = 3
 
-BIN_OP_MAP = {
-    0: "+",
-    1: "-",
-    2: "*",
-    3: "/",
-    4: "%",
-    5: "**",
-    6: "&",
-    7: "|",
-    8: "^",
-    9: "<<",
-    10: ">>"
-}
-
-BIN_OP_BOOL_MAP = {
-    0: "and",
-    1: "or",
-    2: "==",
-    3: "!="
-}
-
-INT_BIN_OP_BOOL_MAP = {
-    0: "==",
-    1: "!=",
-    2: "<",
-    3: "<=",
-    4: ">",
-    5: ">="
-}
-
 LITERAL_ATTR_MAP = {
     "BOOL": "boolval",
     "DECIMAL": "decimalval",
@@ -84,6 +54,40 @@ class TypedConverter:
         "@nonpayable",
         "@payable"
     )
+
+    BIN_OP_MAP = {
+        0: "+",
+        1: "-",
+        2: "*",
+        3: "/",
+        4: "%",
+        5: "**",
+        6: "&",
+        7: "|",
+        8: "^",
+        9: "<<",
+        10: ">>"
+    }
+    INT_BIN_OP_MAP = BIN_OP_MAP
+    DECIMAL_BIN_OP_MAP = BIN_OP_MAP
+
+    BIN_OP_BOOL_MAP = {
+        0: "and",
+        1: "or",
+        2: "==",
+        3: "!="
+    }
+
+    INT_BIN_OP_BOOL_MAP = {
+        0: "==",
+        1: "!=",
+        2: "<",
+        3: "<=",
+        4: ">",
+        5: ">="
+    }
+
+    INIT_VISIBILITY = "@external"
 
     def __init__(self, msg):
         self.contract = msg
@@ -359,8 +363,6 @@ class TypedConverter:
     def visit_init(self, init):
         self._mutability_level = 0
 
-        visibility = "@external"
-
         input_params, input_types, _ = self._visit_input_parameters(init.input_params)
         function_name = "__init__"
         if len(input_types) > 0:
@@ -375,7 +377,7 @@ class TypedConverter:
 
         mutability = "@payable\n" if init.mut else ""
 
-        result = f"{visibility}\n{mutability}def {function_name}({input_params}):\n{block}"
+        result = f"{self.INIT_VISIBILITY}\n{mutability}def {function_name}({input_params}):\n{block}"
 
         return result
 
@@ -423,7 +425,7 @@ class TypedConverter:
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
-        result = f"for {var_name} in range({start}, {stop}):"
+        result = self._format_for_statement(var_name, ivar_type, start, stop)
         return result
 
     def _visit_for_stmt_variable(self, for_stmt_variable):
@@ -439,11 +441,16 @@ class TypedConverter:
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
-        if variable is None:
-            result = f"for {var_name} in range({length}):"
-            return result
-        result = f"for {var_name} in range({variable}, {variable}+{length}):"
+        result = self._format_for_statement(var_name, ivar_type, variable, variable, length)
         return result
+
+    @classmethod
+    def _format_for_statement(cls, var_name, ivar_type, start, end=None, length=None):
+        if length is None:
+            return f"for {var_name} in range({start}, {end}):"
+        if end is None:
+            return f"for {var_name} in range({length}):"
+        return f"for {var_name} in range({start}, {end}+{length}):"
 
     def _visit_for_stmt(self, for_stmt):
         if for_stmt.HasField("variable"):
@@ -775,7 +782,7 @@ class TypedConverter:
     def _visit_bool_expression(self, expr):
         current_type = self.type_stack[-1]
         if expr.HasField("boolBinOp"):
-            bin_op = get_bin_op(expr.boolBinOp.op, BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.boolBinOp.op, self.BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_bool_expression(expr.boolBinOp.left)
             right = self._visit_bool_expression(expr.boolBinOp.right)
@@ -795,7 +802,7 @@ class TypedConverter:
         if expr.HasField("intBoolBinOp"):
             # TODO: here probably must be different kinds of Int
             self.type_stack.append(Int(256))
-            bin_op = get_bin_op(expr.intBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.intBoolBinOp.op, self.INT_BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.intBoolBinOp.left)
             right = self._visit_int_expression(expr.intBoolBinOp.right)
@@ -808,7 +815,7 @@ class TypedConverter:
             return result
         if _has_field(expr, "decBoolBinOp"): # expr.HasField("decBoolBinOp"):
             self.type_stack.append(Decimal())
-            bin_op = get_bin_op(expr.decBoolBinOp.op, INT_BIN_OP_BOOL_MAP)
+            bin_op = get_bin_op(expr.decBoolBinOp.op, self.INT_BIN_OP_BOOL_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.decBoolBinOp.left)
             right = self._visit_decimal_expression(expr.decBoolBinOp.right)
@@ -835,7 +842,7 @@ class TypedConverter:
         current_type = self.type_stack[len(self.type_stack) - 1]
 
         if expr.HasField("binOp"):
-            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            bin_op = get_bin_op(expr.binOp.op, self.INT_BIN_OP_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_int_expression(expr.binOp.left)
             right = self._visit_int_expression(expr.binOp.right)
@@ -980,7 +987,7 @@ class TypedConverter:
 
     def _visit_decimal_expression(self, expr):
         if expr.HasField("binOp"):
-            bin_op = get_bin_op(expr.binOp.op, BIN_OP_MAP)
+            bin_op = get_bin_op(expr.binOp.op, self.DECIMAL_BIN_OP_MAP)
             self.op_stack.append(bin_op)
             left = self._visit_decimal_expression(expr.binOp.left)
             right = self._visit_decimal_expression(expr.binOp.right)
