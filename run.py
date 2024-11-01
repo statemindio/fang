@@ -16,7 +16,7 @@ import proto_loader as proto
 with atheris.instrument_imports():
     import sys
     import vyper
-    #from converters.typed_converters import TypedConverter
+    from converters.typed_converters import TypedConverter
     from converters.typed_converters_4 import NaginiConverter
 
 __version__ = "0.1.3"  # same version as images' one
@@ -45,7 +45,8 @@ input_generator = InputGenerator()
 def TestOneProtoInput(msg):
     data = {
         "json_msg": MessageToJson(msg),
-        "generation_result": None,
+        "generation_result_nagini": None,
+        "generation_result_adder": None,
         "compilation_result": None,
         "error_type": None,
         "error_message": None,
@@ -57,8 +58,10 @@ def TestOneProtoInput(msg):
     c_log = db_client["compilation_log"]
     f_log = db_client['failure_log']
     try:
-        proto = NaginiConverter(msg)
-        proto.visit()
+        proto_converter_nagini = NaginiConverter(msg)
+        proto_converter_nagini.visit()
+        proto_converter_adder = TypedConverter(msg)
+        proto_converter_adder.visit()
     except Exception as e:
         converter_error = {
             "error_type": type(e).__name__,
@@ -69,9 +72,10 @@ def TestOneProtoInput(msg):
 
         logger.critical("Converter has crashed: %s", converter_error)
         raise e  # Do we actually want to fail here?
-    data["generation_result"] = proto.result
+    data["generation_result_nagini"] = proto_converter_nagini.result
+    data["generation_result_adder"] = proto_converter_adder.result
     try:
-        c_result = vyper.compile_code(proto.result)
+        c_result = vyper.compile_code(proto_converter_nagini.result)
         data["compilation_result"] = c_result
     except Exception as e:
         data["error_type"] = type(e).__name__
@@ -80,7 +84,7 @@ def TestOneProtoInput(msg):
     logger.debug("Compilation result: %s", data)
 
     input_values = dict()
-    for name, types in proto.function_inputs.items():
+    for name, types in proto_converter_nagini.function_inputs.items():
         for i in conf.input_strategies:
             input_generator.change_strategy(InputStrategy(i))
 
@@ -96,7 +100,8 @@ def TestOneProtoInput(msg):
 
     message = {
         "_id": str(ins_res.inserted_id),
-        "generation_result": proto.result,
+        "generation_result_nagini": proto_converter_nagini.result,
+        "generation_result_adder": proto_converter_adder.result,
         "function_input_values": input_values,
         "json_msg": MessageToJson(msg),
         "generator_version": __version__,

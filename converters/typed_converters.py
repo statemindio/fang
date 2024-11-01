@@ -138,6 +138,7 @@ class TypedConverter:
         """
         Runs the conversion of the message and stores the result in the result variable
         """
+        random.seed(0)
         for i, var in enumerate(self.contract.decls):
             if i >= MAX_STORAGE_VARIABLES:
                 break
@@ -538,36 +539,36 @@ class TypedConverter:
     def _visit_statement(self, statement):
         # if not in `for` theres always assignment; probs need another default value
         if self._for_block_count > 0:
-            if statement.HasField("cont_stmt"):
+            if _has_field(statement, "cont_stmt"):
                 return self._visit_continue_statement()
-            if statement.HasField("break_stmt"):
+            if _has_field(statement, "break_stmt"):
                 return self._visit_break_statement()
-        if statement.HasField("decl"):
+        if _has_field(statement, "decl"):
             return self.visit_var_decl(statement.decl)
-        if statement.HasField("for_stmt"):
+        if _has_field(statement, "for_stmt"):
             return self._visit_for_stmt(statement.for_stmt)
-        if statement.HasField("if_stmt"):
+        if _has_field(statement, "if_stmt"):
             return self._visit_if_stmt(statement.if_stmt)
-        if statement.HasField("assert_stmt"):
+        if _has_field(statement, "assert_stmt"):
             return self._visit_assert_stmt(statement.assert_stmt)
-        if statement.HasField("func_call"):
+        if _has_field(statement, "func_call"):
             if len(self._func_tracker) > 0:
                 func_num = statement.func_call.func_num % len(self._func_tracker)
                 if func_num in self._function_call_map[self._current_func.id]:
                     return self._visit_func_call(statement.func_call)
-        if statement.HasField("append_stmt"):
+        if _has_field(statement, "append_stmt"):
             append_st = self._visit_append_stmt(statement.append_stmt)
             if append_st is not None:
                 return append_st
-        if statement.HasField("pop_stmt"):
+        if _has_field(statement, "pop_stmt"):
             pop_st = self._visit_pop_stmt(statement.pop_stmt)
             if pop_st is not None:
                 return pop_st
-        if statement.HasField("send_stmt"):
+        if _has_field(statement, "send_stmt"):
             return self._visit_send_stmt(statement.send_stmt)
-        if statement.HasField("raw_call"):
+        if _has_field(statement, "raw_call"):
             return self._visit_raw_call(statement.raw_call)
-        if statement.HasField("raw_log"):
+        if _has_field(statement, "raw_log"):
             return self._visit_raw_log(statement.raw_log)
         return self._visit_assignment(statement.assignment)
 
@@ -694,17 +695,17 @@ class TypedConverter:
         #     result = self._visit_convert(expr.convert)
         #     return result
         current_type = self.type_stack[-1]
-        if expr.HasField("cmp") and not self._is_constant:
+        if _has_field(expr, "cmp") and not self._is_constant:
             name = "create_minimal_proxy_to"
             return self.visit_create_min_proxy_or_copy_of(expr.cmp, name)
-        if expr.HasField("cfb") and not self._is_constant:
+        if _has_field(expr, "cfb") and not self._is_constant:
             return self.visit_create_from_blueprint(expr.cfb)
-        if expr.HasField("cco") and not self._is_constant:
+        if _has_field(expr, "cco") and not self._is_constant:
             name = "create_copy_of"
             return self.visit_create_min_proxy_or_copy_of(expr.cco, name)
-        if expr.HasField("ecRec"):
+        if _has_field(expr, "ecRec"):
             return self.visit_ecrecover(expr.ecRec)
-        if expr.HasField("varRef"):
+        if _has_field(expr, "varRef"):
             # TODO: it has to be decided how exactly to track a current block level or if it has to be passed
             result = self._visit_var_ref(expr.varRef, self._block_level_count)
             if result is not None:

@@ -89,7 +89,7 @@ def verify_results(_conf: Config, data):
 
 
 def target_fields(_conf: Config) -> list:
-    return [f"result_0_4_0_{c['name']}" for c in _conf.compilers]
+    return [f"result_{c['name']}" for c in _conf.compilers]
 
 
 def ready_to_handle(_conf: Config, _res) -> bool:

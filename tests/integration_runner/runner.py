@@ -19,7 +19,8 @@ compiler_name = os.environ.get("SERVICE_NAME")
 conf = Config("./config.yml")
 compiler_params = conf.get_compiler_params_by_name(compiler_name)
 
-compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
+#compiler_key = f"{vyper.__version__.replace('.', '_')}_{compiler_name}"
+compiler_key = f"{compiler_name}"
 
 logger_level = getattr(logging, conf.verbosity)
 logger = logging.getLogger(f"runner_{compiler_key}")
@@ -74,7 +75,7 @@ def handle_compilation(_contract_desc):
     for iv in init_values:
         logger.debug("Constructor values: %s", iv)
         try:
-            contract = boa.loads(_contract_desc["generation_result"],
+            contract = boa.loads(_contract_desc[f"generation_result_{compiler_key}"],
                                  *iv, compiler_args=comp_settings)
         except Exception as e:
             logger.debug("Deployment failed: %s", str(e))
