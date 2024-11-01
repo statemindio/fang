@@ -68,12 +68,12 @@ rsa==4.9
 six==1.16.0
 sortedcontainers==2.4.0
 soupsieve==2.5
-titanoboa @ git+https://github.com/ssi91/titanoboa.git@5d0567c2b2acf931bfc3c138dccdd42438923edc
+titanoboa @ git+https://github.com/Leminkay/titanoboa.git@7a6036b421db71ea0817bc120103d3da9a4af697
 tomli==2.0.1
 toolz==0.12.1
 trie==3.0.1
 typing_extensions==4.12.2
 uritemplate==4.1.1
 urllib3==2.1.0
-vyper==0.3.10
+vyper==0.4.0
 zipp==3.17.0
