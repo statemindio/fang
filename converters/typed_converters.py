@@ -425,7 +425,7 @@ class TypedConverter:
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
-        result = f"for {var_name} in range({start}, {stop}):"
+        result = self._format_for_statement(var_name, ivar_type, start, stop)
         return result
 
     def _visit_for_stmt_variable(self, for_stmt_variable):
@@ -441,11 +441,16 @@ class TypedConverter:
         idx = self._var_tracker.next_id(ivar_type)
         var_name = f"i_{idx}"
         self._var_tracker.register_function_variable(var_name, self._block_level_count + 1, ivar_type, False)
-        if variable is None:
-            result = f"for {var_name} in range({length}):"
-            return result
-        result = f"for {var_name} in range({variable}, {variable}+{length}):"
+        result = self._format_for_statement(var_name, ivar_type, variable, variable, length)
         return result
+
+    @classmethod
+    def _format_for_statement(cls, var_name, ivar_type, start, end=None, length=None):
+        if length is None:
+            return f"for {var_name} in range({start}, {end}):"
+        if end is None:
+            return f"for {var_name} in range({length}):"
+        return f"for {var_name} in range({start}, {end}+{length}):"
 
     def _visit_for_stmt(self, for_stmt):
         if for_stmt.HasField("variable"):
