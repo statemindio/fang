@@ -6,10 +6,10 @@ import pika.exceptions
 import boa
 from bson.objectid import ObjectId
 
-from config import Config
-from queue_managers import QueueManager
-from db import get_mongo_client
-from json_encoders import ExtendedEncoder, ExtendedDecoder
+from helpers.config import Config
+from helpers.queue_managers import QueueManager
+from helpers.db import get_mongo_client
+from helpers.json_encoders import ExtendedEncoder, ExtendedDecoder
 
 
 class RunnerBase:

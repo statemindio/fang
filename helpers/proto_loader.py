@@ -1,4 +1,4 @@
-from config import Config
+from helpers.config import Config
 import vyper
 
 conf = Config()

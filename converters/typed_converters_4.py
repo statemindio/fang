@@ -25,6 +25,8 @@ class NaginiConverter(TypedConverter):
         4: "%"
     }
 
+    INIT_VISIBILITY = "@deploy"
+
     # https://github.com/vyperlang/vyper/pull/3769
     def _visit_reentrancy(self, ret):
         return "@nonreentrant\n"

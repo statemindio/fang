@@ -1,9 +1,9 @@
 import pytest
 
 from func_tracker import FuncTracker
-from config import MAX_FUNCTIONS
+from helpers.config import MAX_FUNCTIONS
 
-import proto_loader as proto
+import helpers.proto_loader as proto
 
 @pytest.fixture
 def func_tracker():

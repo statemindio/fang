@@ -3,7 +3,7 @@ import copy
 from types_d.base import BaseType
 from types_d.types import FixedList, DynArray, Bytes, String
 
-import proto_loader as proto
+import helpers.proto_loader as proto
 
 class VarTracker:
     """

@@ -3,10 +3,10 @@ from decimal import Decimal
 
 import pytest
 
-from input_generation import InputGenerator, InputStrategy
+from generators.input_generation import InputGenerator, InputStrategy
 from runners.simple_runner import handle_compilation
 from types_d import types as t
-from json_encoders import ExtendedEncoder, ExtendedDecoder
+from helpers.json_encoders import ExtendedEncoder, ExtendedDecoder
 
 data = [
     ([t.Int()], [84747631942840761409198475171043116002924132430274400095798688737583350222083]),

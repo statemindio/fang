@@ -1,8 +1,8 @@
 import logging
 import time
 
-from config import Config
-from db import get_mongo_client
+from helpers.config import Config
+from helpers.db import get_mongo_client
 
 class VerifierException(Exception):
     pass

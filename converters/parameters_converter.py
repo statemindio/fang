@@ -1,7 +1,7 @@
 from .utils import extract_type
-from config import MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
+from helpers.config import MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 
-import proto_loader as proto
+import helpers.proto_loader as proto
 
 class ParametersConverter:
     def __init__(self, var_tracker):

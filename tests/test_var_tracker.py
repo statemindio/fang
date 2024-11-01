@@ -2,7 +2,7 @@ import pytest
 
 from types_d import Int, Decimal, FixedList, DynArray, Bytes
 from var_tracker import VarTracker
-from config import MAX_LIST_SIZE
+from helpers.config import MAX_LIST_SIZE
 
 
 @pytest.fixture

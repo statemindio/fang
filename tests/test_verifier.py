@@ -1,6 +1,6 @@
 import json
 
-from config import Config
+from helpers.config import Config
 from verifiers.simple_verifier import reshape_data, verify_results, verify_two_results
 
 data = """

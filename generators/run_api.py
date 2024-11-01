@@ -6,13 +6,13 @@ import atheris
 import atheris_libprotobuf_mutator
 from google.protobuf.json_format import MessageToJson
 
-from config import Config
-from db import get_mongo_client
-from input_generation import InputGenerator, InputStrategy
-from json_encoders import ExtendedEncoder
-from queue_managers import QueueManager, MultiQueueManager
+from helpers.config import Config
+from helpers.db import get_mongo_client
+from generators.input_generation import InputGenerator, InputStrategy
+from helpers.json_encoders import ExtendedEncoder
+from helpers.queue_managers import QueueManager, MultiQueueManager
 
-import proto_loader as proto
+import helpers.proto_loader as proto
 
 class GeneratorBase:
 

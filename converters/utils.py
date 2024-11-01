@@ -1,6 +1,6 @@
 import math
 
-from config import MAX_LIST_SIZE, MAX_BYTESTRING_SIZE
+from helpers.config import MAX_LIST_SIZE, MAX_BYTESTRING_SIZE
 from types_d import Bool, Decimal, BytesM, String, Address, Bytes, FixedList, DynArray, Int
 
 def get_nearest_multiple(num, mul):
