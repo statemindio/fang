@@ -87,6 +87,8 @@ class TypedConverter:
         5: ">="
     }
 
+    INIT_VISIBILITY = "@external"
+
     def __init__(self, msg):
         self.contract = msg
         self.type_stack = []
@@ -361,8 +363,6 @@ class TypedConverter:
     def visit_init(self, init):
         self._mutability_level = 0
 
-        visibility = "@external"
-
         input_params, input_types, _ = self._visit_input_parameters(init.input_params)
         function_name = "__init__"
         if len(input_types) > 0:
@@ -377,7 +377,7 @@ class TypedConverter:
 
         mutability = "@payable\n" if init.mut else ""
 
-        result = f"{visibility}\n{mutability}def {function_name}({input_params}):\n{block}"
+        result = f"{self.INIT_VISIBILITY}\n{mutability}def {function_name}({input_params}):\n{block}"
 
         return result
 
