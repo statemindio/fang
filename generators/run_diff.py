@@ -8,8 +8,9 @@ with atheris.instrument_imports():
     from converters.typed_converters import TypedConverter
     from converters.typed_converters_4 import NaginiConverter
 
+
 class GeneratorDiff(GeneratorBase):
-    def __init__(self, proto_converter, proto_converter_diff, config_file = None):
+    def __init__(self, proto_converter, proto_converter_diff, config_file=None):
         GeneratorBase.__init__(self, proto_converter, config_file)
         self.converter_diff = proto_converter_diff
 
@@ -63,6 +64,7 @@ class GeneratorDiff(GeneratorBase):
             return c_result, None
         except Exception as e:
             return None, e
+
 
 generator = GeneratorDiff(NaginiConverter, TypedConverter)
 

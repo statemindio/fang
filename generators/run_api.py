@@ -14,10 +14,11 @@ from helpers.queue_managers import QueueManager, MultiQueueManager
 
 import helpers.proto_loader as proto
 
+
 class GeneratorBase:
 
     # Add new converters if necessary into new variables
-    def __init__(self, proto_converter, config_file = None):
+    def __init__(self, proto_converter, config_file=None):
         self.__version__ = "0.1.3"
         self.conf = Config(config_file) if config_file is not None else Config()
         self.converter = proto_converter
