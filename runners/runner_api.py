@@ -45,6 +45,9 @@ class RunnerBase:
         self.run_results_collection.update_one({"generation_id": data["_id"]},
                                                {"$set": {f"result_{self.compiler_key}": result, "is_handled": False}})
 
+    def generation_result(self):
+        return "generation_result"
+
     def handle_compilation(self, _contract_desc):
         input_values = json.loads(
             _contract_desc["function_input_values"], cls=ExtendedDecoder)
@@ -54,7 +57,7 @@ class RunnerBase:
         for iv in init_values:
             self.logger.debug("Constructor values: %s", iv)
             try:
-                contract = boa.loads(_contract_desc["generation_result"],
+                contract = boa.loads(_contract_desc[self.generation_result()],
                                      *iv, compiler_args=self.comp_settings)
             except Exception as e:
                 self.logger.debug("Deployment failed: %s", str(e))

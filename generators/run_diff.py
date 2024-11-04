@@ -10,7 +10,7 @@ with atheris.instrument_imports():
 
 class GeneratorDiff(GeneratorBase):
     def __init__(self, proto_converter, proto_converter_diff, config_file = None):
-        GeneratorBase.__init__(proto_converter, config_file)
+        GeneratorBase.__init__(self, proto_converter, config_file)
         self.converter_diff = proto_converter_diff
 
     def TestOneProtoInput(self, msg):
