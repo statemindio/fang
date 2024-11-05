@@ -1,0 +1,20 @@
+compilers:
+  - name: adder
+    queue:
+      host: queue_adder
+      port: 5672
+    exec_params:
+      optimization: "gas"
+  - name: nagini
+    queue:
+      host: queue_nagini
+      port: 5672
+    exec_params:
+      venom: False
+db:
+  host: mongodb
+  port: 27017
+input_strategies: [ 1 ]
+# for logging level reference https://docs.python.org/3/library/logging.html#logging-levels
+verbosity: DEBUG
+extra_flags: [ 'enable_decimals' ]
