@@ -1,7 +1,7 @@
 import math
 
-from helpers.config import MAX_LIST_SIZE, MAX_BYTESTRING_SIZE
-from types_d import Bool, Decimal, BytesM, String, Address, Bytes, FixedList, DynArray, Int
+from fuzz.helpers.config import MAX_LIST_SIZE, MAX_BYTESTRING_SIZE
+from fuzz.types_d import Bool, Decimal, BytesM, String, Address, Bytes, FixedList, DynArray, Int
 
 def get_nearest_multiple(num, mul):
     return mul * math.ceil(num / mul)

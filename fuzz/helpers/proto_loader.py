@@ -1,4 +1,4 @@
-from helpers.config import Config
+from fuzz.helpers.config import Config
 import vyper
 
 conf = Config()

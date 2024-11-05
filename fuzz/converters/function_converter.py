@@ -1,7 +1,7 @@
 import copy
 from collections import defaultdict
 
-import helpers.proto_loader as proto
+import fuzz.helpers.proto_loader as proto
 
 class FunctionConverter:
     def __init__(self, func_tracker):

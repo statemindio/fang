@@ -1,18 +1,18 @@
 import random
 from collections import defaultdict
 
-from helpers.config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE, MAX_FUNCTIONS
-from func_tracker import FuncTracker
-from types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
-from types_d.base import BaseType
-from var_tracker import VarTracker
+from fuzz.helpers.config import MAX_STORAGE_VARIABLES, MAX_LIST_SIZE, MAX_FUNCTIONS
+from .func_tracker import FuncTracker
+from fuzz.types_d import Bool, Decimal, BytesM, Address, Bytes, Int, String, FixedList, DynArray
+from fuzz.types_d.base import BaseType
+from .var_tracker import VarTracker
 from .function_converter import FunctionConverter
 from .parameters_converter import ParametersConverter
 from .utils import VALID_CHARS, INVALID_PREFIX, RESERVED_KEYWORDS, extract_type, _has_field
 
-from helpers.proto_helpers import ConvertFromTypeMessageHelper
+from fuzz.helpers.proto_helpers import ConvertFromTypeMessageHelper
 
-import helpers.proto_loader as proto
+import fuzz.helpers.proto_loader as proto
 
 PURE = 0
 VIEW = 1

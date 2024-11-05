@@ -6,13 +6,13 @@ import atheris
 import atheris_libprotobuf_mutator
 from google.protobuf.json_format import MessageToJson
 
-from helpers.config import Config
-from helpers.db import get_mongo_client
-from generators.input_generation import InputGenerator, InputStrategy
-from helpers.json_encoders import ExtendedEncoder
-from helpers.queue_managers import QueueManager, MultiQueueManager
+from fuzz.helpers.config import Config
+from fuzz.helpers.db import get_mongo_client
+from fuzz.generators.input_generation import InputGenerator, InputStrategy
+from fuzz.helpers.json_encoders import ExtendedEncoder
+from fuzz.helpers.queue_managers import QueueManager, MultiQueueManager
 
-import helpers.proto_loader as proto
+import fuzz.helpers.proto_loader as proto
 
 
 class GeneratorBase:

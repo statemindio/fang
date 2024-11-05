@@ -6,10 +6,10 @@ import pika.exceptions
 import boa
 from bson.objectid import ObjectId
 
-from helpers.config import Config
-from helpers.queue_managers import QueueManager
-from helpers.db import get_mongo_client
-from helpers.json_encoders import ExtendedEncoder, ExtendedDecoder
+from fuzz.helpers.config import Config
+from fuzz.helpers.queue_managers import QueueManager
+from fuzz.helpers.db import get_mongo_client
+from fuzz.helpers.json_encoders import ExtendedEncoder, ExtendedDecoder
 
 
 class RunnerBase:

@@ -1,7 +1,7 @@
-from types_d.base import BaseType
-from types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
+from fuzz.types_d.base import BaseType
+from fuzz.types_d.value_generator import BytesMRandomGen, BytesRandomGen, IntRandomGen, BoolRandomGen, StringRandomGen, \
     AddressRandomGen, DecimalRandomGen
-from types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen, BytesMLiteralGen, IntLiteralGen, \
+from fuzz.types_d.literal_value_generator import BytesLiteralGen, AddressLiteralGen, BytesMLiteralGen, IntLiteralGen, \
     BoolLiteralGen, DecimalLiteralGen, StringLiteralGen
 
 

@@ -4,7 +4,7 @@ from run_api import GeneratorBase
 
 with atheris.instrument_imports():
     import vyper
-    from converters.typed_converters import TypedConverter
+    from fuzz.converters.typed_converters import TypedConverter
 
 class GeneratorAdder(GeneratorBase):
     def compile_source(self, proto_result):

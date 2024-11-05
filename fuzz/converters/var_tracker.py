@@ -1,9 +1,9 @@
 import copy
 
-from types_d.base import BaseType
-from types_d.types import FixedList, DynArray, Bytes, String
+from fuzz.types_d.base import BaseType
+from fuzz.types_d.types import FixedList, DynArray, Bytes, String
 
-import helpers.proto_loader as proto
+import fuzz.helpers.proto_loader as proto
 
 class VarTracker:
     """

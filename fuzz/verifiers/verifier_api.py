@@ -1,8 +1,8 @@
 import logging
 import time
 
-from helpers.config import Config
-from helpers.db import get_mongo_client
+from fuzz.helpers.config import Config
+from fuzz.helpers.db import get_mongo_client
 
 class VerifierException(Exception):
     pass
