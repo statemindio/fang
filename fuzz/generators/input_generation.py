@@ -1,4 +1,4 @@
-from types_d import types, value_generator
+from fuzz.types_d import types, value_generator
 from enum import Enum
 import decimal
 

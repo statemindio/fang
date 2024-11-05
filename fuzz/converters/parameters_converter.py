@@ -1,7 +1,7 @@
 from .utils import extract_type
-from helpers.config import MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
+from fuzz.helpers.config import MAX_FUNCTION_INPUT, MAX_FUNCTION_OUTPUT
 
-import helpers.proto_loader as proto
+import fuzz.helpers.proto_loader as proto
 
 class ParametersConverter:
     def __init__(self, var_tracker):

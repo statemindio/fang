@@ -5,8 +5,8 @@ import logging
 
 import pika
 
-from helpers.config import Config
-from helpers.db import get_mongo_client
+from fuzz.helpers.config import Config
+from fuzz.helpers.db import get_mongo_client
 
 conf = Config()
 logger_level = getattr(logging, conf.verbosity)

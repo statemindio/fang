@@ -1,8 +1,8 @@
 from typing import Sequence
 
-from types_d.base import BaseType
+from fuzz.types_d.base import BaseType
 
-import helpers.proto_loader as proto
+import fuzz.helpers.proto_loader as proto
 
 class Function:
     MUTABILITY_MAPPING = (
