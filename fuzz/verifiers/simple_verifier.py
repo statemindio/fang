@@ -1,5 +1,6 @@
-from verifier_api import VerifierBase
+from fuzz.verifiers.verifier_api import VerifierBase
 
-verifier = VerifierBase()
+if __name__ == '__main__':
+    verifier = VerifierBase()
 
-verifier.start_verifier()
+    verifier.start_verifier()
