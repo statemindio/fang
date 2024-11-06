@@ -3,10 +3,10 @@ import os
 import pytest
 from google.protobuf.json_format import Parse
 
-from converters.typed_converters import TypedConverter
-from types_d import Address, BytesM, String
+import fuzz.helpers.proto_loader as proto
+from fuzz.converters.typed_converters import TypedConverter
+from fuzz.types_d import Address, BytesM, String
 
-import proto_loader as proto
 
 def convert_message(message: str) -> TypedConverter:
     mes = Parse(message, proto.Contract())
@@ -268,7 +268,9 @@ def test_visit_create_min_proxy_or_copy_of():
         res = conv.visit_create_min_proxy_or_copy_of(mes, name)
         assert res == expected
 
+
 hashing = [(proto.Sha256(), "sha256"), (proto.Keccak256(), "keccak256")]
+
 
 def test_visit_hash256():
     mes = ""

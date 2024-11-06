@@ -1,13 +1,14 @@
 import json
 
-from helpers.config import Config
-from verifiers.simple_verifier import reshape_data, verify_results, verify_two_results
+# from fuzz.verifiers.verifier_api import VerifierBase
+
+from fuzz.verifiers.simple_verifier import VerifierBase
 
 data = """
     {
     "_id": {"$oid": "66b178d8b7f5f3dfa365a9e1"},
     "generation_id": "66b178d8b7f5f3dfa365a9e0",
-    "result_0_3_10_opt_codesize": [
+    "result_opt_codesize": [
       {
         "func_0": [
           {
@@ -33,7 +34,7 @@ data = """
         ]
       }
     ],
-    "result_0_3_10_opt_gas": [
+    "result_opt_gas": [
       {
         "func_0": [
           {
@@ -179,12 +180,12 @@ expected = {
     ]
 }
 
-conf = Config()  # TODO: create MockConfig
-
 
 def test_reshape_data():
     data_dict = json.loads(data)
-    reshaped = reshape_data(conf, data_dict)
+    # pytest mocks mongodb connection somehow...
+    verifier = VerifierBase("./config_verifier_test.yml")
+    reshaped = verifier.reshape_data(data_dict)
 
     print(reshaped)
     assert reshaped == expected
@@ -209,14 +210,15 @@ def test_verify_two_result():
         'Return_Value': None,
         'Storage': None
     }
-    r = verify_two_results(res0, res1)
+    verifier = VerifierBase("./config_verifier_test.yml")
+    r = verifier.verify_two_results(res0, res1)
     assert r == expected_res
 
 
 def test_verify_results():
     from pprint import pprint
     data_dict = json.loads(data)
-    expected_res = [{'compilers': ('result_0_3_10_opt_gas', 'result_0_3_10_opt_codesize'),
+    expected_res = [{'compilers': ('result_opt_gas', 'result_opt_codesize'),
                      'deployment': 0,
                      'function': 'func_0',
                      'params_set': 0,
@@ -224,7 +226,7 @@ def test_verify_results():
                                  'Memory': None,
                                  'Return_Value': None,
                                  'Storage': None}},
-                    {'compilers': ('result_0_3_10_opt_gas', 'result_0_3_10_opt_codesize'),
+                    {'compilers': ('result_opt_gas', 'result_opt_codesize'),
                      'deployment': 0,
                      'function': 'func_0',
                      'params_set': 1,
@@ -232,7 +234,7 @@ def test_verify_results():
                                  'Memory': None,
                                  'Return_Value': None,
                                  'Storage': None}},
-                    {'compilers': ('result_0_3_10_opt_gas', 'result_0_3_10_opt_codesize'),
+                    {'compilers': ('result_opt_gas', 'result_opt_codesize'),
                      'deployment': 0,
                      'function': '__default__',
                      'params_set': 0,
@@ -240,7 +242,8 @@ def test_verify_results():
                                  'Memory': None,
                                  'Return_Value': None,
                                  'Storage': None}}]
-    reshaped = reshape_data(conf, data_dict)
-    r = verify_results(conf, reshaped)
+    verifier = VerifierBase("./config_verifier_test.yml")
+    reshaped = verifier.reshape_data(data_dict)
+    r = verifier.verify_results(reshaped)
     pprint(r)
     assert expected_res == r
