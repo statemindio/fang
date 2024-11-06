@@ -140,7 +140,7 @@ class RunnerBase:
     # The boa interface might change
     def init_compiler_settings(self):
         self.comp_settings = {}
-        if self.compiler_params["exec_params"]["venom"]:
+        if self.compiler_params["exec_params"].get(self.compiler_name, False):
             self.comp_settings["experimental_codegen"] = True
 
         if 'enable_decimals' in self.conf.extra_flags:
