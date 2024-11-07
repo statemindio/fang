@@ -1,16 +1,19 @@
 compilers:
   - name: adder
-    queue:
-      host: queue_adder
-      port: 5672
+    queue: adder
     exec_params:
       optimization: "gas"
   - name: nagini
-    queue:
-      host: queue_nagini
-      port: 5672
+    queue: nagini
     exec_params:
       venom: False
+queues:
+  adder:
+    host: queue_adder
+    port: 5672
+  nagini:
+    host: queue_nagini
+    port: 5672
 db:
   host: mongodb
   port: 27017
