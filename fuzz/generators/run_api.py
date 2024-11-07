@@ -141,4 +141,4 @@ class GeneratorBase:
                 q_params["queue_name"],
                 self.logger
             )
-            for q_params in self.conf.compiler_queues])
+            for q_params in self.conf.compiler_queues.values()])

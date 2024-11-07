@@ -136,8 +136,10 @@ class RunnerBase:
 
     def init_queue(self):
         self.queue_name = 'queue3.10'
-        self.qm = QueueManager(self.compiler_params["queue"]["host"],
-                               int(self.compiler_params["queue"]["port"]), self.queue_name, self.logger)
+        queue_params = self.conf.compiler_queues[self.compiler_params["queue"]]
+
+        self.qm = QueueManager(queue_params["host"],
+                               int(queue_params["port"]), self.queue_name, self.logger)
         self.channel = self.qm.channel
 
     # The boa interface might change
