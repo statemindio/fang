@@ -5,8 +5,8 @@ from run_api import GeneratorBase
 
 with atheris.instrument_imports():
     import vyper
-    from converters.typed_converters import TypedConverter
-    from converters.typed_converters_4 import NaginiConverter
+    from fuzz.converters.typed_converters import TypedConverter
+    from fuzz.converters.typed_converters_4 import NaginiConverter
 
 
 class GeneratorDiff(GeneratorBase):
