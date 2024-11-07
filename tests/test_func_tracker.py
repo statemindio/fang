@@ -1,9 +1,9 @@
 import pytest
 
-from func_tracker import FuncTracker
-from config import MAX_FUNCTIONS
+import fuzz.helpers.proto_loader as proto
+from fuzz.converters.func_tracker import FuncTracker
+from fuzz.helpers.config import MAX_FUNCTIONS
 
-import proto_loader as proto
 
 @pytest.fixture
 def func_tracker():

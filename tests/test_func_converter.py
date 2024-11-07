@@ -2,11 +2,9 @@ import os
 
 from google.protobuf.json_format import Parse
 
-from converters.function_converter import FunctionConverter
-from converters.typed_converters import TypedConverter
-from func_tracker import FuncTracker
-
-import proto_loader as proto
+import fuzz.helpers.proto_loader as proto
+from fuzz.converters.function_converter import FunctionConverter
+from fuzz.converters.typed_converters import TypedConverter
 
 
 def test__find_func():

@@ -2,7 +2,7 @@
 
 ### Periphery
 
-To run minimal service set-up (the only compiler and generator and runner) it's required to run database and AMQ
+To run the set-up localy it's required to run database and AMQ
 instances.
 Running DB:
 
@@ -17,6 +17,7 @@ docker run -d -p 5672:5672 -p 15672:15672 rabbitmq:management
 ```
 
 So now the database and AMQ services are allowed by `localhost:27017` and `localhost:5672` respectively.
+The periphery can be run outside of docker, although normally multiple instances of AMQ are required.
 
 ### Configuration
 
@@ -24,26 +25,59 @@ Since the periphery are run we need to put according configurations to `config.y
 
 ```yaml
 compilers:
-  - name: opt_codesize
+  - name: adder
     queue:
       host: localhost
       port: 5672
     exec_params:
-      optimization: codesize
+      optimization: "gas"
+  - name: nagini
+    queue:
+      host: localhost
+      port: 5673
+    exec_params:
+      venom: False
 db:
   host: localhost
   port: 27017
+input_strategies: [1]
+verbosity: DEBUG
+extra_flags: ['enable_decimals']
+```
+
+### Running the Runner service
+
+The differential fuzzing might require having separate dependencies to run (vyper&titanoboa versions).
+Run each set of runners in a different virtual environment.
+
+#### Example environment one
+
+```bash
+pip install -r requirements_adder.txt
+```
+
+```bash
+export PYTHONPATH=$(pwd)
+SERVICE_NAME=adder python fuzz/runners/runner_diff.py
+```
+
+#### Example environment two
+
+```bash
+pip install -r requirements_nagini.txt
+```
+
+```bash
+export PYTHONPATH=$(pwd)
+SERVICE_NAME=nagini python fuzz/runners/runner_diff.py
 ```
 
 ### Running the Generator service
 
-This part is written assuming all commands are run in virtual environment and all dependencies are installed:
+The generator is anchored to one of the vyper versions in a differential fuzzing set-up.
+The generator service must run in the same virtual environment (as in having the same dependencies) as one of the runner services.
 
-```bash
-pip install -r requirements.txt
-```
-
-Also, it's needed to compile `.proto`:
+Compile the proto file:
 
 ```bash
 protoc  --python_out=./ ./vyperProto.proto
@@ -52,19 +86,15 @@ protoc  --python_out=./ ./vyperProto.proto
 Since all dependencies are installed the services can be run:
 
 ```bash
-python ./run.py
+export PYTHONPATH=$(pwd)
+python fuzz/generators/run_diff.py
 ```
 
-### Running the Compiler service
+### Running the Verifier service
+
+Does not depend on the vyper or titanoboa versions, but must have dependencies installed.
 
 ```bash
 export PYTHONPATH=$(pwd)
-SERVICE_NAME=opt_codesize python tests/integration_runner/compile.py
-```
-
-### Running the Runner service
-
-```bash
-export PYTHONPATH=$(pwd)
-python runners/simple_runner.py
+python fuzz/verifiers/simple_verifier.py
 ```
