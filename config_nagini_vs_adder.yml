@@ -1,25 +1,24 @@
 compilers:
-  - name: venom
-    queue: venom
+  - name: adder
+    queue: adder
     exec_params:
-      venom: True
-  - name: default
-    queue: default
+      optimization: "gas"
+  - name: nagini
+    queue: nagini
     exec_params:
       venom: False
 
 queues:
-  venom:
-    host: queue_optimization_gas
+  adder:
+    host: localhost
     port: 5672
-  default:
-    host: queue_optimization_gas
-    port: 5672
-
+  nagini:
+    host: localhost
+    port: 5673
 db:
   host: localhost
   port: 27017
-input_strategies: [1]
+input_strategies: [ 1 ]
 # for logging level reference https://docs.python.org/3/library/logging.html#logging-levels
 verbosity: DEBUG
-extra_flags: []
+extra_flags: [ 'enable_decimals' ]

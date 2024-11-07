@@ -1,0 +1,29 @@
+compilers:
+  - name: opt_gas
+    queue: opt_gas
+    exec_params:
+      optimization: gas
+  - name: opt_codesize
+    queue: opt_codesize
+    exec_params:
+      optimization: codesize
+  - name: opt_none
+    queue:
+      host: localhost
+      port: 5674
+    exec_params:
+      optimization: none
+
+queues:
+  opt_gas:
+    host: localhost
+    port: 5672
+  opt_codesize:
+    host: localhost
+    port: 5673
+db:
+  host: localhost
+  port: 27017
+input_strategies: [ 1 ]
+# for logging level reference https://docs.python.org/3/library/logging.html#logging-levels
+verbosity: INFO

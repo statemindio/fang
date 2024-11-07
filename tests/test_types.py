@@ -1,6 +1,6 @@
 import pytest
 
-from types_d import BytesM, String, Int, TypeRangeError, Bytes, Bool, Decimal, Address
+from fuzz.types_d import BytesM, String, Int, TypeRangeError, Bytes, Bool, Decimal, Address
 
 data = [
     [i, f"bytes{i}"] for i in range(1, 33)

@@ -1,9 +1,9 @@
 import pytest
 
-from func_tracker import FuncTracker
-from vyperProtoNew_pb2 import Func
-# should take from config or create separate for tests?
-from config import MAX_FUNCTIONS
+import fuzz.helpers.proto_loader as proto
+from fuzz.converters.func_tracker import FuncTracker
+from fuzz.helpers.config import MAX_FUNCTIONS
+
 
 @pytest.fixture
 def func_tracker():
@@ -12,8 +12,8 @@ def func_tracker():
 
 def test_func_tracker_register(func_tracker):
     name = "test0"
-    mutability = Func.Mutability.PURE
-    visibility = Func.Visibility.EXTERNAL
+    mutability = proto.Func.Mutability.PURE
+    visibility = proto.Func.Visibility.EXTERNAL
     input_parameters = []
     output_parameters = []
     func_tracker._register_function(name, mutability, visibility, input_parameters, output_parameters)
