@@ -10,10 +10,13 @@ Running DB:
 docker run -d -p 27017:27017 mongo
 ```
 
+For each `runner`, there must be a separate AMQ
+
 AMQ:
 
 ```bash
 docker run -d -p 5672:5672 -p 15672:15672 rabbitmq:management
+docker run -d -p 5673:5672 -p 15673:15672 rabbitmq:management
 ```
 
 So now the database and AMQ services are allowed by `localhost:27017` and `localhost:5672` respectively.
@@ -47,8 +50,8 @@ extra_flags: ['enable_decimals']
 
 ### Running the Runner service
 
-The differential fuzzing might require having separate dependencies to run (vyper&titanoboa versions).
-Run each set of runners in a different virtual environment.
+The differential fuzzing might require having separate dependencies to run (`vyper`&`titanoboa` versions).
+Run each set of `runners` in a different virtual environment.
 
 #### Example environment one
 
@@ -74,8 +77,8 @@ SERVICE_NAME=nagini python fuzz/runners/runner_diff.py
 
 ### Running the Generator service
 
-The generator is anchored to one of the vyper versions in a differential fuzzing set-up.
-The generator service must run in the same virtual environment (as in having the same dependencies) as one of the runner services.
+The `generator` is anchored to one of the `vyper` versions in a differential fuzzing set-up.
+The `generator` service must run in the environment with the `vyper` version that `converter` is adapted to, it can be run in the same virtual environment as one of `runner` services (depending on the anchored version for cross-version).
 
 Compile the proto file:
 
@@ -92,7 +95,7 @@ python fuzz/generators/run_diff.py
 
 ### Running the Verifier service
 
-Does not depend on the vyper or titanoboa versions, but must have dependencies installed.
+Does not depend on the `vyper` or `titanoboa` versions, but must have dependencies installed.
 
 ```bash
 export PYTHONPATH=$(pwd)
