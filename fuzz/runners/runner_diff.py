@@ -1,6 +1,7 @@
 import os
 from runner_api import RunnerBase
 
+
 # Override class methods
 
 class RunnerDiff(RunnerBase):
@@ -14,8 +15,9 @@ class RunnerDiff(RunnerBase):
         else:
             from vyper.compiler.settings import Settings, OptimizationLevel
             compiler_settings = Settings(optimize=OptimizationLevel.from_string(
-                        self.compiler_params["exec_params"]["optimization"]))
+                self.compiler_params["exec_params"]["optimization"]))
             self.comp_settings = {"settings": compiler_settings}
+
 
 runner = RunnerDiff()
 

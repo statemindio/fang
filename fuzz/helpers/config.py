@@ -17,15 +17,23 @@ class Config:
         with open(config_source_path) as csf:
             self.__config_source = yaml.safe_load(csf)
 
-        self._compiler_queues = [
-            dict(host=c["queue"]["host"], port=c["queue"]["port"], queue_name="queue3.10")
-            for c in self.__config_source["compilers"]
-        ]
+        # self._compiler_queues = [
+        #     dict(host=c["queue"]["host"], port=c["queue"]["port"], queue_name="queue3.10")
+        #     for c in self.__config_source["compilers"]
+        # ]
         self._db = self.__config_source["db"]
 
     @property
     def compiler_queues(self):
-        return self._compiler_queues
+        active_queues = {}
+        for c in self.__config_source["compilers"]:
+            if c["queue"] not in self.__config_source["queues"]:
+                # TODO: fail
+                pass
+            if c["queue"] not in active_queues:
+                active_queues[c["queue"]] = self.__config_source["queues"][c["queue"]]
+                active_queues[c["queue"]]["queue_name"] = "queue3.10"
+        return active_queues
 
     @property
     def db(self):

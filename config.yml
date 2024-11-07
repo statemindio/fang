@@ -1,16 +1,21 @@
 compilers:
   - name: venom
-    queue:
-      host: localhost
-      port: 5672
+    queue: venom
     exec_params:
       venom: True
   - name: default
-    queue:
-      host: localhost
-      port: 5673
+    queue: default
     exec_params:
       venom: False
+
+queues:
+  venom:
+    host: queue_optimization_gas
+    port: 5672
+  default:
+    host: queue_optimization_gas
+    port: 5672
+
 db:
   host: localhost
   port: 27017

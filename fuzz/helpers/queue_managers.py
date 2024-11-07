@@ -19,18 +19,19 @@ class QueueManager:
         self.channel = self._connection.channel()
         self._queue_name = queue_name
 
-        self.channel.queue_declare(queue_name)
+        self.channel.queue_declare(queue_name, durable=True)
 
     def __connect(self):
         try:
             return pika.BlockingConnection(pika.ConnectionParameters(
                 host=self.host,
-                port=self.port
+                port=self.port,
+                heartbeat=0
             ))
         except pika.exceptions.AMQPConnectionError as e:
             attempt = self._attempts_counter
             if attempt < 20:
-                #print("connect failed, attempt number {}".format(attempt), flush=True)
+                # print("connect failed, attempt number {}".format(attempt), flush=True)
                 self.logger.info("connect failed, attempt number %s", attempt)
                 time.sleep(5)
                 return self.__connect()
@@ -43,7 +44,14 @@ class QueueManager:
 
     def publish(self, **kwargs):
         message = json.dumps(kwargs)
-        self.channel.basic_publish(exchange='', routing_key=self._queue_name, body=message)
+        self.channel.basic_publish(
+            exchange='',
+            routing_key=self._queue_name,
+            body=message,
+            properties=pika.BasicProperties(
+                delivery_mode=pika.DeliveryMode.Persistent
+            )
+        )
 
 
 class MultiQueueManager:

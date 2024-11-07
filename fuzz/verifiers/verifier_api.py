@@ -22,6 +22,7 @@ class VerifierBase:
             self.logger.debug(f"Unhandled results received: {unhandled_results}")
 
             verification_results = []
+            handled_ids = []
             for res in unhandled_results:
                 self.logger.info(f"Handling result: {res['generation_id']}")
                 self.logger.debug(res)
@@ -40,13 +41,13 @@ class VerifierBase:
                 reshaped_res = self.reshape_data(res)
                 _r = self.verify_results(reshaped_res)
                 verification_results.append({"generation_id": res["generation_id"], "results": _r})
+                handled_ids.append(res["_id"])
 
             if len(verification_results) != 0:
                 self.verification_results_collection.insert_many(verification_results)
 
-            if len(unhandled_results) != 0:
                 self.results_collection.update_many(
-                    {"_id": {"$in": [r["_id"] for r in unhandled_results]}},
+                    {"_id": {"$in": handled_ids}},
                     {"$set": {"is_handled": True}}
                 )
             time.sleep(5)

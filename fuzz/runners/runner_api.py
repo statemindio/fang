@@ -14,7 +14,7 @@ from fuzz.helpers.json_encoders import ExtendedEncoder, ExtendedDecoder
 
 class RunnerBase:
 
-    def __init__(self, config_file = None):
+    def __init__(self, config_file=None):
         self.conf = Config(config_file) if config_file is not None else Config()
         self.inputs_per_function = len(self.conf.input_strategies)
         self.init_config()
@@ -26,11 +26,13 @@ class RunnerBase:
     def start_runner(self):
         while True:
             try:
+                self.channel.basic_qos(prefetch_count=1)
                 self.channel.basic_consume(
-                    self.queue_name, on_message_callback=self.callback, auto_ack=True)
+                    self.queue_name, on_message_callback=self.callback)
                 self.channel.start_consuming()
-            except (pika.exceptions.StreamLostError, pika.exceptions.ChannelWrongStateError):
-                pass
+            except pika.exceptions.AMQPError:
+                self.logger.info("AMQP error. Failing...")
+                exit(1)
 
     def callback(self, ch, method, properties, body):
         data = json.loads(body)
@@ -44,6 +46,7 @@ class RunnerBase:
                                          {"$set": {f"compiled_{self.compiler_key}": True}})
         self.run_results_collection.update_one({"generation_id": data["_id"]},
                                                {"$set": {f"result_{self.compiler_key}": result, "is_handled": False}})
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def generation_result(self):
         return "generation_result"
