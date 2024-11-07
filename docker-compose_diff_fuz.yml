@@ -4,7 +4,7 @@ services:
     image: registry.statemind.io/vyper-fuzzer-generator:v0.1.6
     command:
       - python3.10
-      - generators/run_diff.py
+      - fuzz/generators/run_diff.py
       - /corpus
     networks:
       - db
@@ -40,7 +40,7 @@ services:
       - queue_adder
     command:
       - python3.10
-      - runners/runner_diff.py
+      - fuzz/runners/runner_diff.py
     networks:
       - db
       - queue_opt_gas
@@ -67,7 +67,7 @@ services:
       - queue_nagini
     command:
       - python3.10
-      - runners/runner_diff.py
+      - fuzz/runners/runner_diff.py
     networks:
       - db
       - queue_opt_codesize
@@ -81,7 +81,7 @@ services:
       - mongodb
     command:
       - python3.10
-      - verifiers/simple_verifier.py
+      - fuzz/verifiers/simple_verifier.py
     networks:
       - db
     volumes:
